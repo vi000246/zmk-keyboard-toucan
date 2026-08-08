@@ -10,8 +10,6 @@
 
 #include <behaviors.dtsi>
 #include <dt-bindings/zmk/keys.h>
-#include <dt-bindings/zmk/bt.h>
-#include <dt-bindings/zmk/outputs.h>
 #include <dt-bindings/zmk/pointing.h>
 
 /*
@@ -22,6 +20,7 @@
  *                     "tap-preferred" is the most forgiving, "hold-preferred"
  *                     the most eager. See zmk.dev/docs/keymaps/behaviors/hold-tap
  */
+
 &mt {
     flavor = "tap-preferred";
     tapping-term-ms = <200>;
@@ -33,7 +32,6 @@
 };
 
 / {
-
     behaviors {
         td5: tap_dance_5 {
             compatible = "zmk,behavior-tap-dance";
@@ -42,15 +40,14 @@
             bindings = <&mt LALT SEMI>, <&kp COLON>;
         };
     };
+
     macros {
         macro0: macro_0 {
             compatible = "zmk,behavior-macro";
             #binding-cells = <0>;
             wait-ms = <10>;
             tap-ms = <10>;
-            bindings
-                = <&macro_tap &kp LC(A) &kp LS(LG(RIGHT))>
-                ;
+            bindings = <&macro_tap>, <&kp LC(A) &kp LS(LG(RIGHT))>;
         };
 
         macro1: macro_1 {
@@ -58,10 +55,11 @@
             #binding-cells = <0>;
             wait-ms = <10>;
             tap-ms = <10>;
-            bindings
-                = <&macro_tap &kp C &kp L &kp A &kp U &kp D &kp E>
-                , <&macro_tap &kp RET>
-                ;
+            bindings =
+                <&macro_tap>,
+                <&kp C &kp L &kp A &kp U &kp D &kp E>,
+                <&macro_tap>,
+                <&kp RET>;
         };
 
         macro2: macro_2 {
@@ -69,11 +67,13 @@
             #binding-cells = <0>;
             wait-ms = <10>;
             tap-ms = <10>;
-            bindings
-                = <&macro_tap &kp LS(Z)>
-                , <&macro_tap &kp N3 &kp N0>
-                , <&macro_tap &kp RET>
-                ;
+            bindings =
+                <&macro_tap>,
+                <&kp LS(Z)>,
+                <&macro_tap>,
+                <&kp N3 &kp N0>,
+                <&macro_tap>,
+                <&kp RET>;
         };
 
         macro3: macro_3 {
@@ -81,11 +81,13 @@
             #binding-cells = <0>;
             wait-ms = <10>;
             tap-ms = <10>;
-            bindings
-                = <&macro_tap &kp LS(Z)>
-                , <&macro_tap &kp N5 &kp N0>
-                , <&macro_tap &kp RET>
-                ;
+            bindings =
+                <&macro_tap>,
+                <&kp LS(Z)>,
+                <&macro_tap>,
+                <&kp N5 &kp N0>,
+                <&macro_tap>,
+                <&kp RET>;
         };
 
         macro4: macro_4 {
@@ -93,9 +95,7 @@
             #binding-cells = <0>;
             wait-ms = <10>;
             tap-ms = <10>;
-            bindings
-                = <&macro_tap &kp LC(SPACE) &kp V>
-                ;
+            bindings = <&macro_tap>, <&kp LC(SPACE) &kp V>;
         };
 
         macro5: macro_5 {
@@ -103,9 +103,7 @@
             #binding-cells = <0>;
             wait-ms = <10>;
             tap-ms = <10>;
-            bindings
-                = <&macro_tap &kp LC(SPACE) &kp V &kp COMMA &kp S>
-                ;
+            bindings = <&macro_tap>, <&kp LC(SPACE) &kp V &kp COMMA &kp S>;
         };
 
         macro6: macro_6 {
@@ -113,11 +111,13 @@
             #binding-cells = <0>;
             wait-ms = <10>;
             tap-ms = <10>;
-            bindings
-                = <&macro_tap &kp COLON>
-                , <&macro_tap &kp W &kp Q>
-                , <&macro_tap &kp RET>
-                ;
+            bindings =
+                <&macro_tap>,
+                <&kp COLON>,
+                <&macro_tap>,
+                <&kp W &kp Q>,
+                <&macro_tap>,
+                <&kp RET>;
         };
 
         macro7: macro_7 {
@@ -125,17 +125,21 @@
             #binding-cells = <0>;
             wait-ms = <10>;
             tap-ms = <10>;
-            bindings
-                = <&macro_tap &kp C &kp O &kp N &kp T &kp I &kp N &kp U &kp E>
-                , <&macro_tap &kp RET>
-                ;
+            bindings =
+                <&macro_tap>,
+                <&kp C &kp O &kp N &kp T &kp I &kp N &kp U &kp E>,
+                <&macro_tap>,
+                <&kp RET>;
         };
     };
+
     combos {
         compatible = "zmk,combos";
+
         combo_studio_unlock {
             // Hand-added, not from the .vil — see regen.sh.
             // Z + / together, after a brief pause. Unlocks ZMK Studio.
+
             timeout-ms = <200>;
             require-prior-idle-ms = <500>;
             key-positions = <25 34>;
@@ -147,6 +151,7 @@
             key-positions = <15 16>;
             bindings = <&kp SPACE>;
             layers = <3>;
+
             // LSFT(KC_9) + LSFT(KC_0) → KC_SPACE
         };
 
@@ -154,6 +159,7 @@
             timeout-ms = <27>;
             key-positions = <31 32>;
             bindings = <&to 1>;
+
             // KC_M + KC_COMMA → TO(1)
         };
 
@@ -161,6 +167,7 @@
             timeout-ms = <27>;
             key-positions = <27 28>;
             bindings = <&kp LC(SPACE)>;
+
             // KC_C + KC_V → LCTL(KC_SPACE)
         };
 
@@ -168,6 +175,7 @@
             timeout-ms = <27>;
             key-positions = <2 1>;
             bindings = <&macro6>;
+
             // KC_W + KC_Q → M6
         };
 
@@ -175,24 +183,24 @@
             timeout-ms = <27>;
             key-positions = <7 8>;
             bindings = <&to 4>;
+
             // KC_U + KC_I → TO(4)
         };
     };
+
     keymap {
         compatible = "zmk,keymap";
 
         layer_0 {
             display-name = "BASE";
             bindings = <
-            &none  &kp Q       &kp W        &kp E       &kp R        &kp T    &kp Y    &kp U        &kp I       &kp O        &kp P     &none
-            &none  &mt LALT A  &mt LCTRL S  &mt LGUI D  &mt LSHFT F  &lt 1 G  &lt 2 H  &mt LSHFT J  &mt LGUI K  &mt LCTRL L  &td5      &none
-            &none  &kp Z       &kp X        &kp C       &kp V        &kp B    &kp N    &kp M        &kp COMMA   &kp F18      &kp FSLH  &none
-            &lt 3 TAB  &lt 4 SPACE  &lt 1 ESC  &lt 2 BSPC  &lt 5 RET  &lt 3 F19
+&none  &kp Q  &kp W  &kp E  &kp R  &kp T  &kp Y  &kp U  &kp I  &kp O  &kp P  &none  &none  &mt LALT A  &mt LCTRL S  &mt LGUI D  &mt LSHFT F  &lt 1 G  &lt 2 H  &mt LSHFT J  &mt LGUI K  &mt LCTRL L  &td5  &none  &none  &kp Z  &kp X  &kp C  &kp V  &kp B  &kp N  &kp M  &kp COMMA  &kp F18  &kp FSLH  &none  &lt 3 TAB  &lt 4 SPACE  &lt 1 ESC  &lt 2 BSPC  &lt 5 RET  &lt 3 F19
             >;
         };
 
         layer_1 {
             display-name = "NAV";
+
             /*
              * Positions 3 and 4 are hand-added (see regen.sh):
              *   &studio_unlock — a second way in if the Z + / combo ever
@@ -201,51 +209,37 @@
              *   &bootloader    — left thumb ESC + R. Saves prying the
              *                    dongle out to double-tap RST on a reflash.
              */
+
             bindings = <
-            &none  &none  &none  &studio_unlock  &bootloader      &macro1  &msc SCRL_RIGHT  &msc SCRL_DOWN  &msc SCRL_UP  &msc SCRL_LEFT  &to 0    &none
-            &none  &kp LALT  &kp LCTRL  &kp LGUI  &kp LSHFT  &none    &kp LEFT         &kp DOWN        &kp UP        &kp RIGHT       &macro2  &none
-            &none  &none     &none      &macro7   &macro5    &macro4  &kp END          &kp PG_DN       &kp PG_UP     &kp HOME        &macro3  &none
-            &kp TAB  &kp SPACE  &kp ESC  &kp BSPC  &kp F19  &kp DEL
+&none  &none  &none  &studio_unlock  &bootloader  &macro1  &msc SCRL_RIGHT  &msc SCRL_DOWN  &msc SCRL_UP  &msc SCRL_LEFT  &to 0  &none  &none  &kp LALT  &kp LCTRL  &kp LGUI  &kp LSHFT  &none  &kp LEFT  &kp DOWN  &kp UP  &kp RIGHT  &macro2  &none  &none  &none  &none  &macro7  &macro5  &macro4  &kp END  &kp PG_DN  &kp PG_UP  &kp HOME  &macro3  &none  &kp TAB  &kp SPACE  &kp ESC  &kp BSPC  &kp F19  &kp DEL
             >;
         };
 
         layer_2 {
             display-name = "NUM";
             bindings = <
-            &none  &kp KP_MULTIPLY  &kp KP_N7  &kp KP_N8  &kp KP_N9  &kp KP_PLUS   &mkp MB2        &mkp MB3        &msc SCRL_DOWN  &msc SCRL_UP     &msc SCRL_LEFT   &none
-            &none  &kp KP_DIVIDE    &kp KP_N4  &kp KP_N5  &kp KP_N6  &kp MINUS     &mkp MB1        &kp LSHFT       &kp LGUI        &kp LCTRL        &kp LALT         &none
-            &none  &kp X            &kp KP_N1  &kp KP_N2  &kp KP_N3  &kp KP_EQUAL  &mmv MOVE_LEFT  &mmv MOVE_DOWN  &mmv MOVE_UP    &mmv MOVE_RIGHT  &msc SCRL_RIGHT  &none
-            &kp KP_N0  &kp KP_DOT  &kp PRCNT  &none  &none  &none
+&none  &kp KP_MULTIPLY  &kp KP_N7  &kp KP_N8  &kp KP_N9  &kp KP_PLUS  &mkp MB2  &mkp MB3  &msc SCRL_DOWN  &msc SCRL_UP  &msc SCRL_LEFT  &none  &none  &kp KP_DIVIDE  &kp KP_N4  &kp KP_N5  &kp KP_N6  &kp MINUS  &mkp MB1  &kp LSHFT  &kp LGUI  &kp LCTRL  &kp LALT  &none  &none  &kp X  &kp KP_N1  &kp KP_N2  &kp KP_N3  &kp KP_EQUAL  &mmv MOVE_LEFT  &mmv MOVE_DOWN  &mmv MOVE_UP  &mmv MOVE_RIGHT  &msc SCRL_RIGHT  &none  &kp KP_N0  &kp KP_DOT  &kp PRCNT  &none  &none  &none
             >;
         };
 
         layer_3 {
             display-name = "SYMBOL";
             bindings = <
-            &none  &kp QMARK  &kp EXCL  &kp LBKT  &kp RBKT  &kp KP_PLUS   &kp AT     &kp HASH       &kp DLLR   &kp DQT    &kp GRAVE       &none
-            &none  &kp LT     &kp GT    &kp LPAR  &kp RPAR  &kp MINUS     &kp TILDE  &mt LSHFT SQT  &kp LGUI   &kp LCTRL  &mt LALT COLON  &none
-            &none  &kp PIPE   &kp AMPS  &kp LBRC  &kp RBRC  &kp KP_EQUAL  &kp CARET  &kp STAR       &kp COMMA  &kp BSLH   &kp FSLH        &none
-            &kp UNDER  &kp DOT  &kp PRCNT  &kp LS(LC(LA(LG(E))))  &kp LA(SPACE)  &kp LC(LG(A))
+&none  &kp QMARK  &kp EXCL  &kp LBKT  &kp RBKT  &kp KP_PLUS  &kp AT  &kp HASH  &kp DLLR  &kp DQT  &kp GRAVE  &none  &none  &kp LT  &kp GT  &kp LPAR  &kp RPAR  &kp MINUS  &kp TILDE  &mt LSHFT SQT  &kp LGUI  &kp LCTRL  &mt LALT COLON  &none  &none  &kp PIPE  &kp AMPS  &kp LBRC  &kp RBRC  &kp KP_EQUAL  &kp CARET  &kp STAR  &kp COMMA  &kp BSLH  &kp FSLH  &none  &kp UNDER  &kp DOT  &kp PRCNT  &kp LS(LC(LA(LG(E))))  &kp LA(SPACE)  &kp LC(LG(A))
             >;
         };
 
         layer_4 {
             display-name = "MEDIA";
             bindings = <
-            &none  &kp LG(Q)       &kp LG(W)        &kp LG(E)       &kp LS(LG(Z))    &kp LG(T)      &kp LC(U)         &kp LC(W)     &kp LA(DEL)    &kp LC(K)         &to 0      &none
-            &none  &mt LALT LG(A)  &mt LCTRL LG(S)  &mt LGUI LG(D)  &mt LSHFT LG(F)  &kp LG(L)      &kp LS(LG(LBKT))  &kp LG(LEFT)  &kp LG(RIGHT)  &kp LS(LG(RBKT))  &macro0    &none
-            &none  &kp LG(Z)       &kp LG(X)        &kp LG(C)       &kp LG(V)        &kp LS(LG(T))  &kp LC(A)         &kp LA(LEFT)  &kp LA(RIGHT)  &kp LC(E)         &kp LG(W)  &none
-            &kp LS(LC(LA(LG(GRAVE))))  &sl 5  &none  &kp LG(GRAVE)  &kp F19  &kp LS(LG(GRAVE))
+&none  &kp LG(Q)  &kp LG(W)  &kp LG(E)  &kp LS(LG(Z))  &kp LG(T)  &kp LC(U)  &kp LC(W)  &kp LA(DEL)  &kp LC(K)  &to 0  &none  &none  &mt LALT LG(A)  &mt LCTRL LG(S)  &mt LGUI LG(D)  &mt LSHFT LG(F)  &kp LG(L)  &kp LS(LG(LBKT))  &kp LG(LEFT)  &kp LG(RIGHT)  &kp LS(LG(RBKT))  &macro0  &none  &none  &kp LG(Z)  &kp LG(X)  &kp LG(C)  &kp LG(V)  &kp LS(LG(T))  &kp LC(A)  &kp LA(LEFT)  &kp LA(RIGHT)  &kp LC(E)  &kp LG(W)  &none  &kp LS(LC(LA(LG(GRAVE))))  &sl 5  &none  &kp LG(GRAVE)  &kp F19  &kp LS(LG(GRAVE))
             >;
         };
 
         layer_5 {
             display-name = "FUN";
             bindings = <
-            &none  &kp F12  &kp F7  &kp F8  &kp F9  &kp C_VOL_UP  &kp LS(LC(LA(LG(L))))  &kp LS(LC(LA(LG(E))))  &kp LS(LC(LA(LG(F))))  &kp LS(LC(LA(LG(T))))  &kp LS(LG(N5))         &none
-            &none  &kp F11  &kp F4  &kp F5  &kp F6  &kp C_MUTE    &kp LS(LC(LA(LG(Y))))  &kp LSHFT              &kp LGUI               &kp LCTRL              &kp LALT               &none
-            &none  &kp F10  &kp F1  &kp F2  &kp F3  &kp C_VOL_DN  &kp LS(LC(LA(LG(M))))  &kp LS(LC(LA(LG(A))))  &kp LS(LC(LA(LG(N))))  &kp LS(LC(LA(LG(G))))  &kp LS(LC(LA(LG(O))))  &none
-            &kp C_PREV  &kp C_PP  &kp C_NEXT  &kp LS(LC(LA(LG(V))))  &none  &kp LS(LC(LA(LG(V))))
+&none  &kp F12  &kp F7  &kp F8  &kp F9  &kp C_VOL_UP  &kp LS(LC(LA(LG(L))))  &kp LS(LC(LA(LG(E))))  &kp LS(LC(LA(LG(F))))  &kp LS(LC(LA(LG(T))))  &kp LS(LG(N5))  &none  &none  &kp F11  &kp F4  &kp F5  &kp F6  &kp C_MUTE  &kp LS(LC(LA(LG(Y))))  &kp LSHFT  &kp LGUI  &kp LCTRL  &kp LALT  &none  &none  &kp F10  &kp F1  &kp F2  &kp F3  &kp C_VOL_DN  &kp LS(LC(LA(LG(M))))  &kp LS(LC(LA(LG(A))))  &kp LS(LC(LA(LG(N))))  &kp LS(LC(LA(LG(G))))  &kp LS(LC(LA(LG(O))))  &none  &kp C_PREV  &kp C_PP  &kp C_NEXT  &kp LS(LC(LA(LG(V))))  &none  &kp LS(LC(LA(LG(V))))
             >;
         };
 
@@ -264,26 +258,18 @@
          * you must move the position there, or clicking switches the layer off
          * under you.
          */
+
         layer_6 {
             display-name = "MOUSE";
             bindings = <
-            &trans  &trans  &trans  &trans      &kp PG_UP   &kp PG_DN   &trans  &trans  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans  &mkp LCLK   &mkp RCLK   &mkp MCLK   &trans  &trans  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans  &trans      &kp HOME    &kp END     &trans  &trans  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &kp PG_UP  &kp PG_DN  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &kp HOME  &kp END  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &kp LCMD  &trans  &trans  &trans  &trans
             >;
         };
 
-        extra_1 {
-            status = "reserved";
-        };
+        extra_1 { status = "reserved"; };
 
-        extra_2 {
-            status = "reserved";
-        };
+        extra_2 { status = "reserved"; };
 
-        extra_3 {
-            status = "reserved";
-        };
+        extra_3 { status = "reserved"; };
     };
 };
