@@ -63,18 +63,52 @@
         };
     };
 
+    /*
+     * Auto mouse layer. `zip_temp_layer` turns MOUSE on while the trackpad is
+     * moving and off again after the timeout — *or* the moment a key is
+     * pressed. That second rule is why `excluded-positions` exists: without
+     * it, pressing left-click would switch the layer off in the same instant
+     * it is used. The positions below are exactly the keys bound on layer
+     * MOUSE in config/toucan.keymap (y u / h j k / n m); change one, change
+     * the other.
+     *
+     * `require-prior-idle-ms` stops a palm brushing the pad mid-sentence from
+     * flipping the layer under your fingers.
+     */
+    /omit-if-no-ref/ mouse_temp_layer: mouse_temp_layer {
+        compatible = "zmk,input-processor-temp-layer";
+        #input-processor-cells = <2>;
+        require-prior-idle-ms = <150>;
+        excluded-positions = <6 7 18 19 20 30 31>;
+    };
+
     glidepoint_listener: glidepoint_listener {
         compatible = "zmk,input-listener";
         status = "disabled";
         device = <&glidepoint_split>;
-        input-processors = <&zip_xy_scaler 250 100>;
+        /*
+         * Cursor speed. `zip_xy_scaler <mult> <div>` — 250/100 was 2.5×, a lot
+         * on a 40 mm pad. Raise the first number to speed back up.
+         * If 100/100 is still too fast, the next knob is `sensitivity` on the
+         * pinnacle node in toucan_right.overlay — but that one lives on the
+         * right half, so changing it means flashing the right half as well,
+         * not just the dongle.
+         */
+        input-processors = <&zip_xy_scaler 150 100 &mouse_temp_layer 6 1000>;
         scroller {
             layers = <1 2>;
+            /*
+             * Scroll speed and direction. `zip_scroll_scaler 1 8` = one eighth
+             * of the raw movement (was 1 5) — bigger divisor, slower scroll.
+             *
+             * Direction: both axes used to be inverted here, and no longer
+             * are. To flip back, add this line to the list below:
+             *   &zip_scroll_transform (INPUT_TRANSFORM_X_INVERT | INPUT_TRANSFORM_Y_INVERT)
+             * For one axis only, keep just the flag you want.
+             */
             input-processors = <
                 &zip_xy_to_scroll_mapper
-                &zip_scroll_scaler 1 5
-                &zip_scroll_transform INPUT_TRANSFORM_X_INVERT
-                &zip_scroll_transform INPUT_TRANSFORM_Y_INVERT
+                &zip_scroll_scaler 1 8
             >;
         };
     };

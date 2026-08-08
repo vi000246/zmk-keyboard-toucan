@@ -35,7 +35,10 @@ manifest:
       revision: main
     - name: zmk-dongle-screen
       remote: albertclee
-      revision: claude/enhance-wpm-meter-y9Hrb
+      # Upstream pinned `claude/enhance-wpm-meter-y9Hrb`, which no longer exists
+      # on that fork (GitHub returns 404), so `west update` cannot resolve it.
+      # `main` of the same fork is the nearest thing that does exist.
+      revision: main
       
   self:
     path: config
