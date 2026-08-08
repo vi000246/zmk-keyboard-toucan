@@ -55,11 +55,14 @@ ioreg -p IOUSB -w0 -l | grep -A 25 '"USB Product Name" = "Toucan"' | grep '"USB 
 gh run download <run-id> -R vi000246/zmk-keyboard-toucan -D "$PWD-build/ci"
 ```
 
-## 兩個會被誤判成失敗的正常現象
+## 三個會被誤判成失敗的正常現象
 
 - **`cp: could not copy extended attributes ... Device not configured`** —— 不是失敗。
   bootloader 一收完檔案就立刻重開機並卸載磁碟，`cp` 這時才要寫 macOS 擴充屬性就撲空了。
   **磁碟自己消失就是成功的訊號。**
+- **刷完 dongle 後有一半打字沒反應** —— 不是刷壞。dongle 重開之後兩個半邊要重新以 BLE
+  連上 central，需要幾秒到數十秒，有時要按一下該半邊的鍵把它喚醒。**先等一下、按幾下再判斷**；
+  另一半正常而這一半沒反應，最常見的原因就是它還沒連上，不是韌體問題。
 - **刷完 dongle 後行為沒變** —— 不是編錯。ZMK Studio 存在裝置上的 keymap 會**覆蓋**編譯進去
   的那份，要連上 Studio 執行一次 *Restore Stock Settings*。注意這只影響 keymap；input
   processor（觸控板速度、方向、自動切層）是韌體層的東西，刷完立即生效。
