@@ -69,8 +69,8 @@
      * pressed. That second rule is why `excluded-positions` exists: without
      * it, pressing left-click would switch the layer off in the same instant
      * it is used. The positions below are exactly the keys bound on layer
-     * MOUSE in config/toucan.keymap (y u / h j k / n m); change one, change
-     * the other.
+     * MOUSE in config/toucan.keymap (r t / d f g / v b — the left hand, since
+     * the trackpad is on the right half); change one, change the other.
      *
      * `require-prior-idle-ms` stops a palm brushing the pad mid-sentence from
      * flipping the layer under your fingers.
@@ -79,7 +79,7 @@
         compatible = "zmk,input-processor-temp-layer";
         #input-processor-cells = <2>;
         require-prior-idle-ms = <150>;
-        excluded-positions = <6 7 18 19 20 30 31>;
+        excluded-positions = <4 5 15 16 17 28 29>;
     };
 
     glidepoint_listener: glidepoint_listener {

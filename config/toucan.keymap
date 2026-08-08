@@ -256,17 +256,20 @@
          * movement, or as soon as you press a key that is not in that node's
          * `excluded-positions`.
          *
-         * Those excluded positions are the seven keys bound below (y u /
-         * h j k / n m — positions 6 7 18 19 20 30 31). Move a binding here and
+         * Everything is on the LEFT hand on purpose: the trackpad lives on the
+         * right half, so the hand that is not on the pad does the clicking.
+         *
+         * Those excluded positions are the seven keys bound below (r t /
+         * d f g / v b — positions 4 5 15 16 17 28 29). Move a binding here and
          * you must move the position there, or clicking switches the layer off
          * under you.
          */
         layer_6 {
             display-name = "MOUSE";
             bindings = <
-            &trans  &trans  &trans  &trans  &trans  &trans   &kp PG_DN   &kp PG_UP   &trans      &trans  &trans  &trans
-            &trans  &trans  &trans  &trans  &trans  &trans   &mkp LCLK   &mkp RCLK   &mkp MCLK   &trans  &trans  &trans
-            &trans  &trans  &trans  &trans  &trans  &trans   &kp END     &kp HOME    &trans      &trans  &trans  &trans
+            &trans  &trans  &trans  &trans      &kp PG_UP   &kp PG_DN   &trans  &trans  &trans  &trans  &trans  &trans
+            &trans  &trans  &trans  &mkp LCLK   &mkp RCLK   &mkp MCLK   &trans  &trans  &trans  &trans  &trans  &trans
+            &trans  &trans  &trans  &trans      &kp HOME    &kp END     &trans  &trans  &trans  &trans  &trans  &trans
             &trans  &trans  &trans  &trans  &trans  &trans
             >;
         };
