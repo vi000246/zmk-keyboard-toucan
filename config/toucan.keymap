@@ -319,24 +319,6 @@
          * Both replace their base-layer &lt bindings only while MOUSE is up.
          */
 
-        layer_6 {
-            display-name = "MOUSE";
-            bindings = <
-<<<<<<< HEAD
-            &trans  &trans  &trans  &msc SCRL_DOWN  &msc SCRL_UP  &kp HOME    &trans  &trans  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans  &mkp LCLK       &mkp RCLK     &mkp MCLK   &trans  &trans  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans  &kp PG_DN       &kp PG_UP     &kp END     &trans  &trans  &trans  &trans  &trans  &trans
-            &trans  &kp LGUI  &mo 7  &trans  &trans  &trans
-||||||| dd04b36
-            &trans  &trans  &trans  &trans      &kp PG_UP   &kp PG_DN   &trans  &trans  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans  &mkp LCLK   &mkp RCLK   &mkp MCLK   &trans  &trans  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans  &trans      &kp HOME    &kp END     &trans  &trans  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans  &trans  &trans  &trans
-=======
-&trans  &trans  &trans  &msc SCRL_DOWN  &msc SCRL_UP  &kp HOME  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &kp PAGE_DOWN  &kp PAGE_UP  &kp END  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &kp LCMD  &trans  &trans  &trans  &trans
->>>>>>> d3f7e456ebf398a15b3f5067d7174583ca366e38
-            >;
-        };
 
 layer_6 {
             display-name = "MOUSE";
