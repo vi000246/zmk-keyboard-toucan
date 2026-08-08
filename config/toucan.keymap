@@ -262,7 +262,7 @@
         layer_6 {
             display-name = "MOUSE";
             bindings = <
-&trans  &trans  &trans  &trans  &kp PG_UP  &kp PG_DN  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &kp HOME  &kp END  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &kp LCMD  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &msc SCRL_DOWN  &msc SCRL_UP  &kp HOME  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &kp PAGE_DOWN  &kp PAGE_UP  &kp END  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &kp LCMD  &trans  &trans  &trans  &trans
             >;
         };
 
