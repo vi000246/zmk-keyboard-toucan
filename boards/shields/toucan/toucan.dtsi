@@ -3,6 +3,8 @@
 #include <dt-bindings/zmk/matrix_transform.h>
 #include "toucan-layouts.dtsi"
 
+input-processors = <&zip_xy_scaler 250 100 &mouse_temp_layer 6 250 &zip_button_behaviors>;
+
 &physical_layout0 {
     transform = <&default_transform>;
 };
