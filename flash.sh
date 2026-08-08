@@ -54,10 +54,14 @@ esac
 [ -f "$UF2" ] || { echo "missing firmware: $UF2" >&2; exit 1; }
 
 zmk_serials() {
-  ioreg -p IOUSB -w0 -l 2>/dev/null \
-    | grep -A 25 '"USB Product Name" = "Toucan"' \
-    | grep '"USB Serial Number"' \
-    | sed 's/.*= "\(.*\)"/\1/'
+  # Empty output is the normal, expected case — every board can be in
+  # bootloader at once. Without the `|| true` the grep's exit status 1 trips
+  # pipefail, the failing command substitution trips `set -e`, and the script
+  # dies at exactly the moment it is trying to confirm a board went away.
+  { ioreg -p IOUSB -w0 -l 2>/dev/null \
+      | grep -A 25 '"USB Product Name" = "Toucan"' \
+      | grep '"USB Serial Number"' \
+      | sed 's/.*= "\(.*\)"/\1/'; } || true
 }
 
 find_volume() {
