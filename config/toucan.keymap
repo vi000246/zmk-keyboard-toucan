@@ -32,6 +32,29 @@
     tapping-term-ms = <200>;
 };
 
+/*
+ * Trackpad: tap still clicks, tap-and-hold no longer drags.
+ *
+ * The Pinnacle has exactly one knob here — `no-taps` (DIS_TAP) — and it kills
+ * tap-to-click and tap-and-hold together, so it is the wrong tool. Instead the
+ * dongle intercepts the pad's button events before they reach HID:
+ * `zip_button_behaviors` is a stock ZMK input processor that swallows
+ * INPUT_BTN_0/1/2 and invokes a behavior instead. Point it at macros, and a
+ * macro with no `&macro_pause_for_release` does nothing on release — so a held
+ * button becomes a single click and the drag can never start.
+ *
+ * Consequence, stated plainly: dragging with the pad alone is now impossible.
+ * To drag, hold LCLK on layer MOUSE (left hand, D) and move the pad.
+ *
+ * This node must appear in EVERY processor chain on the listener — a chain
+ * that matches a layer replaces the base chain rather than adding to it, so a
+ * chain that omits this re-opens dragging on exactly those layers. See
+ * boards/shields/toucan/toucan.dtsi.
+ */
+&zip_button_behaviors {
+    bindings = <&pad_tap_l &pad_tap_r &pad_tap_m>;
+};
+
 / {
 
     behaviors {
@@ -43,6 +66,35 @@
         };
     };
     macros {
+        /*
+         * The three pad-click macros. `&macro_tap` presses and releases within
+         * tap-ms; nothing is queued for the release, which is the whole point —
+         * see the &zip_button_behaviors note at the top of this file.
+         */
+        pad_tap_l: pad_tap_l {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            wait-ms = <10>;
+            tap-ms = <20>;
+            bindings = <&macro_tap &mkp LCLK>;
+        };
+
+        pad_tap_r: pad_tap_r {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            wait-ms = <10>;
+            tap-ms = <20>;
+            bindings = <&macro_tap &mkp RCLK>;
+        };
+
+        pad_tap_m: pad_tap_m {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            wait-ms = <10>;
+            tap-ms = <20>;
+            bindings = <&macro_tap &mkp MCLK>;
+        };
+
         macro0: macro_0 {
             compatible = "zmk,behavior-macro";
             #binding-cells = <0>;
@@ -259,23 +311,44 @@
          * Everything is on the LEFT hand on purpose: the trackpad lives on the
          * right half, so the hand that is not on the pad does the clicking.
          *
-         * Those excluded positions are the seven keys bound below (r t /
-         * d f g / v b — positions 4 5 15 16 17 28 29). Move a binding here and
-         * you must move the position there, or clicking switches the layer off
+         * Those excluded positions are the eleven keys bound below (e r t /
+         * d f g / c v b, plus the two left thumbs). Move a binding here and you
+         * must move the position there, or pressing it switches the layer off
          * under you.
+         *
+         * Left thumbs, while the pad is in use:
+         *   middle (37) — LGUI, so cmd-click is one hand each
+         *   right  (38) — hold for half cursor speed; it turns on layer SLOW,
+         *                 which the listener watches for. Nothing on the layer
+         *                 itself does anything, the layer *being on* is the
+         *                 signal.
+         * Both replace their base-layer &lt bindings only while MOUSE is up.
          */
         layer_6 {
             display-name = "MOUSE";
             bindings = <
-            &trans  &trans  &trans  &trans      &kp PG_UP   &kp PG_DN   &trans  &trans  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans  &mkp LCLK   &mkp RCLK   &mkp MCLK   &trans  &trans  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans  &trans      &kp HOME    &kp END     &trans  &trans  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans  &trans  &trans  &trans
+            &trans  &trans  &trans  &msc SCRL_DOWN  &msc SCRL_UP  &kp HOME    &trans  &trans  &trans  &trans  &trans  &trans
+            &trans  &trans  &trans  &mkp LCLK       &mkp RCLK     &mkp MCLK   &trans  &trans  &trans  &trans  &trans  &trans
+            &trans  &trans  &trans  &kp PG_DN       &kp PG_UP     &kp END     &trans  &trans  &trans  &trans  &trans  &trans
+            &trans  &kp LGUI  &mo 7  &trans  &trans  &trans
             >;
         };
 
-        extra_1 {
-            status = "reserved";
+        /*
+         * SLOW — a marker layer, held from MOUSE's right thumb. It binds
+         * nothing: `slow_cursor` in boards/shields/toucan/toucan.dtsi keys off
+         * `layers = <7>` and swaps the pointer scaler from 250/100 to 125/100,
+         * i.e. exactly half. Keep every position &trans so the keys underneath
+         * keep working while it is held.
+         */
+        layer_7 {
+            display-name = "SLOW";
+            bindings = <
+            &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
+            &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
+            &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
+            &trans  &trans  &trans  &trans  &trans  &trans
+            >;
         };
 
         extra_2 {
