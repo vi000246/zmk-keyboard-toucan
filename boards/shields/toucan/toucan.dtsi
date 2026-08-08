@@ -96,19 +96,34 @@
          */
         input-processors = <&zip_xy_scaler 150 100 &mouse_temp_layer 6 1000>;
         scroller {
-            layers = <1 2>;
             /*
-             * Scroll speed and direction. `zip_scroll_scaler 1 8` = one eighth
-             * of the raw movement (was 1 5) — bigger divisor, slower scroll.
+             * Layers where dragging the trackpad scrolls instead of moving the
+             * cursor: 1 NAV, 2 NUM, 4 MEDIA.
              *
-             * Direction: both axes used to be inverted here, and no longer
-             * are. To flip back, add this line to the list below:
-             *   &zip_scroll_transform (INPUT_TRANSFORM_X_INVERT | INPUT_TRANSFORM_Y_INVERT)
-             * For one axis only, keep just the flag you want.
+             * 6 (MOUSE) is deliberately NOT here. That layer switches itself on
+             * whenever the trackpad moves, so listing it would turn every
+             * pointer movement into a scroll and the cursor would never move
+             * again.
+             */
+            layers = <1 2 4>;
+            /*
+             * Scroll speed and direction.
+             *
+             * Speed: `zip_scroll_scaler 1 16` = one sixteenth of the raw
+             * movement. History: 1 5 (vendor) -> 1 8 -> 1 16. Bigger divisor,
+             * slower scroll.
+             *
+             * Direction: settled, leave it alone. The vendor inverted both
+             * axes; with both removed it matches how this machine is set up
+             * (macOS "natural scrolling" is on, which flips it once more on the
+             * host side). To flip an axis, add back:
+             *   &zip_scroll_transform INPUT_TRANSFORM_Y_INVERT
+             * or with (INPUT_TRANSFORM_X_INVERT | INPUT_TRANSFORM_Y_INVERT)
+             * for both.
              */
             input-processors = <
                 &zip_xy_to_scroll_mapper
-                &zip_scroll_scaler 1 8
+                &zip_scroll_scaler 1 16
             >;
         };
     };
