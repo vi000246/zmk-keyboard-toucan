@@ -87,18 +87,29 @@
         status = "disabled";
         device = <&glidepoint_split>;
         /*
-         * Cursor speed. `zip_xy_scaler <mult> <div>` — 250/100 was 2.5×, a lot
-         * on a 40 mm pad. Raise the first number to speed back up.
-         * If 100/100 is still too fast, the next knob is `sensitivity` on the
-         * pinnacle node in toucan_right.overlay — but that one lives on the
-         * right half, so changing it means flashing the right half as well,
-         * not just the dongle.
+         * Cursor and scroll feel are back to the vendor values. 2026-08-08 they
+         * were tuned (cursor 150/100, scroll 1/8 then 1/16, inversions removed)
+         * and the scroll never came out usable at any of those settings, so the
+         * whole feel side was reverted rather than tuned further.
+         *
+         * What is NOT reverted, because it was asked for separately and is
+         * unrelated to feel: `&mouse_temp_layer` below, and layer 4 in the
+         * scroller's layer list.
+         *
+         * Knobs, if this gets revisited:
+         *   `zip_xy_scaler <mult> <div>`     — cursor speed, 250/100 = 2.5x
+         *   `zip_scroll_scaler <mult> <div>` — scroll speed, bigger divisor is slower
+         *   `zip_scroll_transform ...`       — per-axis direction
+         * Note macOS applies its own scroll acceleration and "natural
+         * scrolling" flip on top of whatever the firmware sends, which is why
+         * firmware-side scaling alone never felt right. ZMK v0.3 has no
+         * acceleration processor of its own.
          */
-        input-processors = <&zip_xy_scaler 150 100 &mouse_temp_layer 6 1000>;
+        input-processors = <&zip_xy_scaler 250 100 &mouse_temp_layer 6 1000>;
         scroller {
             /*
              * Layers where dragging the trackpad scrolls instead of moving the
-             * cursor: 1 NAV, 2 NUM, 4 MEDIA.
+             * cursor: 1 NAV, 2 NUM, 4 MEDIA (4 was added on request).
              *
              * 6 (MOUSE) is deliberately NOT here. That layer switches itself on
              * whenever the trackpad moves, so listing it would turn every
@@ -106,24 +117,11 @@
              * again.
              */
             layers = <1 2 4>;
-            /*
-             * Scroll speed and direction.
-             *
-             * Speed: `zip_scroll_scaler 1 16` = one sixteenth of the raw
-             * movement. History: 1 5 (vendor) -> 1 8 -> 1 16. Bigger divisor,
-             * slower scroll.
-             *
-             * Direction: settled, leave it alone. The vendor inverted both
-             * axes; with both removed it matches how this machine is set up
-             * (macOS "natural scrolling" is on, which flips it once more on the
-             * host side). To flip an axis, add back:
-             *   &zip_scroll_transform INPUT_TRANSFORM_Y_INVERT
-             * or with (INPUT_TRANSFORM_X_INVERT | INPUT_TRANSFORM_Y_INVERT)
-             * for both.
-             */
             input-processors = <
                 &zip_xy_to_scroll_mapper
-                &zip_scroll_scaler 1 16
+                &zip_scroll_scaler 1 5
+                &zip_scroll_transform INPUT_TRANSFORM_X_INVERT
+                &zip_scroll_transform INPUT_TRANSFORM_Y_INVERT
             >;
         };
     };
