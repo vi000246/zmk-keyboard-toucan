@@ -18,6 +18,8 @@ manifest:
       url-base: https://github.com/geeksville
     - name: janpfischer
       url-base: https://github.com/Dexter-KBD
+    - name: urob
+      url-base: https://github.com/urob
 
   projects:
     - name: zmk
@@ -35,6 +37,9 @@ manifest:
       revision: main
     - name: zmk-dongle-screen
       remote: albertclee
+    - name: zmk-auto-layer
+      remote: urob
+      revision: v0.3 # Should match ZMK release.
       # Upstream pinned `claude/enhance-wpm-meter-y9Hrb`, which no longer exists
       # on that fork (GitHub returns 404), so `west update` cannot resolve it.
       # `main` of the same fork is the nearest thing that does exist.
