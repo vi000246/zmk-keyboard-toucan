@@ -114,7 +114,7 @@
             bindings = <&macro_tap>, <&kp LC(A) &kp LS(LG(RIGHT))>;
         };
 
-        macro1: macro_1 {
+        claude: macro_1 {
             compatible = "zmk,behavior-macro";
             #binding-cells = <0>;
             wait-ms = <10>;
@@ -126,7 +126,7 @@
                 <&kp RET>;
         };
 
-        macro2: macro_2 {
+        z30: macro_2 {
             compatible = "zmk,behavior-macro";
             #binding-cells = <0>;
             wait-ms = <10>;
@@ -140,7 +140,7 @@
                 <&kp RET>;
         };
 
-        macro3: macro_3 {
+        z50: macro_3 {
             compatible = "zmk,behavior-macro";
             #binding-cells = <0>;
             wait-ms = <10>;
@@ -170,7 +170,7 @@
             bindings = <&macro_tap>, <&kp LC(SPACE) &kp V &kp COMMA &kp S>;
         };
 
-        macro6: macro_6 {
+        wq: macro_6 {
             compatible = "zmk,behavior-macro";
             #binding-cells = <0>;
             wait-ms = <10>;
@@ -184,7 +184,7 @@
                 <&kp RET>;
         };
 
-        macro7: macro_7 {
+        cc_continue: macro_7 {
             compatible = "zmk,behavior-macro";
             #binding-cells = <0>;
             wait-ms = <10>;
@@ -196,7 +196,7 @@
                 <&kp RET>;
         };
 
-        macro8: macro8 {
+        cc_usage: macro8 {
             compatible = "zmk,behavior-macro";
             #binding-cells = <0>;
             bindings =
@@ -210,7 +210,7 @@
             tap-ms = <10>;
         };
 
-        macro9: macro9 {
+        cc_model: macro9 {
             compatible = "zmk,behavior-macro";
             #binding-cells = <0>;
             bindings =
@@ -224,7 +224,7 @@
             tap-ms = <10>;
         };
 
-        macro10: macro10 {
+        cc_effort: macro10 {
             compatible = "zmk,behavior-macro";
             #binding-cells = <0>;
             bindings =
@@ -234,6 +234,20 @@
                 <&kp ENTER>;
 
             label = "MACRO10";
+        };
+
+        cc_exit: macro11 {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            bindings =
+                <&macro_tap>,
+                <&kp FSLH &kp E &kp X &kp I &kp T>,
+                <&macro_tap>,
+                <&kp ENTER>;
+
+            label = "MACRO11";
+            wait-ms = <10>;
+            tap-ms = <10>;
         };
     };
 
@@ -278,7 +292,7 @@
         combo_3 {
             timeout-ms = <27>;
             key-positions = <2 1>;
-            bindings = <&macro6>;
+            bindings = <&wq>;
 
             // KC_W + KC_Q → M6
         };
@@ -315,7 +329,7 @@
              */
 
             bindings = <
-&none  &none  &none  &none  &macro5  &macro4  &msc SCRL_RIGHT  &msc SCRL_DOWN  &msc SCRL_UP  &msc SCRL_LEFT  &to 0  &none  &none  &kp LALT  &kp LCTRL  &kp LGUI  &kp LSHFT  &kp LS(LA(LC(LG(T))))  &kp LEFT  &kp DOWN  &kp UP  &kp RIGHT  &macro2  &none  &none  &macro10  &macro9  &macro7  &macro8  &macro1  &kp END  &kp PG_DN  &kp PG_UP  &kp HOME  &macro3  &none  &kp TAB  &kp SPACE  &kp ESC  &kp BSPC  &kp F19  &kp DEL
+&none  &cc_exit  &none  &none  &macro5  &macro4  &msc SCRL_RIGHT  &msc SCRL_DOWN  &msc SCRL_UP  &msc SCRL_LEFT  &to 0  &none  &none  &kp LALT  &kp LCTRL  &kp LGUI  &kp LSHFT  &kp LS(LA(LC(LG(T))))  &kp LEFT  &kp DOWN  &kp UP  &kp RIGHT  &z30  &none  &none  &cc_effort  &cc_model  &cc_continue  &cc_usage  &claude  &kp END  &kp PG_DN  &kp PG_UP  &kp HOME  &z50  &none  &kp TAB  &kp SPACE  &kp ESC  &kp BSPC  &kp F19  &kp DEL
             >;
         };
 
