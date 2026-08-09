@@ -329,7 +329,7 @@
              */
 
             bindings = <
-&none  &cc_exit  &none  &none  &macro5  &macro4  &msc SCRL_RIGHT  &msc SCRL_DOWN  &msc SCRL_UP  &msc SCRL_LEFT  &to 0  &none  &none  &kp LALT  &kp LCTRL  &kp LGUI  &kp LSHFT  &kp LS(LA(LC(LG(T))))  &kp LEFT  &kp DOWN  &kp UP  &kp RIGHT  &z30  &none  &none  &cc_effort  &cc_model  &cc_continue  &cc_usage  &claude  &kp END  &kp PG_DN  &kp PG_UP  &kp HOME  &z50  &none  &kp TAB  &kp SPACE  &kp ESC  &kp BSPC  &kp F19  &kp DEL
+&none  &cc_exit  &none  &none  &macro5  &macro4  &kp F19  &none  &none  &none  &to 0  &none  &none  &kp LALT  &kp LCTRL  &kp LGUI  &kp LSHFT  &kp LS(LA(LC(LG(T))))  &kp LEFT  &kp DOWN  &kp UP  &kp RIGHT  &z30  &none  &none  &cc_effort  &cc_model  &cc_continue  &cc_usage  &claude  &kp END  &kp PG_DN  &kp PG_UP  &kp HOME  &z50  &none  &kp TAB  &kp SPACE  &kp ESC  &kp BSPC  &kp ENTER  &kp DEL
             >;
         };
 
@@ -350,7 +350,7 @@
         layer_4 {
             display-name = "MEDIA";
             bindings = <
-&none  &kp LG(Q)  &kp LG(W)  &kp LG(E)  &kp LS(LG(Z))  &kp LG(T)  &kp LC(U)  &kp LC(W)  &kp LA(DEL)  &kp LC(K)  &to 0  &none  &none  &mt LALT LG(A)  &mt LCTRL LG(S)  &mt LGUI LG(D)  &mt LSHFT LG(F)  &kp LG(L)  &kp LS(LG(LBKT))  &kp LG(LEFT)  &kp LG(RIGHT)  &kp LS(LG(RBKT))  &macro0  &none  &none  &kp LG(Z)  &kp LG(X)  &kp LG(C)  &kp LG(V)  &kp LS(LG(T))  &kp LC(A)  &kp LA(LEFT)  &kp LA(RIGHT)  &kp LC(E)  &kp LG(W)  &none  &kp LS(LC(LA(LG(GRAVE))))  &sl 5  &none  &kp LG(GRAVE)  &kp F19  &kp LS(LG(GRAVE))
+&none  &kp LG(Q)  &kp LG(W)  &kp LG(E)  &kp LS(LG(Z))  &kp LG(T)  &kp LC(U)  &kp LC(W)  &kp F19  &kp LC(K)  &to 0  &none  &none  &mt LALT LG(A)  &mt LCTRL LG(S)  &mt LGUI LG(D)  &mt LSHFT LG(F)  &kp LG(L)  &kp LS(LG(LBKT))  &kp LG(LEFT)  &kp LG(RIGHT)  &kp LS(LG(RBKT))  &macro0  &none  &none  &kp LG(Z)  &kp LG(X)  &kp LG(C)  &kp LG(V)  &kp LS(LG(T))  &kp LC(A)  &kp LA(LEFT)  &kp LA(RIGHT)  &kp LC(E)  &kp LG(W)  &none  &kp LS(LC(LA(LG(GRAVE))))  &sl 5  &none  &mkp LCLK  &mkp RCLK  &mkp MCLK
             >;
         };
 
