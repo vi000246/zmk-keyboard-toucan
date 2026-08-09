@@ -20,14 +20,17 @@
  *                     "tap-preferred" is the most forgiving, "hold-preferred"
  *                     the most eager. See zmk.dev/docs/keymaps/behaviors/hold-tap
  */
+
 &msc {
     // 每次滾動訊號送出的間隔時間 (預設通常是 10 或 15)
     // 數字越小 ➜ 滾動越快；數字越大 ➜ 滾動越慢
-    delay-ms = <0>; 
+
+    delay-ms = <0>;
 
     // 長按時，花多少毫秒加速到最高滾動速度 (預設通常是 300)
     // 數字越小 ➜ 越快達到最高速；設為 0 代表不加速，直接用最高速滾動
-    time-to-max-speed-ms = <50>; 
+
+    time-to-max-speed-ms = <50>;
 };
 
 &mt {
@@ -59,9 +62,8 @@
  * chain that omits this re-opens dragging on exactly those layers. See
  * boards/shields/toucan/toucan.dtsi.
  */
-&zip_button_behaviors {
-    bindings = <&pad_tap_l &pad_tap_r &pad_tap_m>;
-};
+
+&zip_button_behaviors { bindings = <&pad_tap_l &pad_tap_r &pad_tap_m>; };
 
 / {
     behaviors {
@@ -79,12 +81,13 @@
          * tap-ms; nothing is queued for the release, which is the whole point —
          * see the &zip_button_behaviors note at the top of this file.
          */
+
         pad_tap_l: pad_tap_l {
             compatible = "zmk,behavior-macro";
             #binding-cells = <0>;
             wait-ms = <10>;
             tap-ms = <20>;
-            bindings = <&macro_tap &mkp LCLK>;
+            bindings = <&macro_tap>, <&mkp LCLK>;
         };
 
         pad_tap_r: pad_tap_r {
@@ -92,7 +95,7 @@
             #binding-cells = <0>;
             wait-ms = <10>;
             tap-ms = <20>;
-            bindings = <&macro_tap &mkp RCLK>;
+            bindings = <&macro_tap>, <&mkp RCLK>;
         };
 
         pad_tap_m: pad_tap_m {
@@ -100,7 +103,7 @@
             #binding-cells = <0>;
             wait-ms = <10>;
             tap-ms = <20>;
-            bindings = <&macro_tap &mkp MCLK>;
+            bindings = <&macro_tap>, <&mkp MCLK>;
         };
 
         macro0: macro_0 {
@@ -300,7 +303,7 @@
         layer_5 {
             display-name = "FUN";
             bindings = <
-&none  &kp F12  &kp F7  &kp F8  &kp F9  &kp C_VOL_UP  &kp LS(LC(LA(LG(L))))  &kp LS(LC(LA(LG(E))))  &kp LS(LC(LA(LG(F))))  &kp LS(LC(LA(LG(T))))  &kp LS(LG(N5))  &none  &none  &kp F11  &kp F4  &kp F5  &kp F6  &kp C_MUTE  &kp LS(LC(LA(LG(Y))))  &kp LSHFT  &kp LGUI  &kp LCTRL  &kp LALT  &none  &none  &kp F10  &kp F1  &kp F2  &kp F3  &kp C_VOL_DN  &kp LS(LC(LA(LG(M))))  &kp LS(LC(LA(LG(A))))  &kp LS(LC(LA(LG(N))))  &kp LS(LC(LA(LG(G))))  &kp LS(LC(LA(LG(O))))  &none  &kp C_PREV  &kp C_PP  &kp C_NEXT  &kp LS(LC(LA(LG(V))))  &none  &kp LS(LC(LA(LG(V))))
+&none  &kp F12  &kp F7  &kp F8  &kp F9  &kp C_VOL_UP  &kp LS(LC(LA(LG(L))))  &kp LS(LC(LA(LG(E))))  &kp LS(LC(LA(LG(F))))  &kp LS(LC(LA(LG(T))))  &kp LS(LG(N5))  &none  &none  &kp F11  &kp F4  &kp F5  &kp F6  &kp C_MUTE  &kp LS(LC(LA(LG(Y))))  &kp LSHFT  &kp LGUI  &kp LCTRL  &kp LALT  &none  &none  &kp F10  &kp F1  &kp F2  &kp F3  &kp C_VOL_DN  &kp LS(LC(LA(LG(M))))  &kp LS(LC(LA(LG(A))))  &kp LS(LC(LA(LG(N))))  &kp LS(LC(LA(LG(G))))  &kp LS(LC(LA(LG(O))))  &none  &kp C_PREV  &kp C_PP  &kp C_NEXT  &kp LS(LC(LA(LG(P))))  &none  &kp LS(LC(LA(LG(V))))
             >;
         };
 
@@ -328,14 +331,10 @@
          * Both replace their base-layer &lt bindings only while MOUSE is up.
          */
 
-
-layer_6 {
+        layer_6 {
             display-name = "MOUSE";
             bindings = <
-            &trans  &trans  &trans  &msc MOVE_Y(-50)  &msc MOVE_Y(50)  &kp HOME    &trans  &trans  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans  &mkp LCLK       &mkp RCLK     &mkp MCLK   &trans  &trans  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans  &kp PG_DN       &kp PG_UP     &kp END     &trans  &trans  &trans  &trans  &trans  &trans
-            &trans  &kp LGUI  &mo 7  &trans  &trans  &trans
+&trans  &trans  &trans  &msc MOVE_Y(-50)  &msc MOVE_Y(50)  &kp HOME  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &kp PG_DN  &kp PG_UP  &kp END  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &kp LGUI  &mo 7  &trans  &trans  &trans
             >;
         };
 
@@ -346,13 +345,11 @@ layer_6 {
          * i.e. exactly half. Keep every position &trans so the keys underneath
          * keep working while it is held.
          */
+
         layer_7 {
             display-name = "SLOW";
             bindings = <
-            &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
             >;
         };
 
