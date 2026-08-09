@@ -37,6 +37,7 @@ manifest:
       revision: main
     - name: zmk-dongle-screen
       remote: albertclee
+      revision: main
     - name: zmk-auto-layer
       remote: urob
       revision: v0.3 # Should match ZMK release.
