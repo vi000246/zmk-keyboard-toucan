@@ -77,7 +77,7 @@
         input-processors = <&zip_xy_scaler 250 100 &mouse_temp_layer 6 1000 &zip_button_behaviors>;
 
         scroller {
-            layers = <1 2 4>;
+            layers = <1 2>;
             input-processors = <
                 &zip_xy_to_scroll_mapper
                 &zip_scroll_scaler 1 9
