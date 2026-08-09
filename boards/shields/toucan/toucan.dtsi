@@ -74,7 +74,6 @@
         status = "disabled";
         device = <&glidepoint_split>;
         
-        // 這裡已經幫你把黏滯時間從 1000 改成 250 了
         input-processors = <&zip_xy_scaler 250 100 &mouse_temp_layer 6 1000 &zip_button_behaviors>;
 
         scroller {
