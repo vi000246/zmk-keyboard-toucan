@@ -44,8 +44,8 @@
     tapping-term-ms = <200>;
 };
 &num_word {
-    // 包含：退格、刪除、加號、等號、小數點、乘號、除號、字母 x (以及對應的 Numpad 代碼)
-    continue-list = <BSPC DEL PLUS KP_PLUS EQUAL KP_EQUAL DOT KP_DOT STAR KP_MULTIPLY FSLH KP_DIVIDE X>;
+    // 包含：退格、刪除、加號、減號、等號、小數點、乘號、除號、字母 x (以及對應的 Numpad 代碼)
+    continue-list = <BSPC DEL PLUS KP_PLUS MINUS KP_MINUS EQUAL KP_EQUAL DOT KP_DOT STAR KP_MULTIPLY FSLH KP_DIVIDE X>;
 };
 
 /*
