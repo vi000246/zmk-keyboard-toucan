@@ -17,6 +17,11 @@
         };
     };
 
+    &msc {
+	    //調整按鍵的滾輪速度 數字越小 ➜ 滾動越快；數字越大 ➜ 滾動越慢
+	    delay-ms = <3>; 
+	    time-to-max-speed-ms = <200>; 
+	};
     keymap {
         compatible = "zmk,keymap";
 

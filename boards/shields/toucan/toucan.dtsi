@@ -75,13 +75,13 @@
         device = <&glidepoint_split>;
         
         // 這裡已經幫你把黏滯時間從 1000 改成 250 了
-        input-processors = <&zip_xy_scaler 250 100 &mouse_temp_layer 6 250 &zip_button_behaviors>;
+        input-processors = <&zip_xy_scaler 250 100 &mouse_temp_layer 6 1000 &zip_button_behaviors>;
 
         scroller {
             layers = <1 2 4>;
             input-processors = <
                 &zip_xy_to_scroll_mapper
-                &zip_scroll_scaler 1 5
+                &zip_scroll_scaler 1 9
                 &zip_scroll_transform INPUT_TRANSFORM_X_INVERT
                 &zip_scroll_transform INPUT_TRANSFORM_Y_INVERT
                 &zip_button_behaviors
@@ -91,7 +91,7 @@
         slow_cursor {
             layers = <7>;
             // 這裡的黏滯時間也同步幫你改成 250 了
-            input-processors = <&zip_xy_scaler 125 100 &mouse_temp_layer 6 250 &zip_button_behaviors>;
+            input-processors = <&zip_xy_scaler 125 100 &mouse_temp_layer 6 1000 &zip_button_behaviors>;
         };
     };
 };
