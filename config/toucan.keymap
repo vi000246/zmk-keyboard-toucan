@@ -315,7 +315,7 @@
              */
 
             bindings = <
-&none  &none  &none  &none  &macro5  &macro4  &msc SCRL_RIGHT  &msc SCRL_DOWN  &msc SCRL_UP  &msc SCRL_LEFT  &to 0  &none  &none  &kp LALT  &kp LCTRL  &kp LGUI  &kp LSHFT  &none  &kp LEFT  &kp DOWN  &kp UP  &kp RIGHT  &macro2  &none  &none  &macro10  &macro9  &macro7  &macro8  &macro1  &kp END  &kp PG_DN  &kp PG_UP  &kp HOME  &macro3  &none  &kp TAB  &kp SPACE  &kp ESC  &kp BSPC  &kp F19  &kp DEL
+&none  &none  &none  &none  &macro5  &macro4  &msc SCRL_RIGHT  &msc SCRL_DOWN  &msc SCRL_UP  &msc SCRL_LEFT  &to 0  &none  &none  &kp LALT  &kp LCTRL  &kp LGUI  &kp LSHFT  &kp LS(LA(LC(LG(T))))  &kp LEFT  &kp DOWN  &kp UP  &kp RIGHT  &macro2  &none  &none  &macro10  &macro9  &macro7  &macro8  &macro1  &kp END  &kp PG_DN  &kp PG_UP  &kp HOME  &macro3  &none  &kp TAB  &kp SPACE  &kp ESC  &kp BSPC  &kp F19  &kp DEL
             >;
         };
 
