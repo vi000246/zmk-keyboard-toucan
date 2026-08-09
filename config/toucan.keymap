@@ -329,7 +329,7 @@
              */
 
             bindings = <
-&none  &cc_exit  &none  &none  &macro5  &macro4  &kp F19  &none  &none  &none  &to 0  &none  &none  &kp LALT  &kp LCTRL  &kp LGUI  &kp LSHFT  &kp LS(LA(LC(LG(T))))  &kp LEFT  &kp DOWN  &kp UP  &kp RIGHT  &z30  &none  &none  &cc_effort  &cc_model  &cc_continue  &cc_usage  &claude  &kp END  &kp PG_DN  &kp PG_UP  &kp HOME  &z50  &none  &kp TAB  &kp SPACE  &kp ESC  &kp BSPC  &kp ENTER  &kp DEL
+&none  &cc_exit  &none  &none  &macro5  &macro4  &none  &none  &kp F19  &none  &to 0  &none  &none  &kp LALT  &kp LCTRL  &kp LGUI  &kp LSHFT  &kp LS(LA(LC(LG(T))))  &kp LEFT  &kp DOWN  &kp UP  &kp RIGHT  &z30  &none  &none  &cc_effort  &cc_model  &cc_continue  &cc_usage  &claude  &kp END  &kp PG_DN  &kp PG_UP  &kp HOME  &z50  &none  &kp TAB  &kp SPACE  &kp ESC  &kp BSPC  &kp ENTER  &kp DEL
             >;
         };
 
