@@ -43,8 +43,10 @@
     flavor = "tap-preferred";
     tapping-term-ms = <200>;
 };
+
 &num_word {
     // 包含：退格、刪除、加號、減號、等號、小數點、乘號、除號、字母 x (以及對應的 Numpad 代碼)
+
     continue-list = <BSPC DEL PLUS KP_PLUS MINUS KP_MINUS EQUAL KP_EQUAL DOT KP_DOT STAR KP_MULTIPLY FSLH KP_DIVIDE X>;
 };
 
@@ -309,7 +311,8 @@
 
             // KC_U + KC_I → TO(4)
         };
-	   combo_num_word {
+
+        combo_num_word {
             timeout-ms = <27>; // 依照你其他 combo 的習慣設定為 27 毫秒
             key-positions = <30 31>; // 對應 BASE 層的 N 和 M
             bindings = <&num_word 2>;
@@ -346,7 +349,7 @@
         layer_2 {
             display-name = "NUM";
             bindings = <
-&none  &kp KP_MULTIPLY  &kp KP_N7  &kp KP_N8  &kp KP_N9  &kp KP_PLUS  &none  &none  &none  &none  &none  &none  &none  &kp KP_DIVIDE  &kp KP_N4  &kp KP_N5  &kp KP_N6  &kp MINUS  &none  &kp LSHFT  &kp LGUI  &kp LCTRL  &kp LALT  &none  &none  &kp X  &kp KP_N1  &kp KP_N2  &kp KP_N3  &kp KP_EQUAL  &none  &none  &none  &none  &none  &none  &kp KP_N0  &kp KP_DOT  &kp PRCNT  &none  &none  &none
+&none  &kp KP_MULTIPLY  &kp KP_N7  &kp KP_N8  &kp KP_N9  &kp KP_PLUS  &none  &none  &kp F19  &none  &none  &none  &none  &kp KP_DIVIDE  &kp KP_N4  &kp KP_N5  &kp KP_N6  &kp MINUS  &none  &kp LSHFT  &kp LGUI  &kp LCTRL  &kp LALT  &none  &none  &kp X  &kp KP_N1  &kp KP_N2  &kp KP_N3  &kp KP_EQUAL  &kp F19  &none  &none  &none  &none  &none  &kp KP_N0  &kp KP_DOT  &kp PRCNT  &kp BACKSPACE  &kp ENTER  &kp DEL
             >;
         };
 
