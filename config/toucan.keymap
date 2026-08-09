@@ -195,6 +195,46 @@
                 <&macro_tap>,
                 <&kp RET>;
         };
+
+        macro8: macro8 {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            bindings =
+                <&macro_tap>,
+                <&kp FSLH &kp U &kp S &kp A &kp G &kp E>,
+                <&macro_tap>,
+                <&kp ENTER>;
+
+            label = "MACRO8";
+            wait-ms = <10>;
+            tap-ms = <10>;
+        };
+
+        macro9: macro9 {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            bindings =
+                <&macro_tap>,
+                <&kp FSLH &kp M &kp O &kp D &kp E &kp L>,
+                <&macro_tap>,
+                <&kp ENTER>;
+
+            label = "MACRO9";
+            wait-ms = <10>;
+            tap-ms = <10>;
+        };
+
+        macro10: macro10 {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            bindings =
+                <&macro_tap>,
+                <&kp FSLH &kp E &kp F &kp F &kp O &kp R &kp T>,
+                <&macro_tap>,
+                <&kp ENTER>;
+
+            label = "MACRO10";
+        };
     };
 
     combos {
@@ -275,7 +315,7 @@
              */
 
             bindings = <
-&none  &none  &none  &studio_unlock  &bootloader  &macro1  &msc SCRL_RIGHT  &msc SCRL_DOWN  &msc SCRL_UP  &msc SCRL_LEFT  &to 0  &none  &none  &kp LALT  &kp LCTRL  &kp LGUI  &kp LSHFT  &none  &kp LEFT  &kp DOWN  &kp UP  &kp RIGHT  &macro2  &none  &none  &none  &none  &macro7  &macro5  &macro4  &kp END  &kp PG_DN  &kp PG_UP  &kp HOME  &macro3  &none  &kp TAB  &kp SPACE  &kp ESC  &kp BSPC  &kp F19  &kp DEL
+&none  &none  &none  &none  &macro5  &macro4  &msc SCRL_RIGHT  &msc SCRL_DOWN  &msc SCRL_UP  &msc SCRL_LEFT  &to 0  &none  &none  &kp LALT  &kp LCTRL  &kp LGUI  &kp LSHFT  &none  &kp LEFT  &kp DOWN  &kp UP  &kp RIGHT  &macro2  &none  &none  &macro10  &macro9  &macro7  &macro8  &macro1  &kp END  &kp PG_DN  &kp PG_UP  &kp HOME  &macro3  &none  &kp TAB  &kp SPACE  &kp ESC  &kp BSPC  &kp F19  &kp DEL
             >;
         };
 
