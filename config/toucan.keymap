@@ -332,7 +332,7 @@
 layer_6 {
             display-name = "MOUSE";
             bindings = <
-            &trans  &trans  &trans  &msc MOVE_Y(-15)  &msc MOVE_Y(15)  &kp HOME    &trans  &trans  &trans  &trans  &trans  &trans
+            &trans  &trans  &trans  &msc MOVE_Y(-50)  &msc MOVE_Y(50)  &kp HOME    &trans  &trans  &trans  &trans  &trans  &trans
             &trans  &trans  &trans  &mkp LCLK       &mkp RCLK     &mkp MCLK   &trans  &trans  &trans  &trans  &trans  &trans
             &trans  &trans  &trans  &kp PG_DN       &kp PG_UP     &kp END     &trans  &trans  &trans  &trans  &trans  &trans
             &trans  &kp LGUI  &mo 7  &trans  &trans  &trans
