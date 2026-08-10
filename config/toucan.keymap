@@ -384,24 +384,28 @@
          * Everything is on the LEFT hand on purpose: the trackpad lives on the
          * right half, so the hand that is not on the pad does the clicking.
          *
-         * Those excluded positions are the eleven keys bound below (e r t /
-         * d f g / c v b, plus the two left thumbs). Move a binding here and you
-         * must move the position there, or pressing it switches the layer off
-         * under you.
+         * Those excluded positions are the left-hand keys bound below
+         * (q w e r t / a s d f g / z x c v b rows, plus all three left
+         * thumbs, 36-38). Move a binding here and you must move the position
+         * there, or pressing it switches the layer off under you.
          *
          * Left thumbs, while the pad is in use:
-         *   middle (37) — LGUI, so cmd-click is one hand each
-         *   right  (38) — hold for half cursor speed; it turns on layer SLOW,
-         *                 which the listener watches for. Nothing on the layer
-         *                 itself does anything, the layer *being on* is the
-         *                 signal.
-         * Both replace their base-layer &lt bindings only while MOUSE is up.
+         *   left   (36) — Cmd+[  = browser back
+         *   middle (37) — Cmd+]  = browser forward
+         *                 (Cmd+[/] instead of &mkp MB4/MB5 because Firefox on
+         *                 macOS ignores mouse buttons 4/5)
+         *   right  (38) — ESC
+         * A holds LGUI so cmd-click is one hand each; S holds layer SLOW,
+         * which the listener watches for — nothing on that layer does
+         * anything, the layer *being on* is the signal (half cursor speed).
+         * All of these replace their base-layer bindings only while MOUSE
+         * is up.
          */
 
         layer_6 {
             display-name = "MOUSE";
             bindings = <
-&trans  &kp LS(LG(LEFT_BRACKET))  &kp LS(LG(RIGHT_BRACKET))  &msc MOVE_Y(50)  &msc MOVE_Y(-50)  &kp HOME  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &kp LEFT_COMMAND  &mo 7  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &kp PG_DN  &kp PG_UP  &kp END  &trans  &trans  &trans  &trans  &trans  &trans  &mkp MB4  &mkp MB5  &kp ESCAPE  &trans  &trans  &trans
+&trans  &kp LS(LG(LEFT_BRACKET))  &kp LS(LG(RIGHT_BRACKET))  &msc MOVE_Y(50)  &msc MOVE_Y(-50)  &kp HOME  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &kp LEFT_COMMAND  &mo 7  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &sl 1  &trans  &kp PG_DN  &kp PG_UP  &kp END  &trans  &trans  &trans  &trans  &trans  &trans  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &kp ESCAPE  &trans  &trans  &trans
             >;
         };
 
