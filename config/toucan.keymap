@@ -363,7 +363,7 @@
         layer_4 {
             display-name = "MEDIA";
             bindings = <
-&none  &kp LG(Q)  &kp LG(W)  &kp LG(E)  &kp LS(LG(Z))  &kp LG(T)  &kp LC(U)  &kp LC(W)  &kp F19  &kp LC(K)  &to 0  &none  &none  &mt LALT LG(A)  &mt LCTRL LG(S)  &mt LGUI LG(D)  &mt LSHFT LG(F)  &kp LG(L)  &sl 1  &kp LG(LEFT)  &kp LG(RIGHT)  &none  &kp LG(LS(T))  &none  &none  &kp LG(Z)  &kp LG(X)  &kp LG(C)  &kp LG(V)  &kp LG(B)  &kp LC(A)  &kp LA(LEFT)  &kp LA(RIGHT)  &kp LC(E)  &kp LG(W)  &none  &kp LS(LC(LA(LG(GRAVE))))  &sl 5  &none  &mkp LCLK  &mkp RCLK  &mkp MCLK
+&none  &kp LG(Q)  &kp LG(W)  &kp LG(E)  &kp LS(LG(Z))  &kp LG(T)  &kp LC(U)  &kp LC(W)  &kp F19  &kp LC(K)  &to 0  &none  &none  &mt LALT LG(A)  &mt LCTRL LG(S)  &mt LGUI LG(D)  &mt LSHFT LG(F)  &kp LG(L)  &sl 1  &kp LG(LEFT)  &kp LG(RIGHT)  &kp LS(LA(LC(LG(E))))  &kp LG(LS(T))  &none  &none  &kp LG(Z)  &kp LG(X)  &kp LG(C)  &kp LG(V)  &kp LG(B)  &kp LC(A)  &kp LA(LEFT)  &kp LA(RIGHT)  &kp LC(E)  &kp LG(W)  &none  &kp LS(LC(LA(LG(GRAVE))))  &sl 5  &none  &mkp LCLK  &mkp RCLK  &mkp MCLK
             >;
         };
 
