@@ -280,7 +280,7 @@
             // LSFT(KC_9) + LSFT(KC_0) → KC_SPACE
         };
 
-        combo_1 {
+        combo_to_nav {
             timeout-ms = <27>;
             key-positions = <31 32>;
             bindings = <&to 1>;
@@ -288,7 +288,7 @@
             // KC_M + KC_COMMA → TO(1)
         };
 
-        combo_2 {
+        combo_tmux {
             timeout-ms = <27>;
             key-positions = <27 28>;
             bindings = <&kp LC(SPACE)>;
@@ -296,7 +296,7 @@
             // KC_C + KC_V → LCTL(KC_SPACE)
         };
 
-        combo_3 {
+        combo_wq {
             timeout-ms = <27>;
             key-positions = <2 1>;
             bindings = <&wq>;
@@ -304,7 +304,7 @@
             // KC_W + KC_Q → M6
         };
 
-        combo_4 {
+        combo_media {
             timeout-ms = <27>;
             key-positions = <7 8>;
             bindings = <&to 4>;
