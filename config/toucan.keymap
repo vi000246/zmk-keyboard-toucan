@@ -423,7 +423,7 @@
         layer_6 {
             display-name = "MOUSE";
             bindings = <
-&trans  &kp LS(LG(LEFT_BRACKET))  &kp LS(LG(RIGHT_BRACKET))  &msc MOVE_Y(50)  &msc MOVE_Y(-50)  &kp HOME  &trans  &trans  &trans  &trans  &to 0  &trans  &trans  &kp LEFT_COMMAND  &mo 7  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mo 1  &trans  &kp PG_DN  &kp PG_UP  &kp END  &trans  &trans  &trans  &trans  &trans  &trans  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &kp ESCAPE  &trans  &trans  &trans
+&trans  &kp LS(LG(LEFT_BRACKET))  &kp LS(LG(RIGHT_BRACKET))  &msc MOVE_Y(50)  &msc MOVE_Y(-50)  &kp HOME  &trans  &trans  &trans  &trans  &to 0  &trans  &trans  &kp LEFT_COMMAND  &mo 8  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mo 1  &trans  &kp PG_DN  &kp PG_UP  &kp END  &trans  &trans  &trans  &trans  &trans  &trans  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &kp ESCAPE  &trans  &trans  &trans
             >;
         };
 
@@ -459,7 +459,7 @@
         layer_8 {
             display-name = "SCROLL";
             bindings = <
-&trans  &kp LS(LG(LEFT_BRACKET))  &kp LS(LG(RIGHT_BRACKET))  &msc MOVE_Y(50)  &msc MOVE_Y(-50)  &kp HOME  &trans  &trans  &trans  &trans  &to 0  &trans  &trans  &kp LEFT_COMMAND  &mo 7  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mo 1  &trans  &kp PG_DN  &kp PG_UP  &kp END  &trans  &trans  &trans  &trans  &trans  &trans  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &kp ESCAPE  &trans  &trans  &trans
+&trans  &kp LS(LG(LEFT_BRACKET))  &kp LS(LG(RIGHT_BRACKET))  &msc MOVE_Y(50)  &msc MOVE_Y(-50)  &kp HOME  &trans  &trans  &trans  &trans  &to 0  &trans  &trans  &kp LEFT_COMMAND  &mo 8  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mo 1  &trans  &kp PG_DN  &kp PG_UP  &kp END  &trans  &trans  &trans  &trans  &trans  &trans  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &kp ESCAPE  &trans  &trans  &trans
             >;
         };
 
