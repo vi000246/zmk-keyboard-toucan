@@ -77,7 +77,7 @@
         status = "disabled";
         device = <&glidepoint_split>;
 
-        input-processors = <&zip_xy_scaler 250 100 &mouse_temp_layer 6 1000 &zip_button_behaviors>;
+        input-processors = <&zip_xy_scaler 250 100 &mouse_temp_layer 6 150 &zip_button_behaviors>;
 
         scroller {
             layers = <1 2 8>;
@@ -92,7 +92,7 @@
 
         slow_cursor {
             layers = <7>;
-            input-processors = <&zip_xy_scaler 125 100 &mouse_temp_layer 6 1000 &zip_button_behaviors>;
+            input-processors = <&zip_xy_scaler 125 100 &mouse_temp_layer 6 150 &zip_button_behaviors>;
         };
     };
 };
