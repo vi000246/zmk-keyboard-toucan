@@ -79,9 +79,8 @@
 
         input-processors = <&zip_xy_scaler 250 100 &mouse_temp_layer 6 150 &zip_button_behaviors>;
 
-	   // 1. 保留給 NAV (層 1) 與原本 SCROLL (層 8) 的滾動，只轉化座標，不改變按鍵層
         scroller_default {
-            layers = <1 8>;
+            layers = <1 2 8>;
             input-processors = <
                 &zip_xy_to_scroll_mapper
                 &zip_scroll_scaler 1 9
@@ -91,18 +90,6 @@
             >;
         };
 
-        // 2. 專門給 NUM (層 2) 的觸發機制
-        scroller_num {
-            layers = <2>;
-            input-processors = <
-                &zip_xy_to_scroll_mapper
-                &zip_scroll_scaler 1 9
-                &zip_scroll_transform INPUT_TRANSFORM_X_INVERT
-                &zip_scroll_transform INPUT_TRANSFORM_Y_INVERT
-                &mouse_temp_layer 8 150    /* <--- 核心機制：操作觸控板時自動切換至第 8 層，閒置 150 毫秒後退回 */
-                &zip_button_behaviors
-            >;
-        };
 
         slow_cursor {
             layers = <7>;
