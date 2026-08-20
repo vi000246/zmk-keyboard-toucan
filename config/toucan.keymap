@@ -368,7 +368,7 @@
         layer_4 {
             display-name = "MEDIA";
             bindings = <
-&none  &kp LG(Q)  &kp LG(W)  &kp LG(E)  &kp LS(LG(Z))  &kp LG(T)  &kp LC(U)  &kp LC(W)  &kp LA(DEL)  &kp LC(K)  &to 0  &none  &none  &mt LALT LG(A)  &mt LCTRL LG(S)  &mt LGUI LG(D)  &mt LSHFT LG(F)  &kp LG(L)  &mo 2  &kp LG(LEFT)  &kp LG(RIGHT)  &kp LS(LA(LC(LG(E))))  &kp LG(LS(T))  &none  &none  &kp LG(Z)  &kp LG(X)  &kp LG(C)  &kp LG(V)  &kp LG(B)  &kp LC(A)  &kp LA(LEFT)  &kp LA(RIGHT)  &kp LC(E)  &kp LG(W)  &none  &kp LS(LC(LA(LG(GRAVE))))  &sl 5  &none  &mo 1  &none  &kp F19
+&none  &kp LG(Q)  &kp LG(W)  &kp LG(E)  &kp LS(LG(Z))  &kp LG(T)  &kp LC(U)  &kp LC(W)  &kp LA(DEL)  &kp LC(K)  &to 0  &none  &none  &mt LALT LG(A)  &mt LCTRL LG(S)  &mt LGUI LG(D)  &mt LSHFT LG(F)  &kp LG(L)  &mo 8  &kp LG(LEFT)  &kp LG(RIGHT)  &kp LS(LA(LC(LG(E))))  &kp LG(LS(T))  &none  &none  &kp LG(Z)  &kp LG(X)  &kp LG(C)  &kp LG(V)  &kp LG(B)  &kp LC(A)  &kp LA(LEFT)  &kp LA(RIGHT)  &kp LC(E)  &kp LG(W)  &none  &kp LS(LC(LA(LG(GRAVE))))  &sl 5  &none  &mo 1  &none  &kp F19
             >;
         };
 
@@ -423,7 +423,7 @@
         layer_6 {
             display-name = "MOUSE";
             bindings = <
-&trans  &kp LS(LG(LEFT_BRACKET))  &kp LS(LG(RIGHT_BRACKET))  &msc MOVE_Y(50)  &msc MOVE_Y(-50)  &kp HOME  &trans  &trans  &trans  &trans  &to 0  &trans  &trans  &kp LEFT_COMMAND  &mo 8  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &to 0  &trans  &kp PG_DN  &kp PG_UP  &kp END  &trans  &trans  &trans  &trans  &trans  &trans  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &lt 1 ESCAPE  &trans  &trans  &trans
+&trans  &kp LS(LG(LEFT_BRACKET))  &kp LS(LG(RIGHT_BRACKET))  &msc MOVE_Y(50)  &msc MOVE_Y(-50)  &kp HOME  &trans  &trans  &trans  &trans  &to 0  &trans  &trans  &kp LEFT_COMMAND  &mo 8  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &to 0  &trans  &kp PG_DN  &kp PG_UP  &kp END  &trans  &trans  &trans  &trans  &trans  &trans  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &lt 1 ESCAPE  &mkp LCLK  &mkp RCLK  &mkp MCLK
             >;
         };
 
@@ -459,7 +459,7 @@
         layer_8 {
             display-name = "SCROLL";
             bindings = <
-&trans  &kp LS(LG(LEFT_BRACKET))  &kp LS(LG(RIGHT_BRACKET))  &msc MOVE_Y(50)  &msc MOVE_Y(-50)  &kp HOME  &trans  &trans  &trans  &trans  &to 0  &trans  &trans  &kp LEFT_COMMAND  &mo 8  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &to 0  &trans  &kp PG_DN  &kp PG_UP  &kp END  &trans  &trans  &trans  &trans  &trans  &trans  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &lt 1 ESCAPE  &trans  &trans  &trans
+&trans  &kp LS(LG(LEFT_BRACKET))  &kp LS(LG(RIGHT_BRACKET))  &msc MOVE_Y(50)  &msc MOVE_Y(-50)  &kp HOME  &trans  &trans  &trans  &trans  &to 0  &trans  &trans  &kp LEFT_COMMAND  &mo 8  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &to 0  &trans  &kp PG_DN  &kp PG_UP  &kp END  &trans  &trans  &trans  &trans  &trans  &trans  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &lt 1 ESCAPE  &mkp LCLK  &mkp RCLK  &mkp MCLK
             >;
         };
 
