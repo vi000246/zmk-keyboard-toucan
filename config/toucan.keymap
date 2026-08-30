@@ -424,7 +424,7 @@
         layer_6 {
             display-name = "MOUSE";
             bindings = <
-&trans  &kp LS(LG(LEFT_BRACKET))  &kp LS(LG(RIGHT_BRACKET))  &msc MOVE_Y(50)  &msc MOVE_Y(-50)  &kp HOME  &kp LG(LS(LEFT_BRACKET))  &kp LG(LS(RIGHT_BRACKET))  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &to 0  &trans  &trans  &kp LEFT_COMMAND  &mo 8  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &to 0  &trans  &kp PG_DN  &kp PG_UP  &kp END  &kp LG(W)  &kp LG(LS(T))  &trans  &trans  &trans  &trans  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &lt 1 ESCAPE  &mkp LCLK  &mkp RCLK  &mkp MCLK
+&trans  &kp LS(LG(LEFT_BRACKET))  &kp LS(LG(RIGHT_BRACKET))  &msc MOVE_Y(50)  &msc MOVE_Y(-50)  &kp HOME  &kp LG(LS(LEFT_BRACKET))  &kp LG(LS(RIGHT_BRACKET))  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &to 0  &trans  &trans  &kp LEFT_COMMAND  &mo 8  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &msc MOVE_Y(20)  &msc MOVE_Y(-20)  &trans  &trans  &trans  &trans  &to 0  &trans  &kp PG_DN  &kp PG_UP  &kp END  &kp LG(W)  &kp LG(LS(T))  &trans  &trans  &trans  &trans  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &lt 1 ESCAPE  &mkp LCLK  &mkp RCLK  &mkp MCLK
             >;
         };
 
@@ -460,7 +460,7 @@
         layer_8 {
             display-name = "SCROLL";
             bindings = <
-&trans  &kp LS(LG(LEFT_BRACKET))  &kp LS(LG(RIGHT_BRACKET))  &msc MOVE_Y(50)  &msc MOVE_Y(-50)  &kp HOME  &kp LG(LS(LEFT_BRACKET))  &kp LG(LS(RIGHT_BRACKET))  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &to 0  &trans  &trans  &kp LEFT_COMMAND  &mo 8  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &to 0  &trans  &kp PG_DN  &kp PG_UP  &kp END  &kp LG(W)  &kp LG(LS(T))  &trans  &trans  &trans  &trans  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &lt 1 ESCAPE  &mkp LCLK  &mkp RCLK  &mkp MCLK
+&trans  &kp LS(LG(LEFT_BRACKET))  &kp LS(LG(RIGHT_BRACKET))  &msc MOVE_Y(50)  &msc MOVE_Y(-50)  &kp HOME  &kp LG(LS(LEFT_BRACKET))  &kp LG(LS(RIGHT_BRACKET))  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &to 0  &trans  &trans  &kp LEFT_COMMAND  &mo 8  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &msc MOVE_Y(20)  &msc MOVE_Y(-20)  &trans  &trans  &trans  &trans  &to 0  &trans  &kp PG_DN  &kp PG_UP  &kp END  &kp LG(W)  &kp LG(LS(T))  &trans  &trans  &trans  &trans  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &lt 1 ESCAPE  &mkp LCLK  &mkp RCLK  &mkp MCLK
             >;
         };
 
