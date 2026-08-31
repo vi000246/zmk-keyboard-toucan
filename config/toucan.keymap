@@ -331,7 +331,7 @@
         layer_0 {
             display-name = "BASE";
             bindings = <
-&none  &kp Q  &kp W  &kp E  &kp R  &kp T  &kp Y  &kp U  &kp I  &kp O  &kp P  &none  &none  &mt LALT A  &mt LCTRL S  &mt LGUI D  &mt LSHFT F  &lt 8 G  &lt 8 H  &mt LSHFT J  &mt LGUI K  &mt LCTRL L  &td5  &none  &none  &kp Z  &kp X  &kp C  &kp V  &kp B  &kp N  &kp M  &kp COMMA  &kp F18  &kp FSLH  &none  &lt 3 TAB  &lt 4 SPACE  &lt 1 ESC  &lt 2 BSPC  &lt 5 RET  &lt 3 F19
+&none  &kp Q  &kp W  &kp E  &kp R  &kp T  &kp Y  &kp U  &kp I  &kp O  &kp P  &none  &none  &mt LALT A  &mt LCTRL S  &mt LGUI D  &mt LSHFT F  &lt 0 G  &lt 0 H  &mt LSHFT J  &mt LGUI K  &mt LCTRL L  &td5  &none  &none  &kp Z  &kp X  &kp C  &kp V  &kp B  &kp N  &kp M  &kp COMMA  &kp F18  &kp FSLH  &none  &lt 3 TAB  &lt 4 SPACE  &lt 1 ESC  &lt 2 BSPC  &lt 5 RET  &lt 3 F19
             >;
         };
 
@@ -369,7 +369,7 @@
         layer_4 {
             display-name = "MEDIA";
             bindings = <
-&none  &kp LG(Q)  &kp LG(W)  &kp LG(E)  &kp LS(LG(Z))  &kp LG(T)  &kp LC(U)  &kp LC(W)  &kp LA(DEL)  &kp LC(K)  &to 0  &none  &none  &mt LALT LG(A)  &mt LCTRL LG(S)  &mt LGUI LG(D)  &mt LSHFT LG(F)  &kp LG(L)  &mo 8  &kp LG(LEFT)  &kp LG(RIGHT)  &kp LS(LA(LC(LG(E))))  &kp LG(LS(T))  &none  &none  &kp LG(Z)  &kp LG(X)  &kp LG(C)  &kp LG(V)  &kp LG(B)  &kp LC(A)  &kp LA(LEFT)  &kp LA(RIGHT)  &kp LA(LS(RIGHT))  &kp LG(W)  &none  &kp LS(LC(LA(LG(GRAVE))))  &sl 5  &none  &mo 1  &none  &kp F19
+&none  &kp LG(Q)  &kp LG(W)  &kp LG(E)  &kp LS(LG(Z))  &kp LG(T)  &kp LC(U)  &kp LC(W)  &kp LA(DEL)  &kp LC(K)  &to 0  &none  &none  &mt LALT LG(A)  &mt LCTRL LG(S)  &mt LGUI LG(D)  &mt LSHFT LG(F)  &kp LG(L)  &mo 0  &kp LG(LEFT)  &kp LG(RIGHT)  &kp LS(LA(LC(LG(E))))  &kp LG(LS(T))  &none  &none  &kp LG(Z)  &kp LG(X)  &kp LG(C)  &kp LG(V)  &kp LG(B)  &kp LC(A)  &kp LA(LEFT)  &kp LA(RIGHT)  &kp LA(LS(RIGHT))  &kp LG(W)  &none  &kp LS(LC(LA(LG(GRAVE))))  &sl 5  &none  &mo 1  &none  &kp F19
             >;
         };
 
@@ -380,61 +380,12 @@
             >;
         };
 
-        /*
-         * MOUSE — hand-added, see regen.sh. Switched on automatically while
-         * the trackpad is moving, by `&mouse_temp_layer 6 150` in
-         * boards/shields/toucan/toucan.dtsi. It drops again 150 ms after the
-         * last movement, or as soon as you press a key that is not in that
-         * node's `excluded-positions`.
-         *
-         * A resting finger produces no movement events, so after 150 ms the
-         * layer falls out from under the hand. The escape hatch is H
-         * (position 18): it holds layer SCROLL (`&mo 8`), a verbatim copy of
-         * this layer, for exactly as long as the finger holds it — no
-         * timers. While H is down the pad also SCROLLS (one finger, up/down)
-         * instead of moving the cursor, because the listener's `scroller`
-         * node matches layer 8. See layer_8 below for why it is a copy
-         * rather than a re-hold of this layer.
-         *
-         * Most keys are on the LEFT hand on purpose: the trackpad lives on
-         * the right half, so the hand that is not on the pad does the
-         * clicking. The right hand keeps a few controls anyway:
-         * Y/U = prev/next tab, H = hold SCROLL, P = back to BASE,
-         * right thumb-left = Cmd+W.
-         *
-         * Those excluded positions are every key bound below or on SCROLL —
-         * left-hand q w e r t / a s d f g / z x c v b rows, right-hand
-         * Y U H P (6 7 18 10), all three left thumbs (36-38) and the right
-         * thumb-left (39). Move a binding here and you must move the
-         * position there, or pressing it switches the layer off under you.
-         *
-         * Left thumbs, while the pad is in use:
-         *   left   (36) — Cmd+[  = browser back
-         *   middle (37) — Cmd+]  = browser forward
-         *                 (Cmd+[/] instead of &mkp MB4/MB5 because Firefox on
-         *                 macOS ignores mouse buttons 4/5)
-         *   right  (38) — ESC
-         * A holds LGUI so cmd-click is one hand each; S holds layer SLOW,
-         * which the listener watches for — nothing on that layer does
-         * anything, the layer *being on* is the signal (half cursor speed).
-         * All of these replace their base-layer bindings only while MOUSE
-         * (or SCROLL) is up.
-         */
-
         layer_6 {
             display-name = "MOUSE";
             bindings = <
 &trans  &kp LG(W)  &msc MOVE_Y(20)  &mmv MOVE_UP  &msc MOVE_Y(-50)  &trans  &kp LG(LS(LEFT_BRACKET))  &kp LG(LS(RIGHT_BRACKET))  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &to 0  &trans  &trans  &msc MOVE_X(20)  &mmv MOVE_LEFT  &mmv MOVE_DOWN  &mmv MOVE_RIGHT  &msc MOVE_X(-20)  &msc MOVE_X(20)  &msc MOVE_Y(50)  &msc MOVE_Y(-50)  &msc MOVE_X(-20)  &trans  &trans  &trans  &kp LS(LG(T))  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &kp END  &kp PAGE_DOWN  &kp PAGE_UP  &kp HOME  &trans  &trans  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &mo 7  &mo 7  &trans  &kp F19
             >;
         };
-
-        /*
-         * SLOW — a marker layer, held from MOUSE's right thumb. It binds
-         * nothing: `slow_cursor` in boards/shields/toucan/toucan.dtsi keys off
-         * `layers = <7>` and swaps the pointer scaler from 250/100 to 125/100,
-         * i.e. exactly half. Keep every position &trans so the keys underneath
-         * keep working while it is held.
-         */
 
         layer_7 {
             display-name = "SLOW";
@@ -443,24 +394,10 @@
             >;
         };
 
-        /*
-         * SCROLL — held via `&mo 8` on MOUSE's H (position 18). This is a
-         * verbatim COPY of layer_6 (keep them in sync!), except position 18
-         * itself is &trans because that key is busy holding the layer.
-         *
-         * Why a copy instead of holding layer 6 directly: ZMK layer state is
-         * a shared bitmask with no reference counting, so the temp-layer
-         * processor's 1 s timeout and a manual hold of the SAME layer can
-         * fight each other. A separate layer has a single owner (the H hold)
-         * and cannot be dropped by any timer. The `scroller` node in
-         * boards/shields/toucan/toucan.dtsi watches this layer
-         * (`layers = <1 2 8>`), so while H is held the pad scrolls.
-         */
-
         layer_8 {
             display-name = "SCROLL";
             bindings = <
-&trans  &kp LS(LG(LEFT_BRACKET))  &kp LS(LG(RIGHT_BRACKET))  &msc MOVE_Y(50)  &msc MOVE_Y(-50)  &kp HOME  &kp LG(LS(LEFT_BRACKET))  &kp LG(LS(RIGHT_BRACKET))  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &to 0  &trans  &trans  &kp LEFT_COMMAND  &mo 8  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &msc MOVE_Y(50)  &msc MOVE_Y(-50)  &trans  &trans  &trans  &trans  &to 0  &trans  &kp PG_DN  &kp PG_UP  &kp END  &kp LG(W)  &kp LG(LS(T))  &trans  &trans  &trans  &trans  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &lt 1 ESCAPE  &mkp LCLK  &mkp RCLK  &mkp MCLK
+&trans  &kp LG(W)  &msc MOVE_Y(20)  &mmv MOVE_UP  &msc MOVE_Y(-50)  &trans  &kp LG(LS(LEFT_BRACKET))  &kp LG(LS(RIGHT_BRACKET))  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &to 0  &trans  &trans  &msc MOVE_X(20)  &mmv MOVE_LEFT  &mmv MOVE_DOWN  &mmv MOVE_RIGHT  &msc MOVE_X(-20)  &msc MOVE_X(20)  &msc MOVE_Y(50)  &msc MOVE_Y(-50)  &msc MOVE_X(-20)  &trans  &trans  &trans  &kp LS(LG(T))  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &kp END  &kp PAGE_DOWN  &kp PAGE_UP  &kp HOME  &trans  &trans  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &mo 7  &mo 7  &trans  &kp F19
             >;
         };
 
