@@ -383,7 +383,7 @@
         layer_6 {
             display-name = "MOUSE";
             bindings = <
-&trans  &kp LG(W)  &msc MOVE_Y(20)  &mmv MOVE_UP  &msc MOVE_Y(-50)  &trans  &kp LG(LS(LEFT_BRACKET))  &kp LG(LS(RIGHT_BRACKET))  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &to 0  &trans  &trans  &msc MOVE_X(20)  &mmv MOVE_LEFT  &mmv MOVE_DOWN  &mmv MOVE_RIGHT  &msc MOVE_X(-20)  &msc MOVE_X(20)  &msc MOVE_Y(50)  &msc MOVE_Y(-50)  &msc MOVE_X(-20)  &trans  &trans  &trans  &kp LS(LG(T))  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &kp END  &kp PAGE_DOWN  &kp PAGE_UP  &kp HOME  &trans  &trans  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &mo 7  &mo 7  &trans  &kp F19
+&trans  &kp LG(W)  &msc MOVE_Y(20)  &mmv MOVE_UP  &msc MOVE_Y(-50)  &trans  &kp LG(LS(LEFT_BRACKET))  &kp LG(LS(RIGHT_BRACKET))  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &to 0  &trans  &trans  &msc MOVE_X(50)  &mmv MOVE_LEFT  &mmv MOVE_DOWN  &mmv MOVE_RIGHT  &msc MOVE_X(-50)  &msc MOVE_X(50)  &msc MOVE_Y(50)  &msc MOVE_Y(-50)  &msc MOVE_X(-50)  &trans  &trans  &trans  &kp LS(LG(T))  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &kp END  &kp PAGE_DOWN  &kp PAGE_UP  &kp HOME  &trans  &trans  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &mo 7  &mo 7  &trans  &kp F19
             >;
         };
 
