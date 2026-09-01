@@ -12,6 +12,9 @@
 #include <behaviors.dtsi>
 #include <dt-bindings/zmk/keys.h>
 #include <dt-bindings/zmk/pointing.h>
+/* 左半改當 split central 之後才需要的：主機配對與輸出切換都歸鍵盤自己管。 */
+#include <dt-bindings/zmk/bt.h>
+#include <dt-bindings/zmk/outputs.h>
 
 /*
  * 鍵盤上的滑鼠鍵每一步的量。這裡只管「用鍵盤推游標 / 滾輪」，
@@ -128,6 +131,37 @@
             #binding-cells = <0>;
             tapping-term-ms = <200>;
             bindings = <&mt LALT SEMI>, <&kp COLON>;
+        };
+
+        /*
+         * PTT 搜推文，NAV 位置 22（原本 z30 / z50 各佔一顆）。
+         * 點一下 = z30，連點兩下 = z50。單點要等 200 ms 的 tapping-term
+         * 過完才送出——PTT 熱鍵不在乎這半拍。要加第三檔（例如 z100 搜
+         * 爆文）就照 z30 再寫一個 macro，bindings 後面補上 <&z100>，
+         * 三連點觸發。
+         */
+        td_ptt: tap_dance_ptt {
+            compatible = "zmk,behavior-tap-dance";
+            #binding-cells = <0>;
+            tapping-term-ms = <200>;
+            bindings = <&z30>, <&z50>;
+        };
+    };
+
+    /*
+     * NAV 的 hjkl：方向鍵 ⇄ 滾輪切換。
+     *
+     * NAV 位置 34 的 &tog 14 開關 flag 層（HJKL SCRL, 14）。flag 全
+     * &trans、自己不做事；只有「NAV(1) 和 flag(14) 同時 active」時，
+     * 這裡才把 NAV SCRL(15) 疊上去，蓋掉 hjkl 那四格。所以 flag 開著
+     * 回 BASE 打字，hjkl 仍是字母，不會漏滾輪出來。
+     */
+    conditional_layers {
+        compatible = "zmk,conditional-layers";
+
+        nav_hjkl_scroll {
+            if-layers = <1 14>;
+            then-layer = <15>;
         };
     };
 
@@ -401,6 +435,9 @@
          *
          * 必須「同時」按下兩顆，先按住一顆再補第二顆不會觸發。50 ms 比其他
          * combo 的 27 ms 寬鬆，因為這幾組已經被 layers 擋在 BASE 之外。
+         *
+         * HJKL SCRL flag（14）開著時這四組會暫時失效（最高層變 14、不在
+         * 名單內）。刻意不把 14 加進名單，原因見 layer_14 的註解。
          */
         combo_lock_fast_l {
             timeout-ms = <50>;
@@ -451,10 +488,15 @@
              *                    the thumb must be held past 200 ms.
              *   &bootloader    — left thumb ESC + R. Saves prying the
              *                    dongle out to double-tap RST on a reflash.
+             *
+             * Positions 22 and 34 are also hand-changed:
+             *   22 &td_ptt — z30 / z50 合併：點一下 z30、連點兩下 z50。
+             *   34 &tog 14 — hjkl 方向鍵 ⇄ 滾輪切換，見 conditional_layers
+             *                和 layer_14 / layer_15 的註解。
              */
 
             bindings = <
-&none  &cc_exit  &cc_clear  &none  &cc_rename  &macro4  &kp LS(LG(LEFT_BRACKET))  &kp LS(LG(RIGHT_BRACKET))  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &to 0  &none  &none  &kp LALT  &kp LCTRL  &kp LGUI  &kp LSHFT  &kp LS(LA(LC(LG(T))))  &kp LEFT  &kp DOWN  &kp UP  &kp RIGHT  &z30  &none  &none  &cc_effort  &cc_model  &cc_continue  &cc_usage  &claude  &kp END  &kp PG_DN  &kp PG_UP  &kp HOME  &z50  &none  &none  &none  &kp ESC  &kp BSPC  &kp DEL  &kp F19
+&none  &cc_exit  &cc_clear  &none  &cc_rename  &macro4  &kp LS(LG(LEFT_BRACKET))  &kp LS(LG(RIGHT_BRACKET))  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &to 0  &none  &none  &kp LALT  &kp LCTRL  &kp LGUI  &kp LSHFT  &kp LS(LA(LC(LG(T))))  &kp LEFT  &kp DOWN  &kp UP  &kp RIGHT  &td_ptt  &none  &none  &cc_effort  &cc_model  &cc_continue  &cc_usage  &claude  &kp END  &kp PG_DN  &kp PG_UP  &kp HOME  &tog 14  &none  &none  &none  &kp ESC  &kp BSPC  &kp DEL  &kp F19
             >;
         };
 
@@ -475,7 +517,7 @@
         layer_4 {
             display-name = "MEDIA";
             bindings = <
-&none  &kp LG(Q)  &kp LG(W)  &kp LG(E)  &kp LS(LG(Z))  &kp LG(T)  &kp LC(U)  &kp LC(W)  &kp LA(DEL)  &kp LC(K)  &to 0  &none  &none  &mt LALT LG(A)  &mt LCTRL LG(S)  &mt LGUI LG(D)  &mt LSHFT LG(F)  &kp LG(L)  &trans  &kp LG(LEFT)  &kp LG(RIGHT)  &kp LS(LA(LC(LG(E))))  &kp LG(LS(T))  &none  &none  &kp LG(Z)  &kp LG(X)  &kp LG(C)  &kp LG(V)  &kp LG(B)  &kp LC(A)  &kp LA(LEFT)  &kp LA(RIGHT)  &kp LA(LS(RIGHT))  &kp LG(W)  &none  &kp LS(LC(LA(LG(GRAVE))))  &sl 5  &none  &mo 1  &none  &kp F19
+&none  &kp LG(Q)  &kp LG(W)  &kp LG(E)  &kp LS(LG(Z))  &kp LG(T)  &kp LC(U)  &kp LC(W)  &kp LA(DEL)  &kp LC(K)  &to 0  &none  &none  &mt LALT LG(A)  &mt LCTRL LG(S)  &mt LGUI LG(D)  &mt LSHFT LG(F)  &kp LG(L)  &trans  &kp LG(LEFT)  &kp LG(RIGHT)  &kp LS(LA(LC(LG(E))))  &kp LG(LS(T))  &none  &none  &kp LG(Z)  &kp LG(X)  &kp LG(C)  &kp LG(V)  &kp LG(B)  &kp LC(A)  &kp LA(LEFT)  &kp LA(RIGHT)  &kp LA(LS(RIGHT))  &kp LG(W)  &none  &kp LS(LC(LA(LG(GRAVE))))  &sl 5  &none  &mo 1  &mo 16  &kp F19
             >;
         };
 
@@ -558,6 +600,69 @@
             display-name = "SCRL FAST";
             bindings = <
 &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
+            >;
+        };
+
+        /*
+         * HJKL SCRL — hand-added 的 flag 層。全 &trans，只當開關狀態用：
+         * NAV 位置 34 的 &tog 14 切換。開著時 dongle 螢幕顯示的最高層就是
+         * 這個名字，等於免費的狀態指示燈。實際蓋鍵的是下面的 NAV SCRL(15)，
+         * 由 conditional_layers 在 NAV+flag 同時 active 時自動疊上。
+         *
+         * 兩個已知取捨：
+         *   1. 這層 index (14) 高於 MOUSE(6)/CUR*(8/10)，flag 開著時
+         *      combo_lock_*（觸控板調速鎖定）比對到的最高層是 14、不在
+         *      名單內 ⇒ 那四組 combo 暫時失效。刻意「不」把 14 加進名單：
+         *      加了它們就會在 BASE 打字時活過來，拇指快速連按會誤觸
+         *      &tog 8/10。要鎖速度就先把 flag 關掉。
+         *   2. 任何 &to（NAV 的 P、PAD 層位置 10、combo_to_nav）都會把
+         *      flag 一併清掉——&to 只保留目標層和 default 層。
+         */
+        layer_14 {
+            display-name = "HJKL SCRL";
+            bindings = <
+&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
+            >;
+        };
+
+        /*
+         * NAV SCRL — 由 conditional_layers 自動疊上，不要手動 &tog/&mo 它。
+         * 只蓋 NAV 的 hjkl 四格（18-21），方向與 SCROLL 層（PAD_BINDINGS）
+         * 右手 home row 完全相同；其餘 &trans 落回 NAV——位置 34 也因此
+         * 落回 &tog 14，再按一次就切回方向鍵。
+         */
+        layer_15 {
+            display-name = "NAV SCRL";
+            bindings = <
+&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &msc MOVE_X(KB_SCRL)  &msc MOVE_Y(KB_SCRL)  &msc MOVE_Y(-KB_SCRL)  &msc MOVE_X(-KB_SCRL)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
+            >;
+        };
+
+        /*
+         * BT — 主機配對與輸出切換。2026-09-01 左半改當 split central 之後
+         * 才需要：以前所有主機配對都在 dongle 上，鍵盤本身一顆 &bt 都沒有。
+         *
+         * 進入方式：MEDIA(4) 位置 40 的 &mo 16。MEDIA 自己由 BASE 按住
+         * SPACE（&lt 4 SPACE，左拇指）或 combo_media 的 &to 4 進入，所以
+         * 兩種握法都按得到——左拇指 + 右拇指 + 左手指。
+         *
+         * 刻意做成「按住」而不是 &tog：這層有 &bt BT_CLR 和 &bootloader，
+         * latch 住再誤觸的代價太高。
+         *
+         *   Q W E R T  = BT profile 0-4        A S D = 輸出 USB / BLE / 切換
+         *   Z          = BT_CLR（清掉目前 profile 的配對）
+         *   B          = &bootloader           P     = &to 0 逃生口
+         *
+         * &bootloader 重置的是「按下它的那一側」，也就是左半——而左半現在
+         * 正是最常刷的那顆板子，所以這顆鍵第一次真正有用了。（FLASHING.md
+         * 那次事故正是因為當年它重置的是左半、使用者以為是 dongle。）
+         *
+         * 右手整排 &trans 是刻意的：這層只用左手，右手保持 MEDIA 的行為。
+         */
+        layer_16 {
+            display-name = "BT";
+            bindings = <
+&none  &bt BT_SEL 0  &bt BT_SEL 1  &bt BT_SEL 2  &bt BT_SEL 3  &bt BT_SEL 4  &trans  &trans  &trans  &trans  &to 0  &none  &none  &out OUT_USB  &out OUT_BLE  &out OUT_TOG  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &none  &none  &bt BT_CLR  &trans  &trans  &trans  &bootloader  &trans  &trans  &trans  &trans  &trans  &none  &trans  &trans  &trans  &trans  &trans  &trans
             >;
         };
     };
