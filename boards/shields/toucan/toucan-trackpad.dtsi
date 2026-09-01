@@ -59,18 +59,40 @@
      * 在板上不會產生移動事件，所以這個值不能再縮——縮了會直接壞掉「先定位、
      * 停手、再按鍵」，包含 layer 6 位置 26/27/28 的 &mkp LCLK/RCLK/MCLK。
      *
-     * excluded-positions = 按了「不會」把 temp layer 關掉的位置。六顆拇指
-     * (36-41) 全部在名單內，因為它們在 layer 6/7 上都是調速鍵，被關掉就按不到。
-     * 位置 40 的代價：用完觸控板 150 ms 內按 Enter 會被吞掉一次，變成「按住
-     * 中檔」。因為是 &mo 而不是 &tog，不會 latch。
+     * excluded-positions 刻意留空——語意是「沒有任何鍵能提前結束滑鼠層」，
+     * 只有 timeout 到了才會關。這是 ZMK 上游的常見做法（見 ergohaven/
+     * ergohaven-zmk 的 velvet_v3_ui.keymap）。
      *
-     * 動 layer 6/7 的 bindings 時必須同步檢查這份名單。
+     * ⚠️ 空清單不是「每個鍵都關層」，是「沒有鍵會關層」——語意跟直覺相反。
+     * 原因在編譯期，見 zmk/app/src/pointing/input_processor_temp_layer.c：
+     *
+     *   #define NEEDS_POSITION_HANDLERS(n, ...) \
+     *       DT_INST_PROP_HAS_IDX(n, excluded_positions, 0)
+     *   #if DT_INST_FOREACH_STATUS_OKAY_VARGS(NEEDS_POSITION_HANDLERS, ||)
+     *   ZMK_SUBSCRIPTION(processor_temp_layer, zmk_position_state_changed);
+     *   #endif
+     *
+     * 清單為空 ⇒ 連 zmk_position_state_changed 都不訂閱 ⇒ 按鍵事件根本到不了
+     * 這個 processor。順帶少一次 per-keypress 的線性搜尋。
+     *
+     * 為什麼改成空的：原本列了 34 個位置，而「沒被列到」的只有 0/11/12/22/
+     * 23/24/34/35，其中 6 個沒焊開關——實際上只有位置 22 和 34 會關層，等於
+     * 已經接近「沒有鍵會關層」。但那份名單必須跟 layer 6/7 的 bindings 手動
+     * 同步（尤其六顆拇指調速鍵，漏了就按不到），是純粹的維護負擔。拿掉之後
+     * 動 bindings 不用再回來改這裡。
+     *
+     * ⚠️ 這個改動「不會」解決「用完觸控板打字誤觸」。那個問題的根源是 layer 6
+     * 上有 28 格活的綁定、整排 home row 都是 &msc / &mmv（見 config/
+     * toucan.keymap 的 PAD_BINDINGS）。真正的修法是把那一層瘦身。
+     *
+     * require-prior-idle-ms 是反方向的保護：剛打過字的 N ms 內，觸控板不會
+     * 升起 layer 6（游標仍會動，但點擊鍵不在）。跟上面那件事無關。
      */
     /omit-if-no-ref/ mouse_temp_layer: mouse_temp_layer {
         compatible = "zmk,input-processor-temp-layer";
         #input-processor-cells = <2>;
         require-prior-idle-ms = <150>;
-        excluded-positions = <1 2 3 4 5 6 7 8 9 10 13 14 15 16 17 18 19 20 21 25 26 27 28 29 30 31 32 33 36 37 38 39 40 41>;
+        excluded-positions = <>;
     };
 
     /*

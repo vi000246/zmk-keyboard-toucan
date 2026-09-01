@@ -35,7 +35,9 @@
  * 位置 10 (P) 是 &to 0：&to 會把目標層以上的所有層一併關掉，所以它同時
  * 也是「解除速度鎖定」的逃生口。
  *
- * 拇指 36-41 全部在 toucan.dtsi 的 excluded-positions 名單裡，動之前先看那邊。
+ * 拇指 36-41 不需要登記在任何名單裡：toucan-trackpad.dtsi 的
+ * excluded-positions 已經留空，語意是「沒有任何鍵能提前結束滑鼠層」，所以動
+ * 這裡的 bindings 不用再回頭同步那邊。原因見該檔的註解。
  */
 #define PAD_BINDINGS(T36, T37, T38, T39, T40, T41)                                            \
     &trans  &kp LG(W)  &msc MOVE_Y(KB_SCRL)  &mmv MOVE_Y(-KB_MOVE)  &msc MOVE_Y(-KB_SCRL)     \
