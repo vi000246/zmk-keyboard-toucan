@@ -8,6 +8,8 @@ if(CONFIG_ZMK_DISPLAY AND CONFIG_NICE_VIEW_WIDGET_STATUS)
   zephyr_library_sources(widgets/util.c)
   
   if(NOT CONFIG_ZMK_SPLIT OR CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
+  # cheatsheet 跟 layer 一樣要讀層資訊，只有 central 拿得到。
+  zephyr_library_sources(widgets/cheatsheet.c)
   zephyr_library_sources(widgets/layer.c)
   zephyr_library_sources(widgets/profile.c)
   zephyr_library_sources(widgets/screen.c)
