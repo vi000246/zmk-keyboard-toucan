@@ -42,9 +42,15 @@ manifest:
     #
     # 官方相容性標示：scanner 端需要 ZMK main，但「keyboard-side supported
     # via compatibility macros」對 ZMK 0.3 有效——我們只用鍵盤端。
+    #
+    # 版本刻意跟原廠 prospector-scanner 分支的 v2.0.0 不同：v2.2.2 有 split
+    # 專用的 burst/silent 修正（peripheral 還沒連上時讓出無線電，優先保證
+    # central 連上右半），正好是我們的拓撲。三個版本的 ZMK_STATUS_ADV_VERSION
+    # 都是 1，廣播格式相同，所以配 dongle 那顆 v2.2.0 的 scanner 韌體安全。
     - name: prospector-zmk-module
       remote: prospector
       revision: v2.2.2
+      path: modules/prospector-zmk-module
     - name: zmk-dongle-screen
       remote: albertclee
       revision: main

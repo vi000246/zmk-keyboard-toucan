@@ -16,7 +16,7 @@ WS="${REPO}-build"          # west workspace, deliberately a sibling of the repo
 IMAGE="zmkfirmware/zmk-build-arm:stable"
 
 BOARD="seeeduino_xiao_ble"
-SHIELD="toucan_left rgbled_adapter toucan_pet"
+SHIELD="toucan_left rgbled_adapter nice_view_gem"
 SNIPPET="studio-rpc-usb-uart"   # without this ZMK Studio cannot reach the central
 OUT="toucan_left-${BOARD}-zmk.uf2"
 

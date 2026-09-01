@@ -23,7 +23,7 @@ include:
   # 都編，但只有 central 會真的用它派送按鍵）。ZMK Studio 跟著 central 走，
   # 所以 studio snippet 從 dongle 搬到這裡。
   - board: seeeduino_xiao_ble
-    shield: toucan_left rgbled_adapter toucan_pet
+    shield: toucan_left rgbled_adapter nice_view_gem
     snippet: studio-rpc-usb-uart
     cmake-args: -DCONFIG_ZMK_STUDIO=y -DCONFIG_ZMK_SLEEP=y -DCONFIG_ZMK_PM_SOFT_OFF=y
   - board: seeeduino_xiao_ble

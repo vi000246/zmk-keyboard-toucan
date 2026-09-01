@@ -8,6 +8,16 @@
  */
 #include "toucan-trackpad.dtsi"
 
+/*
+ * physical_layout0 連同每顆鍵的實體座標。以前左半自己宣告一個沒有 keys 屬性
+ * 的裸節點就夠了——它是 peripheral，不跑 Studio。左半改當 central 之後
+ * Studio 跟著搬過來，而 Studio 有一條編譯期斷言：
+ *   "ZMK Studio requires physical layouts with key positions"
+ * （zmk/app/src/physical_layouts.c）。所以改成 include 這份完整的定義，
+ * 跟 dongle 當年用的是同一份。
+ */
+#include "toucan-layouts.dtsi"
+
 &pinctrl {
     spi0_default: spi0_default {
         group1 {
@@ -83,11 +93,6 @@ nice_view_spi: &spi0 {
         >;
     };
 
-    physical_layout0: physical_layout_0 {
-        compatible = "zmk,physical-layout";
-        display-name = "Default Layout";
-        transform = <&default_transform>;
-    };
 };
 
 /*

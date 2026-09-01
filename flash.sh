@@ -35,10 +35,14 @@ case "${1:-}" in
 dongle 已經不是這個 repo 的建置目標了（2026-09-01 起）。
 
 左半改當 split central，dongle 退出訊號路徑、變成純顯示器：請從
-t-ogura 的 release 下載 Prospector scanner 韌體手動拖進 bootloader 磁碟：
+t-ogura 的 release 下載 Prospector scanner 韌體手動拖進 bootloader 磁碟。
 
-  https://github.com/t-ogura/zmk-config-prospector/releases
-  prospector_scanner-xiao_ble_nrf52840_zmk-zmk.uf2
+  https://github.com/t-ogura/zmk-config-prospector/releases/tag/v2.2.0
+  prospector_scanner.uf2          （觸控版本是 prospector_scanner_touch.uf2）
+
+⚠️ 要 v2.2.0，不是最新的 v2.2.2——v2.2.1 和 v2.2.2 都沒有附任何 .uf2。
+   鍵盤端的模組我們仍然釘 v2.2.2（它有 split 專用的 burst/silent 修正）：
+   兩邊的 ZMK_STATUS_ADV_VERSION 都是 1，廣播格式相同，可以混搭。
 
 ⚠️ 不要把舊的 toucan_dongle 韌體刷回去：它也是 central，會跟左半搶同一個
    右半，症狀是右半時連時不連。真的要 rollback 就先把 build.yaml 和
@@ -49,7 +53,7 @@ MSG
   left)
     # 本機 ./build-left.sh 的產物優先，其次是 GitHub Actions 下載下來的。
     UF2="$BUILD/toucan_left-seeeduino_xiao_ble-zmk.uf2"
-    [ -f "$UF2" ] || UF2="$BUILD/ci/firmware/toucan_left rgbled_adapter toucan_pet-seeeduino_xiao_ble-zmk.uf2"
+    [ -f "$UF2" ] || UF2="$BUILD/ci/firmware/toucan_left rgbled_adapter nice_view_gem-seeeduino_xiao_ble-zmk.uf2"
     WANT_BOARDID="$BOARDID_HALF"
     MUST_VANISH="$SERIAL_LEFT"
     ;;

@@ -20,7 +20,8 @@
 1. **絕對不要在沒有辨識板子之前寫入任何掛載的 XIAO 磁碟。** 用 `./flash.sh`，不要手動 `cp`。
 2. **`&bootloader` 鍵永遠只能讓「按下它的那一側」進 bootloader。**
    2026-09-01 起這變成好事：左半是 central、也是最常刷的板子，而 `&bootloader` 正好
-   只重置左半。它在 **BT 層的 `B` 鍵**（MEDIA 層按住位置 40 進入）。
+   只重置左半。它在 **BT 層的 `B` 鍵**：按住左拇指 `SPACE` 進 MEDIA、再按住
+   右拇指 `RET` 那顆進 BT 層，然後左手按 `B`。
    右半只能靠它自己 XIAO 上的 RST 鈕（USB-C 接頭旁、絲印 `RST`，約 2mm，要用迴紋針
    或鑷子尖）連按兩下。
 3. 刷半邊時，**另一顆半邊要留在 USB 上當對照組** —— `flash.sh` 用「誰從 USB
@@ -72,7 +73,13 @@ gh run download <run-id> -R vi000246/zmk-keyboard-toucan -D "$PWD-build/ci"
 dongle 改刷 t-ogura 的 Prospector scanner 韌體，從他的 release 直接下載
 `.uf2` 手動拖進 bootloader 磁碟（不在這個 repo 建置）：
 
-<https://github.com/t-ogura/zmk-config-prospector/releases>
+<https://github.com/t-ogura/zmk-config-prospector/releases/tag/v2.2.0>
+
+檔名 `prospector_scanner.uf2`（觸控版是 `prospector_scanner_touch.uf2`）。
+
+⚠️ **要 v2.2.0，不是最新的 v2.2.2**——v2.2.1 和 v2.2.2 都沒有附任何 `.uf2`，
+只有原始碼。鍵盤端的模組我們仍釘 v2.2.2（見 `config/west.yml` 的說明）：
+兩邊的 `ZMK_STATUS_ADV_VERSION` 都是 1，廣播格式相同，可以混搭。
 
 它只需要 USB 供電，放哪裡都行；關掉、拿走、壞掉都不影響鍵盤。
 
@@ -96,8 +103,10 @@ advertising**，不會退回開放廣播（`zmk/app/src/split/bluetooth/peripher
 4. 兩半各按幾下鍵，等它們互相連上（可能要數十秒）。左半的 RGB widget 會告訴你
    peripheral 連上了沒。
 5. 左半接 USB 到電腦 → 應該直接能打字（USB 輸出）。
-6. 要用藍牙：MEDIA 層按住位置 40 進 **BT 層**，按 `Q`（profile 0），到電腦的藍牙
-   設定連 "Toucan"。`A`/`S`/`D` = 強制 USB / 強制 BLE / 切換。
+6. 要用藍牙：**先到電腦的藍牙設定把舊的 "Toucan" 條目刪掉**（配對失敗最常見的
+   原因就是殘留的舊配對）。然後按住左拇指 `SPACE` 進 MEDIA、再按住右拇指 `RET`
+   進 **BT 層**，左手按 `Q`（profile 0），回電腦連 "Toucan"。
+   `A`/`S`/`D` = 強制 USB / 強制 BLE / 切換。
 7. dongle 刷成 Prospector scanner（上一節），插上任何 USB 電源即可。
 
 ## 三個會被誤判成失敗的正常現象
