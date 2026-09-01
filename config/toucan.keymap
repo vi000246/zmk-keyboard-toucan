@@ -14,6 +14,38 @@
 #include <dt-bindings/zmk/pointing.h>
 
 /*
+ * 鍵盤上的滑鼠鍵每一步的量。這裡只管「用鍵盤推游標 / 滾輪」，
+ * 觸控板本身的速度在 boards/shields/toucan/toucan.dtsi 的 PAD_* 那組。
+ */
+#define KB_SCRL  50   /* &msc 每步的捲動量，ZMK 預設 10 */
+#define KB_MOVE 600   /* &mmv 每步的游標移動量，ZMK 預設 600 */
+
+/*
+ * MOUSE (6) 與 SCROLL (7) 共用的 42 格 bindings。
+ *
+ * 兩層除了六顆拇指之外完全相同——6 的拇指指向游標三檔 (8/9/10)，
+ * 7 的指向滾動三檔 (11/12/13)。兩個 layer index 不能合併：input-listener
+ * 只認 layer，合併之後觸控板自動升層時就會變成滾動、游標永遠動不了。
+ * 也不能讓 7 去 hold 6——ZMK 的 layer state 是沒有 reference counting 的
+ * 共用 bitmask，temp-layer 的 timeout 會跟手動 hold 互相打架。
+ *
+ * 位置 10 (P) 是 &to 0：&to 會把目標層以上的所有層一併關掉，所以它同時
+ * 也是「解除速度鎖定」的逃生口。
+ *
+ * 拇指 36-41 全部在 toucan.dtsi 的 excluded-positions 名單裡，動之前先看那邊。
+ */
+#define PAD_BINDINGS(T36, T37, T38, T39, T40, T41)                                            \
+    &trans  &kp LG(W)  &msc MOVE_Y(KB_SCRL)  &mmv MOVE_Y(-KB_MOVE)  &msc MOVE_Y(-KB_SCRL)     \
+    &trans  &kp LG(LS(LEFT_BRACKET))  &kp LG(LS(RIGHT_BRACKET))                               \
+    &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &to 0  &trans                                \
+    &trans  &msc MOVE_X(KB_SCRL)  &mmv MOVE_X(-KB_MOVE)  &mmv MOVE_Y(KB_MOVE)                 \
+    &mmv MOVE_X(KB_MOVE)  &msc MOVE_X(-KB_SCRL)  &msc MOVE_X(KB_SCRL)                         \
+    &msc MOVE_Y(KB_SCRL)  &msc MOVE_Y(-KB_SCRL)  &msc MOVE_X(-KB_SCRL)  &trans  &trans        \
+    &trans  &kp LS(LG(T))  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans                            \
+    &kp END  &kp PAGE_DOWN  &kp PAGE_UP  &kp HOME  &trans  &trans                             \
+    T36  T37  T38  T39  T40  T41
+
+/*
  * Hold-tap feel, carried over from the .vil's QMK settings.
  *   tapping-term-ms — Vial "Tapping Term"
  *   flavor          — derived from Vial's permissive-hold / mod-tap-interrupt
@@ -186,12 +218,33 @@
             bindings = <&macro_tap>, <&kp LC(SPACE) &kp V>;
         };
 
-        macro5: macro_5 {
+        /*
+         * Claude Code 的斜線指令。跟 cc_usage / cc_model 一樣，打完直接送出。
+         * /clear 會清掉整段對話——不想要自動送出的話，把最後那組
+         * <&macro_tap>, <&kp ENTER> 兩行刪掉即可（只打字、不按 Enter）。
+         */
+        cc_clear: cc_clear {
             compatible = "zmk,behavior-macro";
             #binding-cells = <0>;
             wait-ms = <10>;
             tap-ms = <10>;
-            bindings = <&macro_tap>, <&kp LC(SPACE) &kp V &kp COMMA &kp S>;
+            bindings =
+                <&macro_tap>,
+                <&kp FSLH &kp C &kp L &kp E &kp A &kp R>,
+                <&macro_tap>,
+                <&kp ENTER>;
+        };
+
+        cc_rename: cc_rename {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            wait-ms = <10>;
+            tap-ms = <10>;
+            bindings =
+                <&macro_tap>,
+                <&kp FSLH &kp R &kp E &kp N &kp A &kp M &kp E>,
+                <&macro_tap>,
+                <&kp ENTER>;
         };
 
         wq: macro_6 {
@@ -334,6 +387,48 @@
             key-positions = <30 31>; // 對應 BASE 層的 N 和 M
             bindings = <&num_word 2>;
         };
+
+        /*
+         * 觸控板速度鎖定。最快 + 中檔 → 鎖最快；最慢 + 中檔 → 鎖最慢。
+         * 兩手各一組，中檔本身不可鎖（它是預設的「按住」檔）。
+         *
+         * layers 一定要含 8 和 10：ZMK 是拿「按下第一顆鍵當下最高的 active
+         * layer」去比對這份名單（combo.c 的 zmk_keymap_highest_layer_active），
+         * 少了它們，鎖定之後同一組 combo 就解不開。
+         *
+         * 刻意不含 0（BASE 的 TAB+SPACE / RET+F19 滾鍵永遠不會誤觸）也不含
+         * 7（鎖住滾動速度是陷阱：放開 G 之後觸控板會在非滾動狀態持續滾動）。
+         *
+         * 必須「同時」按下兩顆，先按住一顆再補第二顆不會觸發。50 ms 比其他
+         * combo 的 27 ms 寬鬆，因為這幾組已經被 layers 擋在 BASE 之外。
+         */
+        combo_lock_fast_l {
+            timeout-ms = <50>;
+            key-positions = <36 37>;
+            bindings = <&tog 10>;
+            layers = <6 8 10>;
+        };
+
+        combo_lock_fast_r {
+            timeout-ms = <50>;
+            key-positions = <40 41>;
+            bindings = <&tog 10>;
+            layers = <6 8 10>;
+        };
+
+        combo_lock_slowest_l {
+            timeout-ms = <50>;
+            key-positions = <37 38>;
+            bindings = <&tog 8>;
+            layers = <6 8 10>;
+        };
+
+        combo_lock_slowest_r {
+            timeout-ms = <50>;
+            key-positions = <39 40>;
+            bindings = <&tog 8>;
+            layers = <6 8 10>;
+        };
     };
 
     keymap {
@@ -342,7 +437,7 @@
         layer_0 {
             display-name = "BASE";
             bindings = <
-&none  &kp Q  &kp W  &kp E  &kp R  &kp T  &kp Y  &kp U  &kp I  &kp O  &kp P  &none  &none  &mt LALT A  &mt LCTRL S  &mt LGUI D  &mt LSHFT F  &lt 8 G  &lt 8 H  &mt LSHFT J  &mt LGUI K  &mt LCTRL L  &td5  &none  &none  &kp Z  &kp X  &kp C  &kp V  &kp B  &kp N  &kp M  &kp COMMA  &kp F18  &kp FSLH  &none  &lt 3 TAB  &lt 4 SPACE  &lt 1 ESC  &lt 2 BSPC  &lt 5 RET  &lt 3 F19
+&none  &kp Q  &kp W  &kp E  &kp R  &kp T  &kp Y  &kp U  &kp I  &kp O  &kp P  &none  &none  &mt LALT A  &mt LCTRL S  &mt LGUI D  &mt LSHFT F  &lt 7 G  &lt 7 H  &mt LSHFT J  &mt LGUI K  &mt LCTRL L  &td5  &none  &none  &kp Z  &kp X  &kp C  &kp V  &kp B  &kp N  &kp M  &kp COMMA  &kp F18  &kp FSLH  &none  &lt 3 TAB  &lt 4 SPACE  &lt 1 ESC  &lt 2 BSPC  &lt 5 RET  &lt 3 F19
             >;
         };
 
@@ -359,7 +454,7 @@
              */
 
             bindings = <
-&none  &cc_exit  &none  &none  &macro5  &macro4  &kp LS(LG(LEFT_BRACKET))  &kp LS(LG(RIGHT_BRACKET))  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &to 0  &none  &none  &kp LALT  &kp LCTRL  &kp LGUI  &kp LSHFT  &kp LS(LA(LC(LG(T))))  &kp LEFT  &kp DOWN  &kp UP  &kp RIGHT  &z30  &none  &none  &cc_effort  &cc_model  &cc_continue  &cc_usage  &claude  &kp END  &kp PG_DN  &kp PG_UP  &kp HOME  &z50  &none  &none  &none  &kp ESC  &kp BSPC  &kp DEL  &kp F19
+&none  &cc_exit  &cc_clear  &none  &cc_rename  &macro4  &kp LS(LG(LEFT_BRACKET))  &kp LS(LG(RIGHT_BRACKET))  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &to 0  &none  &none  &kp LALT  &kp LCTRL  &kp LGUI  &kp LSHFT  &kp LS(LA(LC(LG(T))))  &kp LEFT  &kp DOWN  &kp UP  &kp RIGHT  &z30  &none  &none  &cc_effort  &cc_model  &cc_continue  &cc_usage  &claude  &kp END  &kp PG_DN  &kp PG_UP  &kp HOME  &z50  &none  &none  &none  &kp ESC  &kp BSPC  &kp DEL  &kp F19
             >;
         };
 
@@ -380,7 +475,7 @@
         layer_4 {
             display-name = "MEDIA";
             bindings = <
-&none  &kp LG(Q)  &kp LG(W)  &kp LG(E)  &kp LS(LG(Z))  &kp LG(T)  &kp LC(U)  &kp LC(W)  &kp LA(DEL)  &kp LC(K)  &to 0  &none  &none  &mt LALT LG(A)  &mt LCTRL LG(S)  &mt LGUI LG(D)  &mt LSHFT LG(F)  &kp LG(L)  &mo 0  &kp LG(LEFT)  &kp LG(RIGHT)  &kp LS(LA(LC(LG(E))))  &kp LG(LS(T))  &none  &none  &kp LG(Z)  &kp LG(X)  &kp LG(C)  &kp LG(V)  &kp LG(B)  &kp LC(A)  &kp LA(LEFT)  &kp LA(RIGHT)  &kp LA(LS(RIGHT))  &kp LG(W)  &none  &kp LS(LC(LA(LG(GRAVE))))  &sl 5  &none  &mo 1  &none  &kp F19
+&none  &kp LG(Q)  &kp LG(W)  &kp LG(E)  &kp LS(LG(Z))  &kp LG(T)  &kp LC(U)  &kp LC(W)  &kp LA(DEL)  &kp LC(K)  &to 0  &none  &none  &mt LALT LG(A)  &mt LCTRL LG(S)  &mt LGUI LG(D)  &mt LSHFT LG(F)  &kp LG(L)  &trans  &kp LG(LEFT)  &kp LG(RIGHT)  &kp LS(LA(LC(LG(E))))  &kp LG(LS(T))  &none  &none  &kp LG(Z)  &kp LG(X)  &kp LG(C)  &kp LG(V)  &kp LG(B)  &kp LC(A)  &kp LA(LEFT)  &kp LA(RIGHT)  &kp LA(LS(RIGHT))  &kp LG(W)  &none  &kp LS(LC(LA(LG(GRAVE))))  &sl 5  &none  &mo 1  &none  &kp F19
             >;
         };
 
@@ -391,27 +486,79 @@
             >;
         };
 
+        /*
+         * MOUSE — 觸控板一動就由 toucan.dtsi 的 &mouse_temp_layer 6 150
+         * 自動升起，停手 150 ms 後掉下來。bindings 與 SCROLL (7) 共用
+         * PAD_BINDINGS，只有六顆拇指不同：這裡指向游標三檔。
+         *
+         * 拇指規則：越內側越快、越外側越慢，兩手對稱，全部是「按住」。
+         *   36/41 (最內) = 最快 3.75x     37/40 (中)  = 中檔 1.25x
+         *   38/39 (最外，layer 0 的 ESC / BSPC 位) = 最慢 0.62x
+         * 鎖定走 combo（見上面的 combo_lock_*），拇指上沒有 toggle。
+         */
         layer_6 {
             display-name = "MOUSE";
+            bindings = <PAD_BINDINGS(&mo 10, &mo 9, &mo 8, &mo 8, &mo 9, &mo 10)>;
+        };
+
+        /*
+         * SCROLL — BASE 按住 G / H (&lt 7) 進入，觸控板變滾輪。
+         * scroller_default 在 toucan.dtsi 用 layers = <1 2 7> 認這一層。
+         * 拇指位置與 MOUSE 相同，但指向滾動三檔；滾動刻意不提供鎖定。
+         */
+        layer_7 {
+            display-name = "SCROLL";
+            bindings = <PAD_BINDINGS(&mo 13, &mo 12, &mo 11, &mo 11, &mo 12, &mo 13)>;
+        };
+
+        /*
+         * 以下六層都是 marker layer：本身不綁任何功能，存在的意義就是讓
+         * toucan.dtsi 的 input-listener 知道要換哪一條處理鏈。全部 &trans，
+         * 這樣按住的時候底下那層的按鍵照常可用。
+         *
+         * 可鎖定的兩層 (8 最慢 / 10 最快) 在位置 10 (P) 放 &to 0：鎖定之後
+         * 觸控板停下、layer 6 掉了，這是唯一能把鎖定清掉的逃生口。
+         */
+        layer_8 {
+            display-name = "CUR SLOWEST";
             bindings = <
-&trans  &kp LG(W)  &msc MOVE_Y(20)  &mmv MOVE_UP  &msc MOVE_Y(-50)  &trans  &kp LG(LS(LEFT_BRACKET))  &kp LG(LS(RIGHT_BRACKET))  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &to 0  &trans  &trans  &msc MOVE_X(50)  &mmv MOVE_LEFT  &mmv MOVE_DOWN  &mmv MOVE_RIGHT  &msc MOVE_X(-50)  &msc MOVE_X(50)  &msc MOVE_Y(50)  &msc MOVE_Y(-50)  &msc MOVE_X(-50)  &trans  &trans  &trans  &kp LS(LG(T))  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &kp END  &kp PAGE_DOWN  &kp PAGE_UP  &kp HOME  &trans  &trans  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &mo 7  &mo 7  &trans  &kp F19
+&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &to 0  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
             >;
         };
 
-        layer_7 {
-            display-name = "SLOW";
+        layer_9 {
+            display-name = "CUR SLOW";
             bindings = <
 &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
             >;
         };
 
-        layer_8 {
-            display-name = "SCROLL";
+        layer_10 {
+            display-name = "CUR FAST";
             bindings = <
-&trans  &kp LG(W)  &msc MOVE_Y(20)  &mmv MOVE_UP  &msc MOVE_Y(-50)  &trans  &kp LG(LS(LEFT_BRACKET))  &kp LG(LS(RIGHT_BRACKET))  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &to 0  &trans  &trans  &msc MOVE_X(20)  &mmv MOVE_LEFT  &mmv MOVE_DOWN  &mmv MOVE_RIGHT  &msc MOVE_X(-20)  &msc MOVE_X(20)  &msc MOVE_Y(50)  &msc MOVE_Y(-50)  &msc MOVE_X(-20)  &trans  &trans  &trans  &kp LS(LG(T))  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &kp END  &kp PAGE_DOWN  &kp PAGE_UP  &kp HOME  &trans  &trans  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &mo 7  &mo 7  &trans  &kp F19
+&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &to 0  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
             >;
         };
 
-        extra_3 { status = "reserved"; };
+        layer_11 {
+            display-name = "SCRL SLOWEST";
+            bindings = <
+&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
+            >;
+        };
+
+        layer_12 {
+            display-name = "SCRL SLOW";
+            bindings = <
+&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
+            >;
+        };
+
+        layer_13 {
+            display-name = "SCRL FAST";
+            bindings = <
+&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
+            >;
+        };
     };
 };

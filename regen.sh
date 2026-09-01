@@ -1,4 +1,23 @@
 #!/usr/bin/env bash
+#
+# ⚠️ STALE — DO NOT RUN WITHOUT UPDATING PATCH 2 AND PATCH 3 FIRST.
+#
+# config/toucan.keymap has been hand-edited well past what this script knows
+# about, and both patches below now fail their anchors or would regress the
+# result:
+#
+#   Patch 2 expects NAV positions 0-4 to be five &none. They are not: position 2
+#           is &cc_clear and position 4 is &cc_rename. `patch()` asserts a single
+#           match, so this is a hard error rather than a silent skip.
+#   Patch 3 injects a MOUSE layer whose bindings, excluded-positions and
+#           `&mouse_temp_layer 6 1000` comment all describe a design that no
+#           longer exists, and it knows nothing about layers 7-13 (SCROLL plus
+#           the six speed marker layers) or the PAD_BINDINGS macro they share.
+#           Running it would delete all of them.
+#
+# If you need to regenerate from the .vil again, first port both patches to the
+# current layout. See the layer table at the top of config/toucan.keymap.
+#
 # Regenerate config/toucan.keymap from the .vil, then re-apply the hand patches.
 #
 # Three things the exporter cannot know and this script owns:
