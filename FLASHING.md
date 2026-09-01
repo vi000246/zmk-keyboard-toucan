@@ -18,10 +18,13 @@
 ## 硬性規則
 
 1. **絕對不要在沒有辨識板子之前寫入任何掛載的 XIAO 磁碟。** 用 `./flash.sh`，不要手動 `cp`。
-2. **`&bootloader` 鍵永遠只能讓「按下它的那一側」進 bootloader。** dongle 只能靠它自己
-   XIAO 上的 RST 鈕（USB-C 接頭旁、絲印 `RST`，約 2mm，要用迴紋針或鑷子尖）連按兩下。
-3. 刷半邊時，**另一顆半邊或 dongle 要留在 USB 上當對照組** —— `flash.sh` 用「誰從 USB
-   上消失了」做第二道驗證。
+2. **`&bootloader` 鍵永遠只能讓「按下它的那一側」進 bootloader。**
+   2026-09-01 起這變成好事：左半是 central、也是最常刷的板子，而 `&bootloader` 正好
+   只重置左半。它在 **BT 層的 `B` 鍵**（MEDIA 層按住位置 40 進入）。
+   右半只能靠它自己 XIAO 上的 RST 鈕（USB-C 接頭旁、絲印 `RST`，約 2mm，要用迴紋針
+   或鑷子尖）連按兩下。
+3. 刷半邊時，**另一顆半邊要留在 USB 上當對照組** —— `flash.sh` 用「誰從 USB
+   上消失了」做第二道驗證。（dongle 已退出 split，不再是對照組的一部分。）
 
 ## 怎麼分辨三顆板子
 
@@ -43,37 +46,83 @@ ioreg -p IOUSB -w0 -l | grep -A 25 '"USB Product Name" = "Toucan"' | grep '"USB 
 ## 用法
 
 ```sh
-./build-dongle.sh          # 本機 Docker 編 dongle（只編 dongle，它是唯一帶 keymap 的）
-./flash.sh dongle          # 等待 → 驗證 Board-ID → 驗證序號消失 → 寫入
-./flash.sh left
-./flash.sh right           # 目前只驗得到「這是一顆半邊」，驗不出左右
+./build-left.sh            # 本機 Docker 編左半（它是 central，唯一真正用 keymap 的）
+./flash.sh left            # 等待 → 驗證 Board-ID → 驗證序號消失 → 寫入
+./flash.sh right
+./flash.sh reset-left      # 抹掉左半的 bond 與設定（之後必須馬上刷回 left）
+./flash.sh reset-right
+./flash.sh dongle          # 會直接拒絕並說明原因，見下一節
 ```
 
-左右半邊的 `.uf2` 來自 GitHub Actions（`build-dongle.sh` 不編它們）。下載：
+右半的 `.uf2` 來自 GitHub Actions。下載：
 
 ```sh
 gh run download <run-id> -R vi000246/zmk-keyboard-toucan -D "$PWD-build/ci"
 ```
+
+## dongle 已經退出 split（2026-09-01）
+
+左半改當 split central 之後，dongle 不再是訊號路徑的一環：
+
+```
+打字：  右半 ──BLE split──▶ 左半（central）──USB 線 或 BLE──▶ 電腦
+顯示：  左半 ──單向 BLE 廣播──▶ Prospector（被動收聽，不配對、不連線）
+```
+
+dongle 改刷 t-ogura 的 Prospector scanner 韌體，從他的 release 直接下載
+`.uf2` 手動拖進 bootloader 磁碟（不在這個 repo 建置）：
+
+<https://github.com/t-ogura/zmk-config-prospector/releases>
+
+它只需要 USB 供電，放哪裡都行；關掉、拿走、壞掉都不影響鍵盤。
+
+⚠️ **不要把舊的 `toucan_dongle` 韌體刷回去。** 它也是 central，會跟左半搶同一個
+右半，症狀是右半時連時不連。要 rollback 必須連 `build.yaml` 與
+`boards/shields/toucan/Kconfig.defconfig` 一起 revert，並重跑下面的配對流程。
+
+## 一次性遷移：把 central 從 dongle 換到左半
+
+ZMK 的 split peripheral **只要有任何 bond，就永遠只對那個位址做 directed
+advertising**，不會退回開放廣播（`zmk/app/src/split/bluetooth/peripheral.c` 的
+`start_advertising()`）。所以右半還記著 dongle 時，新的 central 根本連不上它——
+**兩個半邊都必須先抹掉 bond**。
+
+順序照做，中間不要跳步：
+
+1. **把 dongle 從 USB 拔掉。** 它還跑著舊的 central 韌體，開著就會在下一步把剛
+   清空的右半搶走。整個遷移過程都不要插回去。
+2. `./flash.sh reset-left` → 接著 `./flash.sh left`
+3. `./flash.sh reset-right` → 接著 `./flash.sh right`
+4. 兩半各按幾下鍵，等它們互相連上（可能要數十秒）。左半的 RGB widget 會告訴你
+   peripheral 連上了沒。
+5. 左半接 USB 到電腦 → 應該直接能打字（USB 輸出）。
+6. 要用藍牙：MEDIA 層按住位置 40 進 **BT 層**，按 `Q`（profile 0），到電腦的藍牙
+   設定連 "Toucan"。`A`/`S`/`D` = 強制 USB / 強制 BLE / 切換。
+7. dongle 刷成 Prospector scanner（上一節），插上任何 USB 電源即可。
 
 ## 三個會被誤判成失敗的正常現象
 
 - **`cp: could not copy extended attributes ... Device not configured`** —— 不是失敗。
   bootloader 一收完檔案就立刻重開機並卸載磁碟，`cp` 這時才要寫 macOS 擴充屬性就撲空了。
   **磁碟自己消失就是成功的訊號。**
-- **刷完 dongle 後有一半打字沒反應** —— 不是刷壞。dongle 重開之後兩個半邊要重新以 BLE
-  連上 central，需要幾秒到數十秒，有時要按一下該半邊的鍵把它喚醒。**先等一下、按幾下再判斷**；
-  另一半正常而這一半沒反應，最常見的原因就是它還沒連上，不是韌體問題。
-- **刷完 dongle 後行為沒變** —— 不是編錯。ZMK Studio 存在裝置上的 keymap 會**覆蓋**編譯進去
-  的那份，要連上 Studio 執行一次 *Restore Stock Settings*。注意這只影響 keymap；input
-  processor（觸控板速度、方向、自動切層）是韌體層的東西，刷完立即生效。
+- **刷完左半後右半沒反應** —— 不是刷壞。左半重開之後右半要重新以 BLE 連上它，需要幾秒
+  到數十秒，有時要按一下右半的鍵把它喚醒。**先等一下、按幾下再判斷。**
+  但如果等超過一分鐘還是不通，八成是 bond 問題：右半還記著舊的 central。
+  照「一次性遷移」那節重跑 `reset-right` → `right`。
+- **刷完左半後 keymap 沒變** —— 不是編錯。ZMK Studio 存在裝置上的 keymap 會**覆蓋**編譯
+  進去的那份，要連上 Studio 執行一次 *Restore Stock Settings*。注意這只影響 keymap；
+  input processor（觸控板速度、方向、自動切層）是韌體層的東西，刷完立即生效。
 
 ## 哪些改動要刷哪一顆
 
 | 改了什麼 | 要刷 |
 |---|---|
-| `config/toucan.keymap`（層、combo、macro） | dongle |
-| `toucan.dtsi` 的 input processor（游標/捲動速度、方向、mouse layer） | dongle |
-| `toucan_right.overlay` 的 `sensitivity`（觸控板硬體增益） | **右半邊** |
-| 半邊的 `.conf`（睡眠、電池回報） | 對應的半邊 |
+| `config/toucan.keymap`（層、combo、macro） | **左半** |
+| `toucan-trackpad.dtsi` 的 input processor（游標/捲動速度、方向、mouse layer） | **左半** |
+| `toucan_right.overlay` 的 `sensitivity`（觸控板硬體增益） | 右半 |
+| `boards/shields/toucan/toucan_left.conf`（睡眠、電池、Prospector 廣播） | 左半 |
+| `boards/shields/toucan/toucan_right.conf` | 右半 |
+| `Kconfig.defconfig` 的 split 角色 | **兩半都要，而且要照上面的遷移流程重跑** |
 
-dongle 是 split central，是唯一帶 keymap 的映像；兩個半邊只負責回報按鍵，keymap 改動碰不到它們。
+左半是 split central，是唯一真正使用 keymap 的映像；右半只負責回報按鍵和轉送
+觸控板的原始事件，keymap 改動碰不到它。

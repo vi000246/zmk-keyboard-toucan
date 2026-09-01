@@ -19,16 +19,31 @@
 #
 ---
 include:
-  - board: seeeduino_xiao_ble
-#    shield: toucan_dongle rgbled_adapter prospector_adapter
-    shield: toucan_dongle rgbled_adapter dongle_screen
-    snippet: studio-rpc-usb-uart
-    cmake-args: -DCONFIG_ZMK_STUDIO=y
+  # 左半 = split central，也是唯一帶 keymap 的映像（keymap 其實三個 target
+  # 都編，但只有 central 會真的用它派送按鍵）。ZMK Studio 跟著 central 走，
+  # 所以 studio snippet 從 dongle 搬到這裡。
   - board: seeeduino_xiao_ble
     shield: toucan_left rgbled_adapter toucan_pet
-    cmake-args: -DCONFIG_ZMK_SLEEP=y -DCONFIG_ZMK_PM_SOFT_OFF=y
+    snippet: studio-rpc-usb-uart
+    cmake-args: -DCONFIG_ZMK_STUDIO=y -DCONFIG_ZMK_SLEEP=y -DCONFIG_ZMK_PM_SOFT_OFF=y
   - board: seeeduino_xiao_ble
     shield: toucan_right rgbled_adapter
     cmake-args: -DCONFIG_ZMK_SLEEP=y -DCONFIG_ZMK_PM_SOFT_OFF=y
   - board: seeeduino_xiao_ble
     shield: settings_reset
+
+  # ── dongle 已退出 split（2026-09-01）────────────────────────────────────
+  #
+  # 左半改當 central 之後，dongle 不再是訊號路徑的一環，改刷 t-ogura 的
+  # Prospector scanner 韌體當純顯示器（從他的 release 直接下載 .uf2，不在
+  # 這個 repo 建置）。
+  #
+  # 這個 target 刻意留著但註解掉，不是刪掉：它是回到舊架構的 rollback 路徑。
+  # ⚠️ 但不要在「左半是 central」的狀態下把它刷進 dongle——兩個 central 會
+  #    搶同一個右半，症狀是右半時連時不連。要 rollback 就連 Kconfig.defconfig
+  #    的 SHIELD_TOUCAN_LEFT 區塊一起 revert，並照 FLASHING.md 重跑配對。
+  #
+  # - board: seeeduino_xiao_ble
+  #   shield: toucan_dongle rgbled_adapter dongle_screen
+  #   snippet: studio-rpc-usb-uart
+  #   cmake-args: -DCONFIG_ZMK_STUDIO=y

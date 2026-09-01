@@ -31,12 +31,25 @@ SERIAL_LEFT="B2AF9AAE792235E5"
 
 case "${1:-}" in
   dongle)
-    UF2="$BUILD/toucan_dongle-seeeduino_xiao_ble-zmk.uf2"
-    WANT_BOARDID="$BOARDID_DONGLE"
-    MUST_VANISH="$SERIAL_DONGLE"
+    cat >&2 <<'MSG'
+dongle 已經不是這個 repo 的建置目標了（2026-09-01 起）。
+
+左半改當 split central，dongle 退出訊號路徑、變成純顯示器：請從
+t-ogura 的 release 下載 Prospector scanner 韌體手動拖進 bootloader 磁碟：
+
+  https://github.com/t-ogura/zmk-config-prospector/releases
+  prospector_scanner-xiao_ble_nrf52840_zmk-zmk.uf2
+
+⚠️ 不要把舊的 toucan_dongle 韌體刷回去：它也是 central，會跟左半搶同一個
+   右半，症狀是右半時連時不連。真的要 rollback 就先把 build.yaml 和
+   Kconfig.defconfig 一起 revert，再照 FLASHING.md 重跑一次配對。
+MSG
+    exit 64
     ;;
   left)
-    UF2="$BUILD/ci/firmware/toucan_left rgbled_adapter toucan_pet-seeeduino_xiao_ble-zmk.uf2"
+    # 本機 ./build-left.sh 的產物優先，其次是 GitHub Actions 下載下來的。
+    UF2="$BUILD/toucan_left-seeeduino_xiao_ble-zmk.uf2"
+    [ -f "$UF2" ] || UF2="$BUILD/ci/firmware/toucan_left rgbled_adapter toucan_pet-seeeduino_xiao_ble-zmk.uf2"
     WANT_BOARDID="$BOARDID_HALF"
     MUST_VANISH="$SERIAL_LEFT"
     ;;
@@ -45,8 +58,23 @@ case "${1:-}" in
     WANT_BOARDID="$BOARDID_HALF"
     MUST_VANISH=""   # serial not recorded yet — see FLASHING.md
     ;;
+  # settings_reset：抹掉板子上所有 BLE bond 與設定。切換 central 角色時
+  # 兩個半邊都必須先跑一次——ZMK 的 peripheral 只要還記得舊 central，就
+  # 只對那個位址做 directed advertising，新的 central 永遠連不上它。
+  # 刷完之後板子是空的，必須馬上把正式韌體刷回去。
+  reset-left)
+    UF2="$BUILD/ci/firmware/settings_reset-seeeduino_xiao_ble-zmk.uf2"
+    WANT_BOARDID="$BOARDID_HALF"
+    MUST_VANISH="$SERIAL_LEFT"
+    ;;
+  reset-right)
+    UF2="$BUILD/ci/firmware/settings_reset-seeeduino_xiao_ble-zmk.uf2"
+    WANT_BOARDID="$BOARDID_HALF"
+    MUST_VANISH=""   # serial not recorded yet — see FLASHING.md
+    ;;
   *)
-    echo "usage: $0 {dongle|left|right}" >&2
+    echo "usage: $0 {left|right|reset-left|reset-right}" >&2
+    echo "       (dongle 已退出建置，執行 '$0 dongle' 會說明原因)" >&2
     exit 64
     ;;
 esac
@@ -75,14 +103,18 @@ echo "target:   $1"
 echo "firmware: $UF2"
 echo "          $(stat -f '%z bytes, built %Sm' -t '%Y-%m-%d %H:%M' "$UF2")"
 echo
-if [ "$1" = "dongle" ]; then
-  echo "Double-tap RST on the DONGLE's XIAO (the button beside its USB-C port)."
-  echo "The &bootloader key cannot do this: ZMK runs reset behaviors on the side"
-  echo "where the key is pressed, so it only ever resets a keyboard half."
-else
-  echo "Double-tap RST on the $1 half's XIAO (the button beside its USB-C port,"
-  echo "silkscreened RST)."
-fi
+case "$1" in
+  left|reset-left)
+    echo "把左半送進 bootloader。兩種方法都行："
+    echo "  a) MEDIA 層按住位置 40 進 BT 層，按 B（&bootloader）。"
+    echo "     reset behavior 重置的是「按下它的那一側」——左半正是目標。"
+    echo "  b) 連按兩下左半 XIAO 上的 RST 鈕（USB-C 接頭旁，絲印 RST）。"
+    ;;
+  *)
+    echo "連按兩下右半 XIAO 上的 RST 鈕（USB-C 接頭旁，絲印 RST）。"
+    echo "keymap 上的 &bootloader 只會重置左半，對右半沒用。"
+    ;;
+esac
 echo
 
 before="$(zmk_serials)"
@@ -128,9 +160,19 @@ cp "$UF2" "$VOL/" 2>/dev/null || true
 sync
 echo "flashed $1 — it reboots on its own"
 
-if [ "$1" = "dongle" ]; then
-  echo
-  echo "If this changed the KEYMAP (not just input processors), connect ZMK"
-  echo "Studio and run 'Restore Stock Settings' — Studio's stored keymap"
-  echo "overrides the compiled one and the flash will otherwise look inert."
-fi
+case "$1" in
+  reset-*)
+    echo
+    echo "⚠️ 這顆板子現在是空的（bond 和設定都被抹掉）。"
+    echo "   馬上把正式韌體刷回去：./flash.sh ${1#reset-}"
+    ;;
+  left)
+    echo
+    echo "左半是 split central，也是唯一真正使用 keymap 的映像。改了 keymap"
+    echo "之後若行為沒變，連上 ZMK Studio 執行一次 'Restore Stock Settings'"
+    echo "——Studio 存在裝置上的 keymap 會覆蓋編譯進去的那份。"
+    echo
+    echo "（input processor：觸控板速度、方向、自動切層——刷完立即生效，"
+    echo "  不受 Studio 影響。）"
+    ;;
+esac

@@ -1,0 +1,160 @@
+/*
+ * 觸控板：速度參數 + input-split proxy + 自動升層 + 處理鏈。
+ *
+ * 這個檔案被「central」和「持有感測器的 peripheral」兩邊 include：
+ *   toucan_left.overlay   — central，把 glidepoint_listener 設 okay
+ *   toucan.dtsi           — 給 toucan_right / toucan_dongle
+ *
+ * glidepoint_split 兩邊都要有，而且 reg 必須一致（都是 0）：peripheral 那側
+ * 由 toucan_right.overlay 把它綁到真正的 cirque 感測器，central 這側它是接收
+ * 端的 proxy。listener 只在 central 上 status = "okay"。
+ */
+
+#include <input/processors.dtsi>
+#include <dt-bindings/zmk/input_transform.h>
+
+/*
+ * ─── 觸控板速度：三檔由 base 推導 ────────────────────────────────────────
+ *
+ * 只要調下面那組「手調」的數字，游標與滾動的三檔都會跟著同步——因為兩者
+ * 共用同一組百分比，比例永遠一致。devicetree 的 cell 支援括號內算式，所以
+ * 推導可以直接寫在這裡。
+ *
+ * 對應的 marker layer（見 config/toucan.keymap）：
+ *   8  CUR SLOWEST   9  CUR SLOW    10 CUR FAST
+ *   11 SCRL SLOWEST  12 SCRL SLOW   13 SCRL FAST
+ */
+
+/* ── 手調 ── */
+#define PAD_BASE_MULT     250      /* 一般游標 = 250/100 = 2.50x */
+#define PAD_BASE_DIV      100
+#define PAD_SLOWEST_PCT    25      /* 最慢 = base 的 25%  -> 0.62x */
+#define PAD_SLOW_PCT       50      /* 中檔 = base 的 50%  -> 1.25x */
+#define PAD_FAST_PCT      150      /* 最快 = base 的 150% -> 3.75x */
+#define PAD_SCRL_DIV        9      /* 一般滾動 zip_scroll_scaler 1 N，N 越大越慢 */
+
+/* ── 推導，不要手改 ── */
+#define PAD_SLOWEST_MULT     (PAD_BASE_MULT * PAD_SLOWEST_PCT / 100)   /*  62 */
+#define PAD_SLOW_MULT        (PAD_BASE_MULT * PAD_SLOW_PCT    / 100)   /* 125 */
+#define PAD_FAST_MULT        (PAD_BASE_MULT * PAD_FAST_PCT    / 100)   /* 375 */
+#define PAD_SCRL_SLOWEST_DIV (PAD_SCRL_DIV * 100 / PAD_SLOWEST_PCT)    /*  36 */
+#define PAD_SCRL_SLOW_DIV    (PAD_SCRL_DIV * 100 / PAD_SLOW_PCT)       /*  18 */
+#define PAD_SCRL_FAST_DIV    (PAD_SCRL_DIV * 100 / PAD_FAST_PCT)       /*   6 */
+
+/ {
+    split_inputs {
+        #address-cells = <1>;
+        #size-cells = <0>;
+
+        glidepoint_split: glidepoint_split@0 {
+            compatible = "zmk,input-split";
+            reg = <0>;
+        };
+    };
+
+    /*
+     * 自動升起 MOUSE 層（6）的處理器。
+     *
+     * timeout 150 ms = 「最後一次觸控板移動之後，layer 6 還留多久」。手指停
+     * 在板上不會產生移動事件，所以這個值不能再縮——縮了會直接壞掉「先定位、
+     * 停手、再按鍵」，包含 layer 6 位置 26/27/28 的 &mkp LCLK/RCLK/MCLK。
+     *
+     * excluded-positions = 按了「不會」把 temp layer 關掉的位置。六顆拇指
+     * (36-41) 全部在名單內，因為它們在 layer 6/7 上都是調速鍵，被關掉就按不到。
+     * 位置 40 的代價：用完觸控板 150 ms 內按 Enter 會被吞掉一次，變成「按住
+     * 中檔」。因為是 &mo 而不是 &tog，不會 latch。
+     *
+     * 動 layer 6/7 的 bindings 時必須同步檢查這份名單。
+     */
+    /omit-if-no-ref/ mouse_temp_layer: mouse_temp_layer {
+        compatible = "zmk,input-processor-temp-layer";
+        #input-processor-cells = <2>;
+        require-prior-idle-ms = <150>;
+        excluded-positions = <1 2 3 4 5 6 7 8 9 10 13 14 15 16 17 18 19 20 21 25 26 27 28 29 30 31 32 33 36 37 38 39 40 41>;
+    };
+
+    /*
+     * 觸控板處理鏈。只在 central 上跑（toucan_left.overlay 把它設 okay）。
+     *
+     * 子節點是「第一個命中的取代整條 base 鏈」——不是疊加。所以：
+     *   1. 宣告順序 = 優先權。滾動的三檔排在 scroller_default 之前，
+     *      cursor_* 排在它之後（否則按住 ESC 進 NAV 時會被搶走）。
+     *   2. 每一條鏈都必須帶 &zip_button_behaviors，漏掉的那幾層會重新
+     *      開放 tap-and-drag（見 config/toucan.keymap 檔頭的說明）。
+     *   3. 三條 cursor_* 都必須帶 &mouse_temp_layer，否則鎖定某一檔之後
+     *      layer 6 就不再自動升起。
+     *
+     * layer 14 (HJKL SCRL) 和 15 (NAV SCRL) 刻意「不」出現在任何 layers
+     * 名單裡——那是鍵盤方向鍵的滾輪切換，跟觸控板無關，加進來會讓觸控板
+     * 在 NAV 上行為不一致。
+     *
+     * 同時鎖住兩檔時由較慢的勝出（8 -> 9 -> 10），刻意的安全側；按 P 清掉。
+     */
+    glidepoint_listener: glidepoint_listener {
+        compatible = "zmk,input-listener";
+        status = "disabled";
+        device = <&glidepoint_split>;
+
+        input-processors = <&zip_xy_scaler PAD_BASE_MULT PAD_BASE_DIV &mouse_temp_layer 6 150 &zip_button_behaviors>;
+
+        scroll_slowest {
+            layers = <11>;
+            input-processors = <
+                &zip_xy_to_scroll_mapper
+                &zip_scroll_scaler 1 PAD_SCRL_SLOWEST_DIV
+                &zip_scroll_transform INPUT_TRANSFORM_X_INVERT
+                &zip_scroll_transform INPUT_TRANSFORM_Y_INVERT
+                &zip_button_behaviors
+            >;
+        };
+
+        scroll_slow {
+            layers = <12>;
+            input-processors = <
+                &zip_xy_to_scroll_mapper
+                &zip_scroll_scaler 1 PAD_SCRL_SLOW_DIV
+                &zip_scroll_transform INPUT_TRANSFORM_X_INVERT
+                &zip_scroll_transform INPUT_TRANSFORM_Y_INVERT
+                &zip_button_behaviors
+            >;
+        };
+
+        scroll_fast {
+            layers = <13>;
+            input-processors = <
+                &zip_xy_to_scroll_mapper
+                &zip_scroll_scaler 1 PAD_SCRL_FAST_DIV
+                &zip_scroll_transform INPUT_TRANSFORM_X_INVERT
+                &zip_scroll_transform INPUT_TRANSFORM_Y_INVERT
+                &zip_button_behaviors
+            >;
+        };
+
+        // 一般滾動。7 = SCROLL（BASE 按住 G / H 進入）、1 = NAV、2 = NUM。
+        scroller_default {
+            layers = <1 2 7>;
+            input-processors = <
+                &zip_xy_to_scroll_mapper
+                &zip_scroll_scaler 1 PAD_SCRL_DIV
+                &zip_scroll_transform INPUT_TRANSFORM_X_INVERT
+                &zip_scroll_transform INPUT_TRANSFORM_Y_INVERT
+                &zip_button_behaviors
+            >;
+        };
+
+        cursor_slowest {
+            layers = <8>;
+            input-processors = <&zip_xy_scaler PAD_SLOWEST_MULT PAD_BASE_DIV &mouse_temp_layer 6 150 &zip_button_behaviors>;
+        };
+
+        cursor_slow {
+            layers = <9>;
+            input-processors = <&zip_xy_scaler PAD_SLOW_MULT PAD_BASE_DIV &mouse_temp_layer 6 150 &zip_button_behaviors>;
+        };
+
+        cursor_fast {
+            layers = <10>;
+            input-processors = <&zip_xy_scaler PAD_FAST_MULT PAD_BASE_DIV &mouse_temp_layer 6 150 &zip_button_behaviors>;
+        };
+    };
+};

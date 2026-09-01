@@ -25,24 +25,57 @@ config BT_MAX_PAIRED
 
 endif
 
+#
+# 左半 = split central（2026-09-01 起）。
+#
+# 以前 central 是 dongle，左右兩半都是 peripheral。改成左半當 central 之後：
+#   - 出門不用帶 dongle，鍵盤自己就能對主機輸出（USB 或 BLE）。
+#   - dongle 退居純顯示器，改刷 t-ogura 的 Prospector scanner 韌體，靠
+#     BLE 廣播被動收聽狀態，不佔鍵盤的連線槽（見 toucan_left.conf 的
+#     CONFIG_ZMK_STATUS_ADVERTISEMENT）。
+#
+# ⚠️ 改這裡等於改 BLE bond 圖。ZMK 的 split peripheral 一旦有 bond 就只對
+#    那個位址做 directed advertising，永遠不會退回開放廣播（zmk v0.3
+#    app/src/split/bluetooth/peripheral.c 的 start_advertising()）。所以右半
+#    還記著 dongle 時，左半連不上它——必須先刷 settings_reset。步驟見
+#    FLASHING.md。
+#
 if SHIELD_TOUCAN_LEFT
 
 config ZMK_KEYBOARD_NAME
     default "Toucan"
 
 config ZMK_SPLIT_ROLE_CENTRAL
-    default n
+    default y
 
+config ZMK_SPLIT
+    default y
+
+# 只有右半一個 peripheral（dongle 已不在 split 裡）。
+config ZMK_SPLIT_BLE_CENTRAL_PERIPHERALS
+    default 1
+
+# ZMK_SPLIT_BLE_CENTRAL_PERIPHERALS + 5 個 BT profile。
+config BT_MAX_CONN
+    default 6
+
+config BT_MAX_PAIRED
+    default 6
+
+# central 才有的功能：把右半的電量抓過來，並代為回報給主機。
+# 這兩個之前是 default n（左半當時是 peripheral，設了也沒作用）。
 config ZMK_SPLIT_BLE_CENTRAL_BATTERY_LEVEL_FETCHING
-    default n
+    default y
 
 config ZMK_SPLIT_BLE_CENTRAL_BATTERY_LEVEL_PROXY
-    default n
+    default y
 
 endif
 
 
-if SHIELD_TOUCAN_DONGLE || SHIELD_TOUCAN_RIGHT
+# 觸控板：右半有實體感測器；左半（central）跑 input listener，dongle 保留
+# 以便隨時 rollback 回舊架構。
+if SHIELD_TOUCAN_DONGLE || SHIELD_TOUCAN_RIGHT || SHIELD_TOUCAN_LEFT
     config ZMK_POINTING
         default y
 endif

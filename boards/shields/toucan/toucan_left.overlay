@@ -2,6 +2,12 @@
 #include <dt-bindings/zmk/input_transform.h>
 #include <dt-bindings/zmk/matrix_transform.h>
 
+/*
+ * 左半是 split central，觸控板的處理鏈跑在這裡。右半只負責把感測器的原始
+ * 事件經 input-split 送過來（見 toucan_right.overlay 的 &glidepoint_split）。
+ */
+#include "toucan-trackpad.dtsi"
+
 &pinctrl {
     spi0_default: spi0_default {
         group1 {
@@ -82,4 +88,12 @@ nice_view_spi: &spi0 {
         display-name = "Default Layout";
         transform = <&default_transform>;
     };
+};
+
+/*
+ * 只有 central 能跑 input listener——它要讀 layer 狀態才能分派三檔速度。
+ * 右半那側這個節點維持 disabled。
+ */
+&glidepoint_listener {
+    status = "okay";
 };

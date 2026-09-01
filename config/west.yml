@@ -32,9 +32,19 @@ manifest:
     - name: zmk-rgbled-widget
       remote: caksoylar
       revision: v0.3
+    # Prospector：t-ogura 的 scanner 版，不是 carrefinho 的 dongle-display 版。
+    # 兩者專案名相同（west 要求唯一），所以是「換掉」而不是「並存」。
+    #
+    # 鍵盤端只用它的 status advertisement：把電量 / 層名 / modifier / WPM 塞進
+    # BLE 廣播對空氣喊，dongle 那邊刷 scanner 韌體被動收聽。不連線、不配對，
+    # 所以不佔鍵盤的 BT profile。設定在
+    # boards/shields/toucan/toucan_left.conf。
+    #
+    # 官方相容性標示：scanner 端需要 ZMK main，但「keyboard-side supported
+    # via compatibility macros」對 ZMK 0.3 有效——我們只用鍵盤端。
     - name: prospector-zmk-module
-      remote: carrefinho
-      revision: main
+      remote: prospector
+      revision: v2.2.2
     - name: zmk-dongle-screen
       remote: albertclee
       revision: main
