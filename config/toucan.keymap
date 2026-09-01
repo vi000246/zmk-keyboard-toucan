@@ -18,28 +18,51 @@
 
 /*
  * 鍵盤上的滑鼠鍵每一步的量。這裡只管「用鍵盤推游標 / 滾輪」，
- * 觸控板本身的速度在 boards/shields/toucan/toucan.dtsi 的 PAD_* 那組。
+ * 觸控板本身的速度在 boards/shields/toucan/toucan-trackpad.dtsi 的 PAD_* 那組。
  */
 #define KB_SCRL  50   /* &msc 每步的捲動量，ZMK 預設 10 */
 #define KB_MOVE 600   /* &mmv 每步的游標移動量，ZMK 預設 600 */
 
 /*
- * MOUSE (6) 與 SCROLL (7) 共用的 42 格 bindings。
+ * SCROLL (7) 的 42 格 bindings。
  *
- * 兩層除了六顆拇指之外完全相同——6 的拇指指向游標三檔 (8/9/10)，
- * 7 的指向滾動三檔 (11/12/13)。兩個 layer index 不能合併：input-listener
- * 只認 layer，合併之後觸控板自動升層時就會變成滾動、游標永遠動不了。
- * 也不能讓 7 去 hold 6——ZMK 的 layer state 是沒有 reference counting 的
- * 共用 bitmask，temp-layer 的 timeout 會跟手動 hold 互相打架。
+ * ── 為什麼 6 和 7 不再共用同一份 ───────────────────────────────────────
  *
- * 位置 10 (P) 是 &to 0：&to 會把目標層以上的所有層一併關掉，所以它同時
- * 也是「解除速度鎖定」的逃生口。
+ * 這兩層的「進入方式」根本不同，所以能承受的內容也不同：
+ *
+ *   layer 6 (MOUSE)  觸控板一動就「自動」升起。你沒有要求它。
+ *   layer 7 (SCROLL) BASE 按住 G / H 才進來。是你刻意要的。
+ *
+ * 自動升起的層必須近乎無害——因為用完觸控板接著打字時，timeout 窗口內每一顆
+ * 鍵都會落在它上面。原本兩層共用這份 bindings，等於 layer 6 有 28 格是活的、
+ * 整排 home row 都是 &msc / &mmv，而位置 1 是 &kp LG(W)（關分頁）、位置 25 是
+ * &kp LS(LG(T))（重開分頁）。打 the 的 e 是游標上移，打 and 三個字母全中。
+ * 那不是 timeout 設太長，是這一層裝了不該裝的東西。
+ *
+ * 所以 layer 6 瘦身成「只有點擊 + 調速 + 逃生口」，其餘全 &trans（見下面的
+ * layer_6）。進階操作全部留在這一層，反正你是刻意按住 G / H 進來的。
+ *
+ * 被移出 layer 6 的東西在別層都有，不會消失：
+ *   位置 6-9   分頁切換 / 上下頁  → NAV 層同位置就有
+ *   位置 30-33 End/PgDn/PgUp/Home → NAV 層同位置就有
+ *   位置 1     &kp LG(W)          → MEDIA 層位置 2
+ *   位置 25    &kp LS(LG(T))      → MEDIA 層位置 22
+ *   鍵盤滾動   → 這一層，或 NAV 的 &tog 14（HJKL 滾輪切換）
+ *
+ * ── 為什麼 6 / 7 必須是兩個 index ─────────────────────────────────────
+ *
+ * 不能合併：input-listener 只認 layer，合併之後觸控板自動升層時就會變成滾動、
+ * 游標永遠動不了。也不能讓 7 去 hold 6——ZMK 的 layer state 是沒有 reference
+ * counting 的共用 bitmask，temp-layer 的 timeout 會跟手動 hold 互相打架。
+ *
+ * 位置 10 (P) 是 &to 0：&to 會把目標層以上的所有層一併關掉，所以它同時也是
+ * 「解除速度鎖定」的逃生口。
  *
  * 拇指 36-41 不需要登記在任何名單裡：toucan-trackpad.dtsi 的
  * excluded-positions 已經留空，語意是「沒有任何鍵能提前結束滑鼠層」，所以動
- * 這裡的 bindings 不用再回頭同步那邊。原因見該檔的註解。
+ * 這裡的 bindings 不用回頭同步那邊。原因見該檔的註解。
  */
-#define PAD_BINDINGS(T36, T37, T38, T39, T40, T41)                                            \
+#define SCROLL_BINDINGS(T36, T37, T38, T39, T40, T41)                                         \
     &trans  &kp LG(W)  &msc MOVE_Y(KB_SCRL)  &mmv MOVE_Y(-KB_MOVE)  &msc MOVE_Y(-KB_SCRL)     \
     &trans  &kp LG(LS(LEFT_BRACKET))  &kp LG(LS(RIGHT_BRACKET))                               \
     &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &to 0  &trans                                \
@@ -531,9 +554,22 @@
         };
 
         /*
-         * MOUSE — 觸控板一動就由 toucan.dtsi 的 &mouse_temp_layer 6 150
-         * 自動升起，停手 150 ms 後掉下來。bindings 與 SCROLL (7) 共用
-         * PAD_BINDINGS，只有六顆拇指不同：這裡指向游標三檔。
+         * MOUSE — 觸控板一動就由 toucan-trackpad.dtsi 的 &mouse_temp_layer
+         * 自動升起，停手後 timeout 才掉下來。
+         *
+         * ⚠️ 這一層刻意「幾乎全空」。它是唯一會在你沒要求時自己升起來的層，
+         * 所以 timeout 窗口內你打的每一顆字都會落在這裡。只留三類東西：
+         *
+         *   26/27/28 (Z/X/C)  左 / 右 / 中鍵——滑鼠層的存在理由
+         *   36-41 (六顆拇指)   三檔調速
+         *   10 (P)            &to 0 逃生口（連速度鎖定一起清掉）
+         *
+         * 其餘 33 格全部 &trans，落回下面的層。所以誤按的代價是「打出原本
+         * 那個字」，而不是關掉分頁或讓頁面亂跳。
+         *
+         * 進階操作（鍵盤滾動、分頁切換、Page Up/Down）搬到 SCROLL (7) 了——
+         * 那層要按住 G / H 才進來，是刻意的，可以放任何東西。理由與各項的
+         * 替代位置見上面 SCROLL_BINDINGS 的註解。
          *
          * 拇指規則：越內側越快、越外側越慢，兩手對稱，全部是「按住」。
          *   36/41 (最內) = 最快 3.75x     37/40 (中)  = 中檔 1.25x
@@ -542,7 +578,9 @@
          */
         layer_6 {
             display-name = "MOUSE";
-            bindings = <PAD_BINDINGS(&mo 10, &mo 9, &mo 8, &mo 8, &mo 9, &mo 10)>;
+            bindings = <
+&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &to 0  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mo 10  &mo 9  &mo 8  &mo 8  &mo 9  &mo 10
+            >;
         };
 
         /*
@@ -552,7 +590,7 @@
          */
         layer_7 {
             display-name = "SCROLL";
-            bindings = <PAD_BINDINGS(&mo 13, &mo 12, &mo 11, &mo 11, &mo 12, &mo 13)>;
+            bindings = <SCROLL_BINDINGS(&mo 13, &mo 12, &mo 11, &mo 11, &mo 12, &mo 13)>;
         };
 
         /*
@@ -629,7 +667,7 @@
 
         /*
          * NAV SCRL — 由 conditional_layers 自動疊上，不要手動 &tog/&mo 它。
-         * 只蓋 NAV 的 hjkl 四格（18-21），方向與 SCROLL 層（PAD_BINDINGS）
+         * 只蓋 NAV 的 hjkl 四格（18-21），方向與 SCROLL 層（SCROLL_BINDINGS）
          * 右手 home row 完全相同；其餘 &trans 落回 NAV——位置 34 也因此
          * 落回 &tog 14，再按一次就切回方向鍵。
          */

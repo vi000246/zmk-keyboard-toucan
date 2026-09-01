@@ -81,17 +81,23 @@
      * 同步（尤其六顆拇指調速鍵，漏了就按不到），是純粹的維護負擔。拿掉之後
      * 動 bindings 不用再回來改這裡。
      *
-     * ⚠️ 這個改動「不會」解決「用完觸控板打字誤觸」。那個問題的根源是 layer 6
-     * 上有 28 格活的綁定、整排 home row 都是 &msc / &mmv（見 config/
-     * toucan.keymap 的 PAD_BINDINGS）。真正的修法是把那一層瘦身。
+     * 空清單本身「不」解決「用完觸控板打字誤觸」——那個問題的根源是 layer 6
+     * 裝了什麼，不是誰能關層。已經一併處理：layer 6 現在只留點擊、六顆調速
+     * 拇指和位置 10 的 &to 0，其餘 32 格全 &trans，進階操作搬到 SCROLL (7)。
+     * 詳見 config/toucan.keymap 的 layer_6 註解。
      *
      * require-prior-idle-ms 是反方向的保護：剛打過字的 N ms 內，觸控板不會
-     * 升起 layer 6（游標仍會動，但點擊鍵不在）。跟上面那件事無關。
+     * 升起 layer 6（游標仍會動，但點擊鍵不在）。200 ms 對齊 QMK 的
+     * AUTO_MOUSE_DELAY 預設值（= TAPPING_TERM）。跟上面那件事無關。
+     *
+     * layer 6 瘦身之後，把下面 listener 的 timeout（目前 150）拉長變成安全的
+     * 選項——誤按的代價已經只是「打出原本那個字」。ergohaven 用 500、QMK 的
+     * AUTO_MOUSE_TIME 預設 650。想要「先定位、停手、再點擊」更穩就往上調。
      */
     /omit-if-no-ref/ mouse_temp_layer: mouse_temp_layer {
         compatible = "zmk,input-processor-temp-layer";
         #input-processor-cells = <2>;
-        require-prior-idle-ms = <150>;
+        require-prior-idle-ms = <200>;
         excluded-positions = <>;
     };
 
