@@ -73,13 +73,22 @@ gh run download <run-id> -R vi000246/zmk-keyboard-toucan -D "$PWD-build/ci"
 dongle 改刷 t-ogura 的 Prospector scanner 韌體，從他的 release 直接下載
 `.uf2` 手動拖進 bootloader 磁碟（不在這個 repo 建置）：
 
-<https://github.com/t-ogura/zmk-config-prospector/releases/tag/v2.2.0>
+<https://github.com/t-ogura/zmk-config-prospector/releases/tag/v2.2.3>
 
-檔名 `prospector_scanner.uf2`（觸控版是 `prospector_scanner_touch.uf2`）。
+檔名 `prospector_scanner-*.uf2`（觸控版是 `prospector_scanner_touch-*.uf2`）。
 
-⚠️ **要 v2.2.0，不是最新的 v2.2.2**——v2.2.1 和 v2.2.2 都沒有附任何 `.uf2`，
-只有原始碼。鍵盤端的模組我們仍釘 v2.2.2（見 `config/west.yml` 的說明）：
-兩邊的 `ZMK_STATUS_ADV_VERSION` 都是 1，廣播格式相同，可以混搭。
+⚠️ **要 v2.2.0 或 v2.2.3**——v2.2.1 和 v2.2.2 都沒有附任何 `.uf2`，只有
+原始碼（v2.2.3 於 2026-09 重新開始附）。鍵盤端的模組我們釘 v2.2.2（見
+`config/west.yml` 的說明）：這幾版的 `ZMK_STATUS_ADV_VERSION` 都是 1，
+廣播格式相同，可以混搭。
+
+層的顯示方式由 scanner 的「layout」決定，跟鍵盤端無關：
+- 預設 layout 0 = YADS：一排層號 0-6、亮起目前那格。
+- **Field (1) / Radii (3) 才會顯示目前的層名**（廣播裡的層名欄位只有
+  4 字元，所以層名取名要 ≤ 4 字，例如 SYM）。
+- 觸控版韌體用滑動手勢切 layout；非觸控版只能在建置時用
+  `CONFIG_PROSPECTOR_DEFAULT_LAYOUT=1` 指定——也就是要 fork
+  `t-ogura/zmk-config-prospector` 改一行 conf，讓它的 GitHub Actions 幫你編。
 
 它只需要 USB 供電，放哪裡都行；關掉、拿走、壞掉都不影響鍵盤。
 

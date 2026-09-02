@@ -49,7 +49,7 @@ from backend.parsers.vial import parse
 
 # Layer names as the user calls them. Max 12 chars — the dongle screen's layer
 # widget truncates at `char text[13]`.
-LAYER_NAMES = ["BASE", "NAV", "NUM", "SYMBOL", "MEDIA", "FUN"]
+LAYER_NAMES = ["BASE", "NAV", "NUM", "SYM", "MEDIA", "FUN"]
 assert all(len(n) <= 12 for n in LAYER_NAMES), "a name would be truncated on screen"
 
 result = zmk_export.export(

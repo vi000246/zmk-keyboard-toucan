@@ -21,7 +21,7 @@
  * 觸控板本身的速度在 boards/shields/toucan/toucan-trackpad.dtsi 的 PAD_* 那組。
  */
 #define KB_SCRL  50   /* &msc 每步的捲動量，ZMK 預設 10 */
-#define KB_MOVE 600   /* &mmv 每步的游標移動量，ZMK 預設 600 */
+#define KB_MOVE 1500  /* &mmv 游標最高速，ZMK 預設 600。accel-exponent=0 ⇒ 全程等速，嫌慢就再往上調 */
 
 /*
  * SCROLL (7) 的 42 格 bindings。
@@ -72,6 +72,38 @@
     &trans  &kp LS(LG(T))  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans                            \
     &kp END  &kp PAGE_DOWN  &kp PAGE_UP  &kp HOME  &trans  &trans                             \
     T36  T37  T38  T39  T40  T41
+
+/*
+ * 調速層疊在「鍵盤滾動 / 游標鍵」上的縮放版。
+ *
+ * 拇指調速原本只作用在觸控板的 input processor 鏈上（toucan-trackpad.dtsi），
+ * &msc / &mmv 是 behavior、不走那條鏈，所以按住調速鍵對鍵盤游標完全沒有效果。
+ * 這個巨集把 SCROLL 層上所有 &msc / &mmv 的格子用縮放過的值再蓋一次，貼在
+ * SCRL 三檔 (11/12/13) 上——它們正是 SCROLL 拇指按住時亮起的層，於是
+ * 「按住 G/H + 拇指調速」對觸控板和鍵盤游標 / 滾輪同時生效。
+ *
+ * 只蓋 11/12/13、刻意「不」蓋 CUR 三檔 (8/9/10)：8/10 可以用 combo 鎖定，
+ * 鎖著打字時這些格子若不是 &trans，E/D/F 那排會變成游標鍵、字打不出來。
+ * SCRL 檔只能按住、按住時左手一定壓在 G/H 上，不會同時打字。
+ *
+ * PCT 跟 toucan-trackpad.dtsi 的 PAD_*_PCT 同值（25/50/150），改比例請兩邊
+ * 一起改。位置對照 SCROLL_BINDINGS：2/4/13/17-21 是 &msc、3/14/15/16 是
+ * &mmv，其餘全 &trans 落回 SCROLL（位置 10 的 &to 0 逃生口也是這樣落下去）。
+ */
+#define KB_TIER_BINDINGS(PCT)                                                                  \
+    &trans  &trans  &msc MOVE_Y((KB_SCRL * PCT / 100))  &mmv MOVE_Y((-KB_MOVE * PCT / 100))   \
+    &msc MOVE_Y((-KB_SCRL * PCT / 100))                                                        \
+    &trans  &trans  &trans                                                                     \
+    &trans  &trans  &trans  &trans                                                             \
+    &trans  &msc MOVE_X((KB_SCRL * PCT / 100))  &mmv MOVE_X((-KB_MOVE * PCT / 100))           \
+    &mmv MOVE_Y((KB_MOVE * PCT / 100))                                                         \
+    &mmv MOVE_X((KB_MOVE * PCT / 100))  &msc MOVE_X((-KB_SCRL * PCT / 100))                   \
+    &msc MOVE_X((KB_SCRL * PCT / 100))                                                         \
+    &msc MOVE_Y((KB_SCRL * PCT / 100))  &msc MOVE_Y((-KB_SCRL * PCT / 100))                   \
+    &msc MOVE_X((-KB_SCRL * PCT / 100))  &trans  &trans                                        \
+    &trans  &trans  &trans  &trans  &trans  &trans                                             \
+    &trans  &trans  &trans  &trans  &trans  &trans                                             \
+    &trans  &trans  &trans  &trans  &trans  &trans
 
 /*
  * Hold-tap feel, carried over from the .vil's QMK settings.
@@ -533,7 +565,14 @@
         };
 
         layer_3 {
-            display-name = "SYMBOL";
+            /*
+             * 名字刻意縮短成 SYM：
+             *   1. nice_view 的層名用 quinquefive_24（每字約 29px），畫布寬 144px，
+             *      SYMBOL 六個字會折行，第二行剛好壓在 y98 起的按鍵小抄上。
+             *   2. Prospector 廣播的層名欄位只有 4 字元，SYMBOL 本來就會被截斷。
+             * 改這裡必須同步改 cheatsheet.c 的 .layer_name（它用層名找表）。
+             */
+            display-name = "SYM";
             bindings = <
 &none  &kp QMARK  &kp EXCL  &kp LBKT  &kp RBKT  &kp KP_PLUS  &kp AT  &kp HASH  &kp DLLR  &kp DQT  &kp GRAVE  &none  &none  &kp LT  &kp GT  &kp LPAR  &kp RPAR  &kp MINUS  &kp TILDE  &mt LSHFT SQT  &kp LGUI  &kp LCTRL  &mt LALT COLON  &none  &none  &kp PIPE  &kp AMPS  &kp LBRC  &kp RBRC  &kp KP_EQUAL  &kp CARET  &kp STAR  &kp COMMA  &kp BSLH  &kp FSLH  &none  &kp UNDER  &kp DOT  &kp PRCNT  &kp LS(LC(LA(LG(E))))  &kp LA(SPACE)  &kp LC(LG(A))
             >;
@@ -594,12 +633,16 @@
         };
 
         /*
-         * 以下六層都是 marker layer：本身不綁任何功能，存在的意義就是讓
-         * toucan.dtsi 的 input-listener 知道要換哪一條處理鏈。全部 &trans，
-         * 這樣按住的時候底下那層的按鍵照常可用。
+         * 以下六層是調速用的 marker layer：讓 toucan-trackpad.dtsi 的
+         * input-listener 知道要換哪一條處理鏈。
          *
-         * 可鎖定的兩層 (8 最慢 / 10 最快) 在位置 10 (P) 放 &to 0：鎖定之後
-         * 觸控板停下、layer 6 掉了，這是唯一能把鎖定清掉的逃生口。
+         * CUR 三檔 (8/9/10) 全 &trans——8/10 可以被 combo 鎖定，鎖著打字時
+         * 每一格都必須落回底下的層。可鎖定的兩層在位置 10 (P) 放 &to 0：
+         * 鎖定之後觸控板停下、layer 6 掉了，這是唯一能清掉鎖定的逃生口。
+         *
+         * SCRL 三檔 (11/12/13) 疊上 KB_TIER_BINDINGS：除了給 input-listener
+         * 當滾動調速的記號，同時把鍵盤的 &msc / &mmv 換成縮放過的值，讓
+         * 拇指調速對鍵盤游標 / 滾輪也生效（理由見巨集上方的註解）。
          */
         layer_8 {
             display-name = "CUR SLOWEST";
@@ -624,23 +667,17 @@
 
         layer_11 {
             display-name = "SCRL SLOWEST";
-            bindings = <
-&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
-            >;
+            bindings = <KB_TIER_BINDINGS(25)>;
         };
 
         layer_12 {
             display-name = "SCRL SLOW";
-            bindings = <
-&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
-            >;
+            bindings = <KB_TIER_BINDINGS(50)>;
         };
 
         layer_13 {
             display-name = "SCRL FAST";
-            bindings = <
-&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
-            >;
+            bindings = <KB_TIER_BINDINGS(150)>;
         };
 
         /*

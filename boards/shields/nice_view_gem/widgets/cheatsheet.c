@@ -38,7 +38,7 @@ struct cheat_sheet {
 
 static const struct cheat_sheet sheets[] = {
     {
-        .layer_name = "SYMBOL",
+        .layer_name = "SYM", /* = keymap 裡該層的 display-name，改名要同步 */
         .cell =
             {
                 /* 位置  1    2    3    4    5  ｜   6    7    8    9   10 */
