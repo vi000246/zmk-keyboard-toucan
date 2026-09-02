@@ -2,5 +2,17 @@ name: Build ZMK firmware
 on: [push, pull_request, workflow_dispatch]
 
 jobs:
+  # 鍵盤（左半 / 右半 / settings_reset），ZMK v0.3，manifest 在 config/。
   build:
     uses: zmkfirmware/zmk/.github/workflows/build-user-config.yml@v0.3
+
+  # Prospector scanner（dongle 顯示器），ZMK main，manifest 在 scanner/。
+  # 跟鍵盤分成兩個 job 是因為兩邊釘不同的 zmk 版本，一份 west.yml 塞不下。
+  # 產物叫 prospector_scanner_custom（跟鍵盤的 firmware 分開）。
+  # 還原方式見 DONGLE-RESTORE.md。
+  scanner:
+    uses: zmkfirmware/zmk/.github/workflows/build-user-config.yml@main
+    with:
+      config_path: scanner
+      build_matrix_path: scanner/build.yaml
+      archive_name: prospector_scanner_custom

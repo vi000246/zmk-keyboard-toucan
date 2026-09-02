@@ -70,26 +70,28 @@ gh run download <run-id> -R vi000246/zmk-keyboard-toucan -D "$PWD-build/ci"
 顯示：  左半 ──單向 BLE 廣播──▶ Prospector（被動收聽，不配對、不連線）
 ```
 
-dongle 改刷 t-ogura 的 Prospector scanner 韌體，從他的 release 直接下載
-`.uf2` 手動拖進 bootloader 磁碟（不在這個 repo 建置）：
+dongle 改刷 Prospector scanner 韌體。**2026-09-02 起改在這個 repo 自建**
+（Radii layout：顯示目前層名、沒有 WPM，外加 SYM 層按鍵小抄）：
 
-<https://github.com/t-ogura/zmk-config-prospector/releases/tag/v2.2.3>
+1. GitHub Actions 每次 push 會產出 `prospector_scanner_custom` artifact
+   （scanner job，跟鍵盤的 `firmware` 是分開的兩個 zip）。
+2. 解壓拿 `prospector_scanner-xiao_ble_nrf52840_zmk-zmk.uf2`，dongle 連按
+   兩下 RST 進 bootloader、拖進去。
 
-檔名 `prospector_scanner-*.uf2`（觸控版是 `prospector_scanner_touch-*.uf2`）。
+自建的內容、可調選項、以及**還原成官方韌體的步驟**都在
+[`DONGLE-RESTORE.md`](DONGLE-RESTORE.md)。官方 release（YADS 層號列 +
+WPM）永遠是安全的 fallback：v2.2.0 或 v2.2.3 有附 `.uf2`（v2.2.1 /
+v2.2.2 只有原始碼），跟自訂版可以隨時互刷、鍵盤完全不用動。
 
-⚠️ **要 v2.2.0 或 v2.2.3**——v2.2.1 和 v2.2.2 都沒有附任何 `.uf2`，只有
-原始碼（v2.2.3 於 2026-09 重新開始附）。鍵盤端的模組我們釘 **v2.0.0**
-（跟原廠 scanner 分支相同；v2.2.x 鍵盤端的廣播會干擾 split 觸控板，
-原因見 `config/west.yml` 的說明）：這幾版的 `ZMK_STATUS_ADV_VERSION`
-都是 1，廣播格式相同，可以混搭。
+鍵盤端的模組釘 **v2.0.0**（跟原廠 scanner 分支相同；v2.2.x 鍵盤端的廣播
+會干擾 split 觸控板，原因見 `config/west.yml` 的說明）。各版本的
+`ZMK_STATUS_ADV_VERSION` 都是 1，廣播格式相同，可以混搭。
 
-層的顯示方式由 scanner 的「layout」決定，跟鍵盤端無關：
-- 預設 layout 0 = YADS：一排層號 0-6、亮起目前那格。
-- **Field (1) / Radii (3) 才會顯示目前的層名**（廣播裡的層名欄位只有
-  4 字元，所以層名取名要 ≤ 4 字，例如 SYM）。
-- 觸控版韌體用滑動手勢切 layout；非觸控版只能在建置時用
-  `CONFIG_PROSPECTOR_DEFAULT_LAYOUT=1` 指定——也就是要 fork
-  `t-ogura/zmk-config-prospector` 改一行 conf，讓它的 GitHub Actions 幫你編。
+（背景知識：層的顯示方式由 scanner 的 layout 決定，跟鍵盤端無關。
+0=YADS 層號列、1=Field WPM 動畫、2=Operator、3=Radii 層名輪盤。廣播的
+層名欄位只有 4 字元，層名取名要 ≤ 4 字，例如 SYM。非觸控版 layout 開機
+固定，在 `scanner/prospector_scanner.conf` 的
+`CONFIG_PROSPECTOR_DEFAULT_LAYOUT` 選。）
 
 它只需要 USB 供電，放哪裡都行；關掉、拿走、壞掉都不影響鍵盤。
 

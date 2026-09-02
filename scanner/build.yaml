@@ -1,0 +1,13 @@
+# Prospector scanner（dongle）建置矩陣，由 .github/workflows/build.yml 的
+# scanner job 使用（build_matrix_path: scanner/build.yaml）。
+#
+# cmake-args 的 ZMK_EXTRA_MODULES 會「覆蓋」reusable workflow 自動加的那個
+# （它因為 repo 根目錄有 zephyr/module.yml 而自動掛整個 repo；west build
+# 指令列上 matrix.cmake-args 排在後面，cmake 同名 -D 後者勝）。刻意覆蓋：
+# scanner 建置只需要 vendor 進來的模組，不需要 toucan 的 shield。
+---
+include:
+  - board: xiao_ble/nrf52840/zmk
+    shield: prospector_scanner
+    cmake-args: -DZMK_EXTRA_MODULES="${GITHUB_WORKSPACE}/scanner-module"
+    artifact-name: prospector_scanner_custom

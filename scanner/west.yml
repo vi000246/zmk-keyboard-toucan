@@ -1,0 +1,26 @@
+# Prospector scanner（dongle 顯示器）專用的 west manifest。
+#
+# 為什麼跟 config/west.yml 分開：scanner 韌體需要 ZMK main（LVGL 9 / hwmv2
+# 板名 xiao_ble/nrf52840/zmk），鍵盤韌體釘 ZMK v0.3——一份 manifest 塞不下
+# 兩個 zmk 版本，所以 .github/workflows/build.yml 用兩個 job、各指各的
+# config_path。
+#
+# 這裡「沒有」prospector-zmk-module 這個 project：模組已 vendor 進
+# ../scanner-module（為了改 radii_layout.c 加 SYM 小抄），由
+# scanner/build.yaml 的 -DZMK_EXTRA_MODULES 掛進來。upstream 原始碼:
+# https://github.com/t-ogura/prospector-zmk-module （vendor 自 v2.2.3）
+#
+# 還原方式見 repo 根目錄 DONGLE-RESTORE.md。
+manifest:
+  remotes:
+    - name: zmkfirmware
+      url-base: https://github.com/zmkfirmware
+  projects:
+    - name: zmk
+      remote: zmkfirmware
+      # upstream（t-ogura/zmk-config-prospector）用 revision: main。這裡釘
+      # 2026-09-02 的 main HEAD 求可重現；哪天要更新就把 SHA 換成新的 main。
+      revision: 641514a97db345f499dd50b0360e594270f008fe
+      import: app/west.yml
+  self:
+    path: scanner
