@@ -24,7 +24,10 @@ scanner-module/boards/shields/prospector_scanner/src/radii_layout.c
 ```
 
 vendor 基準版本：`t-ogura/prospector-zmk-module` **v2.2.3**（未改動的部分
-與 upstream tarball 完全相同）。scanner 的 zmk 釘在 main 的
+與 upstream tarball 完全相同，唯一例外：upstream 的 `.gitignore` 沒有帶
+進來——它的 `zmk/`、`zephyr/`、`modules/` 規則會把 `include/zmk/`、
+`zephyr/module.yml` 等「必要檔案」擋在 git 之外，害 CMake 認不得這個
+module）。scanner 的 zmk 釘在 main 的
 `641514a97db345f499dd50b0360e594270f008fe`（2026-09-02）。
 
 ⚠️ 注意：這跟**鍵盤**韌體完全無關。鍵盤端（`config/west.yml`）釘的
