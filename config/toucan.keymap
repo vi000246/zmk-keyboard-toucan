@@ -17,11 +17,24 @@
 #include <dt-bindings/zmk/outputs.h>
 
 /*
- * 鍵盤上的滑鼠鍵每一步的量。這裡只管「用鍵盤推游標 / 滾輪」，
+ * 鍵盤滑鼠鍵的速度（&mmv 游標 / &msc 滾輪）。這裡只管「用鍵盤推游標 / 滾輪」，
  * 觸控板本身的速度在 boards/shields/toucan/toucan-trackpad.dtsi 的 PAD_* 那組。
+ *
+ * ⚠️ 2026-09-02 起不再用 #define / 函式巨集，速度全部寫成字面數字——
+ * nickcoutsos keymap-editor 的 parser 不吃 bindings 裡的自訂前處理器巨集，
+ * 看到就整份拒收（MOVE_X/MOVE_Y/LS() 這類 ZMK 官方巨集沒問題）。
+ * 代價是「改速度要同步改多處」，對照表：
+ *
+ *   游標基準 1500（ZMK 預設 600；下面 &mmv 設 accel-exponent=0 ⇒ 全程等速）
+ *     出現處：SCROLL(7) 的 ±1500 四格
+ *   滾輪基準 50（ZMK 預設 10）
+ *     出現處：SCROLL(7) 與 NAV SCRL(15) 的 ±50
+ *   調速三檔 = 基準 × 25% / 50% / 150%（跟 toucan-trackpad.dtsi 的
+ *   PAD_*_PCT 同比例，改比例請兩邊一起改）：
+ *     SCRL SLOWEST(11)：游標 ±375   滾輪 ±12
+ *     SCRL SLOW(12)   ：游標 ±750   滾輪 ±25
+ *     SCRL FAST(13)   ：游標 ±2250  滾輪 ±75
  */
-#define KB_SCRL  50   /* &msc 每步的捲動量，ZMK 預設 10 */
-#define KB_MOVE 1500  /* &mmv 游標最高速，ZMK 預設 600。accel-exponent=0 ⇒ 全程等速，嫌慢就再往上調 */
 
 /*
  * SCROLL (7) 的 42 格 bindings。
@@ -61,49 +74,10 @@
  * 拇指 36-41 不需要登記在任何名單裡：toucan-trackpad.dtsi 的
  * excluded-positions 已經留空，語意是「沒有任何鍵能提前結束滑鼠層」，所以動
  * 這裡的 bindings 不用回頭同步那邊。原因見該檔的註解。
+ *
+ * （這一層跟 SCRL 三檔的 bindings 以前是用巨集展開共用的，為了
+ * keymap-editor 已攞平成字面 bindings——見檔頭速度對照表。）
  */
-#define SCROLL_BINDINGS(T36, T37, T38, T39, T40, T41)                                         \
-    &trans  &kp LG(W)  &msc MOVE_Y(KB_SCRL)  &mmv MOVE_Y(-KB_MOVE)  &msc MOVE_Y(-KB_SCRL)     \
-    &trans  &kp LG(LS(LEFT_BRACKET))  &kp LG(LS(RIGHT_BRACKET))                               \
-    &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &to 0  &trans                                \
-    &trans  &msc MOVE_X(KB_SCRL)  &mmv MOVE_X(-KB_MOVE)  &mmv MOVE_Y(KB_MOVE)                 \
-    &mmv MOVE_X(KB_MOVE)  &msc MOVE_X(-KB_SCRL)  &msc MOVE_X(KB_SCRL)                         \
-    &msc MOVE_Y(KB_SCRL)  &msc MOVE_Y(-KB_SCRL)  &msc MOVE_X(-KB_SCRL)  &trans  &trans        \
-    &trans  &kp LS(LG(T))  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans                            \
-    &kp END  &kp PAGE_DOWN  &kp PAGE_UP  &kp HOME  &trans  &trans                             \
-    T36  T37  T38  T39  T40  T41
-
-/*
- * 調速層疊在「鍵盤滾動 / 游標鍵」上的縮放版。
- *
- * 拇指調速原本只作用在觸控板的 input processor 鏈上（toucan-trackpad.dtsi），
- * &msc / &mmv 是 behavior、不走那條鏈，所以按住調速鍵對鍵盤游標完全沒有效果。
- * 這個巨集把 SCROLL 層上所有 &msc / &mmv 的格子用縮放過的值再蓋一次，貼在
- * SCRL 三檔 (11/12/13) 上——它們正是 SCROLL 拇指按住時亮起的層，於是
- * 「按住 G/H + 拇指調速」對觸控板和鍵盤游標 / 滾輪同時生效。
- *
- * 只蓋 11/12/13、刻意「不」蓋 CUR 三檔 (8/9/10)：8/10 可以用 combo 鎖定，
- * 鎖著打字時這些格子若不是 &trans，E/D/F 那排會變成游標鍵、字打不出來。
- * SCRL 檔只能按住、按住時左手一定壓在 G/H 上，不會同時打字。
- *
- * PCT 跟 toucan-trackpad.dtsi 的 PAD_*_PCT 同值（25/50/150），改比例請兩邊
- * 一起改。位置對照 SCROLL_BINDINGS：2/4/13/17-21 是 &msc、3/14/15/16 是
- * &mmv，其餘全 &trans 落回 SCROLL（位置 10 的 &to 0 逃生口也是這樣落下去）。
- */
-#define KB_TIER_BINDINGS(PCT)                                                                  \
-    &trans  &trans  &msc MOVE_Y((KB_SCRL * PCT / 100))  &mmv MOVE_Y((-KB_MOVE * PCT / 100))   \
-    &msc MOVE_Y((-KB_SCRL * PCT / 100))                                                        \
-    &trans  &trans  &trans                                                                     \
-    &trans  &trans  &trans  &trans                                                             \
-    &trans  &msc MOVE_X((KB_SCRL * PCT / 100))  &mmv MOVE_X((-KB_MOVE * PCT / 100))           \
-    &mmv MOVE_Y((KB_MOVE * PCT / 100))                                                         \
-    &mmv MOVE_X((KB_MOVE * PCT / 100))  &msc MOVE_X((-KB_SCRL * PCT / 100))                   \
-    &msc MOVE_X((KB_SCRL * PCT / 100))                                                         \
-    &msc MOVE_Y((KB_SCRL * PCT / 100))  &msc MOVE_Y((-KB_SCRL * PCT / 100))                   \
-    &msc MOVE_X((-KB_SCRL * PCT / 100))  &trans  &trans                                        \
-    &trans  &trans  &trans  &trans  &trans  &trans                                             \
-    &trans  &trans  &trans  &trans  &trans  &trans                                             \
-    &trans  &trans  &trans  &trans  &trans  &trans
 
 /*
  * Hold-tap feel, carried over from the .vil's QMK settings.
@@ -608,7 +582,7 @@
          *
          * 進階操作（鍵盤滾動、分頁切換、Page Up/Down）搬到 SCROLL (7) 了——
          * 那層要按住 G / H 才進來，是刻意的，可以放任何東西。理由與各項的
-         * 替代位置見上面 SCROLL_BINDINGS 的註解。
+         * 替代位置見上面 SCROLL (7) 的註解。
          *
          * 拇指規則：越內側越快、越外側越慢，兩手對稱，全部是「按住」。
          *   36/41 (最內) = 最快 3.75x     37/40 (中)  = 中檔 1.25x
@@ -626,10 +600,13 @@
          * SCROLL — BASE 按住 G / H (&lt 7) 進入，觸控板變滾輪。
          * scroller_default 在 toucan.dtsi 用 layers = <1 2 7> 認這一層。
          * 拇指位置與 MOUSE 相同，但指向滾動三檔；滾動刻意不提供鎖定。
+         * 游標 ±1500 / 滾輪 ±50 = 全鍵盤速度基準，見檔頭對照表。
          */
         layer_7 {
             display-name = "SCROLL";
-            bindings = <SCROLL_BINDINGS(&mo 13, &mo 12, &mo 11, &mo 11, &mo 12, &mo 13)>;
+            bindings = <
+&trans  &kp LG(W)  &msc MOVE_Y(50)  &mmv MOVE_Y(-1500)  &msc MOVE_Y(-50)  &trans  &kp LG(LS(LEFT_BRACKET))  &kp LG(LS(RIGHT_BRACKET))  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &to 0  &trans  &trans  &msc MOVE_X(50)  &mmv MOVE_X(-1500)  &mmv MOVE_Y(1500)  &mmv MOVE_X(1500)  &msc MOVE_X(-50)  &msc MOVE_X(50)  &msc MOVE_Y(50)  &msc MOVE_Y(-50)  &msc MOVE_X(-50)  &trans  &trans  &trans  &kp LS(LG(T))  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &kp END  &kp PAGE_DOWN  &kp PAGE_UP  &kp HOME  &trans  &trans  &mo 13  &mo 12  &mo 11  &mo 11  &mo 12  &mo 13
+            >;
         };
 
         /*
@@ -640,9 +617,16 @@
          * 每一格都必須落回底下的層。可鎖定的兩層在位置 10 (P) 放 &to 0：
          * 鎖定之後觸控板停下、layer 6 掉了，這是唯一能清掉鎖定的逃生口。
          *
-         * SCRL 三檔 (11/12/13) 疊上 KB_TIER_BINDINGS：除了給 input-listener
-         * 當滾動調速的記號，同時把鍵盤的 &msc / &mmv 換成縮放過的值，讓
-         * 拇指調速對鍵盤游標 / 滾輪也生效（理由見巨集上方的註解）。
+         * SCRL 三檔 (11/12/13) 不只是記號：同時把 SCROLL 層上所有
+         * &msc / &mmv 的格子用「縮放過的字面數字」再蓋一次（&msc/&mmv 是
+         * behavior、不走觸控板的 input processor 鏈，不蓋的話調速鍵對鍵盤
+         * 游標完全沒效果）。於是「按住 G/H + 拇指調速」對觸控板和鍵盤
+         * 游標 / 滾輪同時生效。數字對照表在檔頭。
+         *
+         * 刻意「不」蓋可鎖定的 CUR 三檔 (8/10)：鎖著打字時這些格子若不是
+         * &trans，E/D/F 那排會變成游標鍵、字打不出來。SCRL 檔只能按住、
+         * 按住時左手一定壓在 G/H 上，不會同時打字。其餘格子全 &trans 落回
+         * SCROLL（位置 10 的 &to 0 逃生口也是這樣落下去）。
          */
         layer_8 {
             display-name = "CUR SLOWEST";
@@ -665,19 +649,28 @@
             >;
         };
 
+        /* 基準的 25%：游標 ±375、滾輪 ±12 */
         layer_11 {
             display-name = "SCRL SLOWEST";
-            bindings = <KB_TIER_BINDINGS(25)>;
+            bindings = <
+&trans  &trans  &msc MOVE_Y(12)  &mmv MOVE_Y(-375)  &msc MOVE_Y(-12)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &msc MOVE_X(12)  &mmv MOVE_X(-375)  &mmv MOVE_Y(375)  &mmv MOVE_X(375)  &msc MOVE_X(-12)  &msc MOVE_X(12)  &msc MOVE_Y(12)  &msc MOVE_Y(-12)  &msc MOVE_X(-12)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
+            >;
         };
 
+        /* 基準的 50%：游標 ±750、滾輪 ±25 */
         layer_12 {
             display-name = "SCRL SLOW";
-            bindings = <KB_TIER_BINDINGS(50)>;
+            bindings = <
+&trans  &trans  &msc MOVE_Y(25)  &mmv MOVE_Y(-750)  &msc MOVE_Y(-25)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &msc MOVE_X(25)  &mmv MOVE_X(-750)  &mmv MOVE_Y(750)  &mmv MOVE_X(750)  &msc MOVE_X(-25)  &msc MOVE_X(25)  &msc MOVE_Y(25)  &msc MOVE_Y(-25)  &msc MOVE_X(-25)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
+            >;
         };
 
+        /* 基準的 150%：游標 ±2250、滾輪 ±75 */
         layer_13 {
             display-name = "SCRL FAST";
-            bindings = <KB_TIER_BINDINGS(150)>;
+            bindings = <
+&trans  &trans  &msc MOVE_Y(75)  &mmv MOVE_Y(-2250)  &msc MOVE_Y(-75)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &msc MOVE_X(75)  &mmv MOVE_X(-2250)  &mmv MOVE_Y(2250)  &mmv MOVE_X(2250)  &msc MOVE_X(-75)  &msc MOVE_X(75)  &msc MOVE_Y(75)  &msc MOVE_Y(-75)  &msc MOVE_X(-75)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
+            >;
         };
 
         /*
@@ -704,14 +697,14 @@
 
         /*
          * NAV SCRL — 由 conditional_layers 自動疊上，不要手動 &tog/&mo 它。
-         * 只蓋 NAV 的 hjkl 四格（18-21），方向與 SCROLL 層（SCROLL_BINDINGS）
+         * 只蓋 NAV 的 hjkl 四格（18-21），方向與 SCROLL 層
          * 右手 home row 完全相同；其餘 &trans 落回 NAV——位置 34 也因此
          * 落回 &tog 14，再按一次就切回方向鍵。
          */
         layer_15 {
             display-name = "NAV SCRL";
             bindings = <
-&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &msc MOVE_X(KB_SCRL)  &msc MOVE_Y(KB_SCRL)  &msc MOVE_Y(-KB_SCRL)  &msc MOVE_X(-KB_SCRL)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &msc MOVE_X(50)  &msc MOVE_Y(50)  &msc MOVE_Y(-50)  &msc MOVE_X(-50)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
             >;
         };
 
