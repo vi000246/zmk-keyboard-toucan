@@ -78,9 +78,10 @@ dongle 改刷 t-ogura 的 Prospector scanner 韌體，從他的 release 直接�
 檔名 `prospector_scanner-*.uf2`（觸控版是 `prospector_scanner_touch-*.uf2`）。
 
 ⚠️ **要 v2.2.0 或 v2.2.3**——v2.2.1 和 v2.2.2 都沒有附任何 `.uf2`，只有
-原始碼（v2.2.3 於 2026-09 重新開始附）。鍵盤端的模組我們釘 v2.2.2（見
-`config/west.yml` 的說明）：這幾版的 `ZMK_STATUS_ADV_VERSION` 都是 1，
-廣播格式相同，可以混搭。
+原始碼（v2.2.3 於 2026-09 重新開始附）。鍵盤端的模組我們釘 **v2.0.0**
+（跟原廠 scanner 分支相同；v2.2.x 鍵盤端的廣播會干擾 split 觸控板，
+原因見 `config/west.yml` 的說明）：這幾版的 `ZMK_STATUS_ADV_VERSION`
+都是 1，廣播格式相同，可以混搭。
 
 層的顯示方式由 scanner 的「layout」決定，跟鍵盤端無關：
 - 預設 layout 0 = YADS：一排層號 0-6、亮起目前那格。
