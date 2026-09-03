@@ -7,7 +7,6 @@
  * Read CONVERSION-REPORT.md first: it lists everything that did not map
  * cleanly from QMK to ZMK.
  */
-
 /*
  * ── 層名：全部 ≤ 4 字元，這是硬約束 ─────────────────────────────────────
  *
@@ -664,7 +663,7 @@
         layer_6 {
             display-name = "PAD";
             bindings = <
-&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &to 0  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mo 10  &mo 9  &mo 8  &mo 8  &mo 9  &mo 10
+&trans  &trans  &trans  &trans  &trans  &trans  &mkp MCLK  &trans  &trans  &trans  &to 0  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &mkp LCLK  &mkp RCLK  &trans  &trans  &trans  &trans  &mo 10  &mo 9  &mo 8  &mo 8  &mo 9  &mo 10
             >;
         };
 
