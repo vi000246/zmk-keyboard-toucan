@@ -593,7 +593,7 @@
              */
 
             bindings = <
-&none  &cc_exit  &cc_clear  &none  &cc_rename  &macro4  &kp LS(LG(LEFT_BRACKET))  &kp LS(LG(RIGHT_BRACKET))  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &to 0  &none  &none  &kp LALT  &kp LCTRL  &kp LGUI  &kp LSHFT  &trans  &kp LEFT  &kp DOWN  &kp UP  &kp RIGHT  &td_ptt  &none  &none  &cc_effort  &cc_model  &cc_continue  &cc_usage  &claude  &kp END  &kp PG_DN  &kp PG_UP  &kp HOME  &tog 14  &none  &none  &none  &kp ESC  &kp BSPC  &kp DEL  &kp F19
+&none  &cc_exit  &cc_clear  &none  &cc_rename  &macro4  &kp LS(LG(LEFT_BRACKET))  &kp LS(LG(RIGHT_BRACKET))  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &to 0  &none  &none  &kp LALT  &kp LCTRL  &kp LGUI  &kp LSHFT  &trans  &kp LEFT  &kp DOWN  &kp UP  &kp RIGHT  &td_ptt  &none  &none  &cc_effort  &kp LA(P)  &cc_continue  &cc_usage  &claude  &kp END  &kp PG_DN  &kp PG_UP  &kp HOME  &tog 14  &none  &none  &none  &kp ESC  &kp BSPC  &kp DEL  &kp F19
             >;
         };
 
