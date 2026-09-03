@@ -8,9 +8,11 @@
 
 | 項目 | 內容 |
 |---|---|
-| 預設 layout | Radii（輪盤 + 目前**層名**大字）。取代原本的 YADS（一排層號）。Radii 是唯一**沒有 WPM 手速統計**的 layout——「顯示層名」跟「拔掉手速」都是它 |
-| SYM 按鍵小抄 | 廣播層名 = `SYM` 時，dongle 全螢幕蓋一張 3×10 的符號小抄；離開該層自動消失 |
-| 輪盤格數 | `CONFIG_PROSPECTOR_MAX_LAYERS=10`（上限就是 10；鍵盤有 17 層，>9 的層輪盤不亮格，層名照顯示） |
+| 預設 layout | Radii（layout 3）。2026-09-03 起**整個重寫成 Toucan 專用的儀表板**，見下表。仍是唯一**沒有 WPM 手速統計**的 layout |
+| 儀表板版面 | 左緣 17 格 ladder（一格一層）＋ 大字層名（固定 4 字元單行）＋ 兩行英文副標 ＋ 電量數字/bar ＋ 修飾鍵 2×2 ＋ BLE 四點。全暗底 |
+| 層名來源 | 大字用**廣播帶來的 display-name**；副標走 `radii_layout.c` 的本地 `LAYERS[]` 表，用 `active_layer` 當 index 查，不受廣播 4 bytes 限制 |
+| SYM 按鍵小抄 | 廣播層名 = `SYM` 時，dongle 全螢幕蓋一張 3×10 的符號小抄；離開該層自動消失。面板寬度已從 240 修正為 280（原本右邊會漏 40px） |
+| ladder 格數 | 由 `radii_layout.c` 的 `LAYERS[]` 筆數決定（目前 17），配 `BUILD_ASSERT`。**不再讀 `CONFIG_PROSPECTOR_MAX_LAYERS`**——那個上限只到 10，裝不下 17 層，正是改寫的原因之一 |
 
 ## 動到的檔案（= 要還原就動這些）
 
@@ -84,7 +86,11 @@ repo 還原後，dongle 上如果還跑著自訂韌體，照 Step A 刷回官方
 
 | 想改什麼 | 去哪改 |
 |---|---|
-| 換回有 WPM 的 layout / 換 layout | `scanner/prospector_scanner.conf` 的 `CONFIG_PROSPECTOR_DEFAULT_LAYOUT`（0=YADS 1=Field 2=Operator 3=Radii） |
-| 小抄的內容 / 觸發層名 | `scanner-module/.../src/radii_layout.c` 的 `cheat_rows` / `CHEAT_LAYER_NAME` |
+| 換回有 WPM 的 layout / 換 layout | `scanner/prospector_scanner.conf` 的 `CONFIG_PROSPECTOR_DEFAULT_LAYOUT`（0=YADS 1=Field 2=Operator 3=Radii 儀表板） |
+| 副標文字 | `scanner-module/.../src/radii_layout.c` 的 `LAYERS[]`。**加/刪/重排鍵盤層數時一定要同步**（只改層名不用），漏了會編譯失敗（BUILD_ASSERT）或副標對到錯的層 |
+| 配色 | 同檔 `color_palettes[]`，4 組暗色（Mint / Amber / Ice / Rose）。非觸控模式開機固定用第 0 個 |
+| 版面座標 | 同檔頂端的 `LADDER_* / TEXT_X / COL_X / RIGHT_X / BAR_*` 常數 |
+| 大字層名字級 | 同檔 `create_text_column()` 的 `FR_Regular_48`。⚠️ 換字型前先看 `fonts_carrefinho.h` 記的 glyph 範圍——`FG_Medium_20` / `FG_Medium_26` 只到 0x60，**沒有小寫**，而層名有 `-` `+`、副標有小寫 |
+| 小抄的內容 / 觸發層名 | 同檔 `cheat_rows` / `CHEAT_LAYER_NAME` |
 | 亮度、逾時變暗、轉 180° | `scanner/prospector_scanner.conf` 加 `CONFIG_PROSPECTOR_FIXED_BRIGHTNESS` / `CONFIG_PROSPECTOR_SCANNER_TIMEOUT_MS` / `CONFIG_PROSPECTOR_ROTATE_DISPLAY_180`（完整清單見 `scanner-module/Kconfig`） |
 | 升級 upstream 模組 | 下載新版 tarball 覆蓋 `scanner-module/`，再把 radii_layout.c 的小抄 patch 重新套上（搜 CHEAT_LAYER_NAME 的四段），必要時更新 `scanner/west.yml` 釘的 zmk SHA |
