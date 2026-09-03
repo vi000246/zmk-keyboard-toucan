@@ -38,6 +38,11 @@
     };
 };
 
-&glidepoint_listener {
+/*
+ * 2026-09-03 隨感測器換代改名（glidepoint_listener -> trackpad_listener）。
+ * dongle 早已退出 split、build.yaml 裡的 target 也註解掉了，這個檔案純粹是
+ * rollback 路徑——但名字不跟著改的話，真要 rollback 時會直接編不過。
+ */
+&trackpad_listener {
     status = "okay";
 };

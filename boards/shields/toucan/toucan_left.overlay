@@ -4,7 +4,7 @@
 
 /*
  * 左半是 split central，觸控板的處理鏈跑在這裡。右半只負責把感測器的原始
- * 事件經 input-split 送過來（見 toucan_right.overlay 的 &glidepoint_split）。
+ * 事件經 input-split 送過來（見 toucan_right.overlay 的 &trackpad_split）。
  */
 #include "toucan-trackpad.dtsi"
 
@@ -99,6 +99,6 @@ nice_view_spi: &spi0 {
  * 只有 central 能跑 input listener——它要讀 layer 狀態才能分派三檔速度。
  * 右半那側這個節點維持 disabled。
  */
-&glidepoint_listener {
+&trackpad_listener {
     status = "okay";
 };

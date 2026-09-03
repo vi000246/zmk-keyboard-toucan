@@ -80,10 +80,19 @@ if SHIELD_TOUCAN_DONGLE || SHIELD_TOUCAN_RIGHT || SHIELD_TOUCAN_LEFT
         default y
 endif
 
-if SHIELD_TOUCAN_LEFT || SHIELD_TOUCAN_RIGHT
+# SPI 現在只有左半需要——nice_view 掛在 spi0 上。
+# 右半 2026-09-03 起是 I2C（Azoteq TPS43），而 nRF52840 的 SPIM0 / TWIM0 是
+# 同一顆周邊，兩者不能並存：右半開了 SPI 反而會跟觸控板搶。
+if SHIELD_TOUCAN_LEFT
 
 config SPI
     default y
+
+endif
+
+# 右半的 I2C 在 toucan_right.conf（連同 CONFIG_INPUT_TPS43 一起）。
+
+if SHIELD_TOUCAN_LEFT || SHIELD_TOUCAN_RIGHT
 
 config ZMK_SPLIT
     default y

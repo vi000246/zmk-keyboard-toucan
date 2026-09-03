@@ -2,9 +2,17 @@
 #include <input/processors.dtsi>
 #include <dt-bindings/zmk/input_transform.h>
 
-&xiao_i2c {
-    status = "disabled";
-};
+/*
+ * 右半 = split peripheral，持有實體觸控板感測器。
+ *
+ * 2026-09-03：Cirque Pinnacle (SPI0) → Azoteq TPS43 (I2C0 @0x74)。
+ * 這台是 toucan2，硬體跟 repo 原本 fork 的 toucan1 不同，詳細比較與腳位
+ * 對撞表見 config/west.yml 的 zmk_driver_azoteq 那段註解。
+ *
+ * ⚠️ 不要在這裡把 xiao_i2c 設 disabled——它是 &i2c0 的 label 別名，關掉
+ *    等於關掉觸控板的匯流排。（左半才需要關：那邊 spi0 給 nice_view 用，
+ *    而 nRF52840 的 SPIM0 / TWIM0 是同一顆周邊，兩者不能並存。）
+ */
 
 &default_transform {
     col-offset = <6>;
@@ -29,52 +37,113 @@
 };
 
 &pinctrl {
-    spi0_default: spi0_default {
+    i2c0_azoteq_default: i2c0_azoteq_default {
         group1 {
-            psels = <NRF_PSEL(SPIM_SCK, 1, 13)>,
-                <NRF_PSEL(SPIM_MOSI, 1, 15)>,
-                <NRF_PSEL(SPIM_MISO, 1, 14)>;
+            psels = <NRF_PSEL(TWIM_SDA, 1, 13)>,
+                    <NRF_PSEL(TWIM_SCL, 1, 15)>;
+            bias-pull-up;
         };
     };
 
-     spi0_sleep: spi0_sleep {
+    i2c0_azoteq_sleep: i2c0_azoteq_sleep {
         group1 {
-            psels = <NRF_PSEL(SPIM_SCK, 1, 13)>,
-                    <NRF_PSEL(SPIM_MOSI, 1, 15)>,
-                    <NRF_PSEL(SPIM_MISO, 1, 14)>;
+            psels = <NRF_PSEL(TWIM_SDA, 1, 13)>,
+                    <NRF_PSEL(TWIM_SCL, 1, 15)>;
             low-power-enable;
-            bias-pull-down; // minimize power leakage during sleep
         };
     };
-
 };
 
-&spi0 {
-   compatible = "nordic,nrf-spim";
-   status = "okay";
-   pinctrl-0 = <&spi0_default>;
-   pinctrl-1 = <&spi0_sleep>;
-   pinctrl-names = "default", "sleep";
-   cs-gpios = <&gpio0 3 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;  // pull-up to ensure CS is !asserted when asleep
-   glidepoint:  glidepoint@0 {
-        compatible = "cirque,pinnacle";
-        reg = <0>;
-        spi-max-frequency = <1000000>;
-        status = "okay";
-        dr-gpios = <&gpio0 2 (GPIO_ACTIVE_HIGH)>;
-        sensitivity = "2x";
-        x-invert;
+&i2c0 {
+    status = "okay";
+    clock-frequency = <I2C_BITRATE_FAST>;
+    pinctrl-0 = <&i2c0_azoteq_default>;
+    pinctrl-1 = <&i2c0_azoteq_sleep>;
+    pinctrl-names = "default", "sleep";
 
-        // Optional: turning this on enables very aggressive power saving, after 5 seconds with no touches
-        // the trackpad will go to sleep.  It wakes up on touch, but there is a ~300ms delay.  Most users will find
-        // the standard behavior of 'put to sleep when zmk enters idle state (30 seconds without a keypress) feels better.
-	    //sleep;
+    /*
+     * 數值基準 = beekeeb/zmk-keyboard-toucan2 的原廠設定（同一塊板子、同一
+     * 顆感測器），只有「手勢開關」按這個 repo 既有的設計調整，見下方。
+     */
+    tps43_trackpad: trackpad@74 {
+        compatible = "azoteq,tps43";
+        reg = <0x74>;
+        status = "okay";
+
+        rst-gpios = <&gpio1 14 GPIO_ACTIVE_HIGH>;
+        rdy-gpios = <&gpio0 2 GPIO_ACTIVE_HIGH>;
+
+        enable-power-management;
+        /* LP2 狀態 640 ms 回報率：55µA，而不是預設 160 ms 的 174µA。 */
+        report-rate-lp2 = <640>;
+        /* idle-sleep 省更多電，但 ZMK idle 之後觸控板會完全不動，不建議。 */
+        // idle-sleep;
+
+        sensitivity = <100>;
+        scroll-sensitivity = <100>;
+        filter-settings = <0x0B>;
+        hold-time = <500>;
+
+        /*
+         * ── 方位 ──────────────────────────────────────────────────────
+         * 照抄 beekeeb toucan2：感測器是轉過的，沒有 switch-xy 的話 X / Y
+         * 會對調。
+         *
+         * ⚠️ 實機如果方向不對，只有三個旋鈕，依序試：
+         *   1. 這裡的 switch-xy（拿掉 = X/Y 不對調）
+         *   2. 這裡加 invert-x / invert-y
+         *   3. toucan-trackpad.dtsi 各滾動鏈的 INPUT_TRANSFORM_*_INVERT
+         *      ——那幾個是當年配合 Cirque 的方位調出來的，換感測器之後
+         *      很可能要跟著翻。
+         */
+        switch-xy;
+        invert-scroll-y;
+
+        /*
+         * ── 手勢 ──────────────────────────────────────────────────────
+         * TPS43 的手勢是「感測器內建」的（devicetree flag 直接進硬體），
+         * 不是 ZMK input processor——這跟 Cirque 完全不同，Cirque 那邊
+         * 所有手勢都是靠 processor 疊出來的。
+         *
+         * 目前只開兩個「點擊」，刻意跟這個 repo 既有的設計對齊：
+         *
+         *   single-tap      點一下 = 左鍵。等同 Cirque 時代的行為，會被
+         *                   toucan.keymap 的 &zip_button_behaviors 攔下來
+         *                   換成 &pad_tap_l。
+         *   two-finger-tap  兩指點 = 右鍵 → &pad_tap_r。Cirque 沒有，
+         *                   但語意一致，白賺的。
+         *
+         * 以下刻意「不」開，理由都在既有設計裡：
+         *
+         *   press-and-hold  = 按住拖曳。使用者刻意讓「pad 單獨拖曳變成
+         *                     不可能」（見 toucan.keymap 檔頭的
+         *                     zip_button_behaviors 說明），要拖曳是按住
+         *                     PAD 層的 LCLK 再移動。開了會打架。
+         *   scroll          = 硬體雙指滾動。這個 repo 的滾動是「層 + 單指
+         *                     拖曳 + 三檔調速」（SCRL / SCR- / SCR / SCR+），
+         *                     硬體滾動會繞過整套調速設計。想試就打開，
+         *                     scroll-angle 一併解註解。
+         *   zoom            = 雙指縮放，需要 zmk-input-zoom 的 zip_zoom_mapper
+         *                     接在 listener 上（模組已在 west.yml 拉進來）。
+         *   three-finger-swipe = 三指滑動切桌面，需要 swipe_button_mapper。
+         *
+         * 全部都是一行的事，等基本游標確認正常再逐個加。
+         */
+        single-tap;
+        two-finger-tap;
+        // press-and-hold;
+        // scroll;
+        // scroll-angle = <30>;
+        // zoom;
+        // three-finger-swipe;
+        // three-finger-swipe-throttle-ms = <1200>;
     };
 };
 
-&glidepoint_split {
-    device = <&glidepoint>;
-
-    // Optional
-    // input-processors = <&zip_xy_transform (INPUT_TRANSFORM_XY_SWAP | INPUT_TRANSFORM_X_INVERT | INPUT_TRANSFORM_Y_INVERT)>;
+/*
+ * 把感測器綁到 input-split 的 proxy 上。對側（central）那份在
+ * toucan-trackpad.dtsi，reg 必須一致（都是 0）。
+ */
+&trackpad_split {
+    device = <&tps43_trackpad>;
 };

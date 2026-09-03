@@ -73,25 +73,25 @@
  * 代價是「改速度要同步改多處」，對照表：
  *
  *   游標基準 1500（ZMK 預設 600；下面 &mmv 設 accel-exponent=0 ⇒ 全程等速）
- *     出現處：SCROLL(7) 的 ±1500 四格
+ *     出現處：SCRL(7) 的 ±1500 四格
  *   滾輪基準 50（ZMK 預設 10）
- *     出現處：SCROLL(7) 與 NAV SCRL(15) 的 ±50
+ *     出現處：SCRL(7) 與 WHEL(15) 的 ±50
  *   調速三檔 = 基準 × 25% / 50% / 150%（跟 toucan-trackpad.dtsi 的
  *   PAD_*_PCT 同比例，改比例請兩邊一起改）：
- *     SCRL SLOWEST(11)：游標 ±375   滾輪 ±12
- *     SCRL SLOW(12)   ：游標 ±750   滾輪 ±25
- *     SCRL FAST(13)   ：游標 ±2250  滾輪 ±75
+ *     SCR-(11)：游標 ±375   滾輪 ±12
+ *     SCR (12)：游標 ±750   滾輪 ±25
+ *     SCR+(13)：游標 ±2250  滾輪 ±75
  */
 
 /*
- * SCROLL (7) 的 42 格 bindings。
+ * SCRL (7) 的 42 格 bindings。
  *
  * ── 為什麼 6 和 7 不再共用同一份 ───────────────────────────────────────
  *
  * 這兩層的「進入方式」根本不同，所以能承受的內容也不同：
  *
- *   layer 6 (MOUSE)  觸控板一動就「自動」升起。你沒有要求它。
- *   layer 7 (SCROLL) BASE 按住 G / H 才進來。是你刻意要的。
+ *   layer 6 (PAD)  觸控板一動就「自動」升起。你沒有要求它。
+ *   layer 7 (SCRL) BASE 按住 G / H 才進來。是你刻意要的。
  *
  * 自動升起的層必須近乎無害——因為用完觸控板接著打字時，timeout 窗口內每一顆
  * 鍵都會落在它上面。原本兩層共用這份 bindings，等於 layer 6 有 28 格是活的、
@@ -105,8 +105,8 @@
  * 被移出 layer 6 的東西在別層都有，不會消失：
  *   位置 6-9   分頁切換 / 上下頁  → NAV 層同位置就有
  *   位置 30-33 End/PgDn/PgUp/Home → NAV 層同位置就有
- *   位置 1     &kp LG(W)          → MEDIA 層位置 2
- *   位置 25    &kp LS(LG(T))      → MEDIA 層位置 22
+ *   位置 1     &kp LG(W)          → CMD 層位置 2
+ *   位置 25    &kp LS(LG(T))      → CMD 層位置 22
  *   鍵盤滾動   → 這一層，或 NAV 的 &tog 14（HJKL 滾輪切換）
  *
  * ── 為什麼 6 / 7 必須是兩個 index ─────────────────────────────────────
@@ -183,21 +183,33 @@
 /*
  * Trackpad: tap still clicks, tap-and-hold no longer drags.
  *
- * The Pinnacle has exactly one knob here — `no-taps` (DIS_TAP) — and it kills
- * tap-to-click and tap-and-hold together, so it is the wrong tool. Instead the
- * dongle intercepts the pad's button events before they reach HID:
+ * The central intercepts the pad's button events before they reach HID:
  * `zip_button_behaviors` is a stock ZMK input processor that swallows
  * INPUT_BTN_0/1/2 and invokes a behavior instead. Point it at macros, and a
  * macro with no `&macro_pause_for_release` does nothing on release — so a held
  * button becomes a single click and the drag can never start.
  *
  * Consequence, stated plainly: dragging with the pad alone is now impossible.
- * To drag, hold LCLK on layer MOUSE (left hand, D) and move the pad.
+ * To drag, hold LCLK on layer PAD (left hand, D) and move the pad.
  *
  * This node must appear in EVERY processor chain on the listener — a chain
  * that matches a layer replaces the base chain rather than adding to it, so a
  * chain that omits this re-opens dragging on exactly those layers. See
- * boards/shields/toucan/toucan.dtsi.
+ * boards/shields/toucan/toucan-trackpad.dtsi.
+ *
+ * ── 2026-09-03，換成 Azoteq TPS43 之後 ──────────────────────────────────
+ *
+ * 原本這段的理由是「Cirque Pinnacle 只有 no-taps (DIS_TAP) 一個旋鈕，而它
+ * 會把 tap-to-click 和 tap-and-hold 一起關掉，所以是錯的工具」。TPS43 沒有
+ * 這個限制——它的手勢是分開的 devicetree flag，`single-tap` 和
+ * `press-and-hold`（＝拖曳）可以獨立開關，而 toucan_right.overlay 現在
+ * 刻意只開 single-tap / two-finger-tap，沒開 press-and-hold。
+ *
+ * 那為什麼還留著這個 processor？兩個理由：
+ *   1. 它是 pad 點擊實際的路由：BTN_0/1/2 -> &pad_tap_l / _r / _m。
+ *      拿掉的話 pad 點擊會直接送原始 HID button，繞過這三個 macro。
+ *   2. 感測器層級關掉拖曳是「設定」，這裡是「保險」——兩層都擋著，
+ *      日後有人手癢打開 press-and-hold 也不會突然多出拖曳行為。
  */
 
 &zip_button_behaviors { bindings = <&pad_tap_l &pad_tap_r &pad_tap_m>; };
@@ -229,9 +241,9 @@
     /*
      * NAV 的 hjkl：方向鍵 ⇄ 滾輪切換。
      *
-     * NAV 位置 34 的 &tog 14 開關 flag 層（HJKL SCRL, 14）。flag 全
+     * NAV 位置 34 的 &tog 14 開關 flag 層（HJKL, 14）。flag 全
      * &trans、自己不做事；只有「NAV(1) 和 flag(14) 同時 active」時，
-     * 這裡才把 NAV SCRL(15) 疊上去，蓋掉 hjkl 那四格。所以 flag 開著
+     * 這裡才把 WHEL(15) 疊上去，蓋掉 hjkl 那四格。所以 flag 開著
      * 回 BASE 打字，hjkl 仍是字母，不會漏滾輪出來。
      */
     conditional_layers {
@@ -514,7 +526,7 @@
          * 必須「同時」按下兩顆，先按住一顆再補第二顆不會觸發。50 ms 比其他
          * combo 的 27 ms 寬鬆，因為這幾組已經被 layers 擋在 BASE 之外。
          *
-         * HJKL SCRL flag（14）開著時這四組會暫時失效（最高層變 14、不在
+         * HJKL flag（14）開著時這四組會暫時失效（最高層變 14、不在
          * 名單內）。刻意不把 14 加進名單，原因見 layer_14 的註解。
          */
         combo_lock_fast_l {
@@ -617,7 +629,7 @@
         };
 
         /*
-         * MOUSE — 觸控板一動就由 toucan-trackpad.dtsi 的 &mouse_temp_layer
+         * PAD — 觸控板一動就由 toucan-trackpad.dtsi 的 &mouse_temp_layer
          * 自動升起，停手後 timeout 才掉下來。
          *
          * ⚠️ 這一層刻意「幾乎全空」。它是唯一會在你沒要求時自己升起來的層，
@@ -630,9 +642,9 @@
          * 其餘 33 格全部 &trans，落回下面的層。所以誤按的代價是「打出原本
          * 那個字」，而不是關掉分頁或讓頁面亂跳。
          *
-         * 進階操作（鍵盤滾動、分頁切換、Page Up/Down）搬到 SCROLL (7) 了——
+         * 進階操作（鍵盤滾動、分頁切換、Page Up/Down）搬到 SCRL (7) 了——
          * 那層要按住 G / H 才進來，是刻意的，可以放任何東西。理由與各項的
-         * 替代位置見上面 SCROLL (7) 的註解。
+         * 替代位置見上面 SCRL (7) 的註解。
          *
          * 拇指規則：越內側越快、越外側越慢，兩手對稱，全部是「按住」。
          *   36/41 (最內) = 最快 3.75x     37/40 (中)  = 中檔 1.25x
@@ -647,9 +659,9 @@
         };
 
         /*
-         * SCROLL — BASE 按住 G / H (&lt 7) 進入，觸控板變滾輪。
+         * SCRL — BASE 按住 G / H (&lt 7) 進入，觸控板變滾輪。
          * scroller_default 在 toucan.dtsi 用 layers = <1 2 7> 認這一層。
-         * 拇指位置與 MOUSE 相同，但指向滾動三檔；滾動刻意不提供鎖定。
+         * 拇指位置與 PAD 相同，但指向滾動三檔；滾動刻意不提供鎖定。
          * 游標 ±1500 / 滾輪 ±50 = 全鍵盤速度基準，見檔頭對照表。
          */
         layer_7 {
@@ -667,7 +679,7 @@
          * 每一格都必須落回底下的層。可鎖定的兩層在位置 10 (P) 放 &to 0：
          * 鎖定之後觸控板停下、layer 6 掉了，這是唯一能清掉鎖定的逃生口。
          *
-         * SCRL 三檔 (11/12/13) 不只是記號：同時把 SCROLL 層上所有
+         * SCRL 三檔 (11/12/13) 不只是記號：同時把 SCRL 層上所有
          * &msc / &mmv 的格子用「縮放過的字面數字」再蓋一次（&msc/&mmv 是
          * behavior、不走觸控板的 input processor 鏈，不蓋的話調速鍵對鍵盤
          * 游標完全沒效果）。於是「按住 G/H + 拇指調速」對觸控板和鍵盤
@@ -676,7 +688,7 @@
          * 刻意「不」蓋可鎖定的 CUR 三檔 (8/10)：鎖著打字時這些格子若不是
          * &trans，E/D/F 那排會變成游標鍵、字打不出來。SCRL 檔只能按住、
          * 按住時左手一定壓在 G/H 上，不會同時打字。其餘格子全 &trans 落回
-         * SCROLL（位置 10 的 &to 0 逃生口也是這樣落下去）。
+         * SCRL（位置 10 的 &to 0 逃生口也是這樣落下去）。
          */
         layer_8 {
             display-name = "CUR-";
@@ -724,13 +736,13 @@
         };
 
         /*
-         * HJKL SCRL — hand-added 的 flag 層。全 &trans，只當開關狀態用：
+         * HJKL — hand-added 的 flag 層。全 &trans，只當開關狀態用：
          * NAV 位置 34 的 &tog 14 切換。開著時 dongle 螢幕顯示的最高層就是
-         * 這個名字，等於免費的狀態指示燈。實際蓋鍵的是下面的 NAV SCRL(15)，
+         * 這個名字，等於免費的狀態指示燈。實際蓋鍵的是下面的 WHEL(15)，
          * 由 conditional_layers 在 NAV+flag 同時 active 時自動疊上。
          *
          * 兩個已知取捨：
-         *   1. 這層 index (14) 高於 MOUSE(6)/CUR*(8/10)，flag 開著時
+         *   1. 這層 index (14) 高於 PAD(6)/CUR*(8/10)，flag 開著時
          *      combo_lock_*（觸控板調速鎖定）比對到的最高層是 14、不在
          *      名單內 ⇒ 那四組 combo 暫時失效。刻意「不」把 14 加進名單：
          *      加了它們就會在 BASE 打字時活過來，拇指快速連按會誤觸
@@ -746,8 +758,8 @@
         };
 
         /*
-         * NAV SCRL — 由 conditional_layers 自動疊上，不要手動 &tog/&mo 它。
-         * 只蓋 NAV 的 hjkl 四格（18-21），方向與 SCROLL 層
+         * WHEL — 由 conditional_layers 自動疊上，不要手動 &tog/&mo 它。
+         * 只蓋 NAV 的 hjkl 四格（18-21），方向與 SCRL 層
          * 右手 home row 完全相同；其餘 &trans 落回 NAV——位置 34 也因此
          * 落回 &tog 14，再按一次就切回方向鍵。
          */
@@ -762,7 +774,7 @@
          * BT — 主機配對與輸出切換。2026-09-01 左半改當 split central 之後
          * 才需要：以前所有主機配對都在 dongle 上，鍵盤本身一顆 &bt 都沒有。
          *
-         * 進入方式：MEDIA(4) 位置 40 的 &mo 16。MEDIA 自己由 BASE 按住
+         * 進入方式：CMD(4) 位置 40 的 &mo 16。CMD 自己由 BASE 按住
          * SPACE（&lt 4 SPACE，左拇指）或 combo_media 的 &to 4 進入，所以
          * 兩種握法都按得到——左拇指 + 右拇指 + 左手指。
          *
@@ -777,7 +789,7 @@
          * 正是最常刷的那顆板子，所以這顆鍵第一次真正有用了。（FLASHING.md
          * 那次事故正是因為當年它重置的是左半、使用者以為是 dongle。）
          *
-         * 右手整排 &trans 是刻意的：這層只用左手，右手保持 MEDIA 的行為。
+         * 右手整排 &trans 是刻意的：這層只用左手，右手保持 CMD 的行為。
          */
         layer_16 {
             display-name = "BT";

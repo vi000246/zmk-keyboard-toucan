@@ -10,12 +10,12 @@ manifest:
       url-base: https://github.com/alee0729
     - name: caksoylar
       url-base: https://github.com/caksoylar
+    - name: beekeeb
+      url-base: https://github.com/beekeeb
     - name: carrefinho
       url-base: https://github.com/carrefinho
     - name: prospector
       url-base: https://github.com/t-ogura
-    - name: geeksville
-      url-base: https://github.com/geeksville
     - name: janpfischer
       url-base: https://github.com/Dexter-KBD
     - name: urob
@@ -26,9 +26,33 @@ manifest:
       remote: zmkfirmware
       revision: v0.3
       import: app/west.yml
-    - name: cirque-input-module
-      remote: geeksville
-      revision: toucan
+    # ── 觸控板驅動：Azoteq TPS43（toucan2）─────────────────────────────────
+    #
+    # 2026-09-03 從 geeksville/cirque-input-module (revision: toucan) 換過來。
+    #
+    # 這台是 **toucan2**，跟這個 repo 原本 fork 的 toucan1 不是同一個硬體：
+    #   toucan1  Cirque Pinnacle  掛 SPI0        compatible = "cirque,pinnacle"
+    #   toucan2  Azoteq TPS43     掛 I2C0 @0x74  compatible = "azoteq,tps43"
+    #
+    # 而且四根腳位兩代用途完全相反：
+    #   P1.13  SPIM_SCK  -> TWIM_SDA      P1.15  SPIM_MOSI -> TWIM_SCL
+    #   P1.14  SPIM_MISO -> rst-gpios     P0.02  Cirque DR -> TPS43 RDY
+    #
+    # 所以 Cirque 韌體刷進 toucan2 時，是在 I2C 匯流排上打 SPI clock，感測器
+    # 永遠不回話 ⇒ input event 恆為 0（游標不動、PAD 層不升）。按鍵正常是
+    # 因為 kscan 那 10 根腳兩代逐字相同——這正是當初誤判成「韌體迴歸」的原因。
+    #
+    # ⚠️ 換過去之後這個 repo 只能刷 toucan2。要刷回 toucan1 得 revert 這一段
+    #    以及 toucan_right.overlay / toucan-trackpad.dtsi / toucan_right.conf。
+    #
+    # zmk-input-zoom 是 TPS43 雙指縮放要用的 input processor（目前沒啟用，
+    # 見 toucan_right.overlay 的 zoom 註解），先拉進來省得之後再動 manifest。
+    - name: zmk_driver_azoteq
+      remote: beekeeb
+      revision: main
+    - name: zmk-input-zoom
+      remote: beekeeb
+      revision: main
     - name: zmk-rgbled-widget
       remote: caksoylar
       revision: v0.3

@@ -2,12 +2,19 @@
  * 觸控板：速度參數 + input-split proxy + 自動升層 + 處理鏈。
  *
  * 這個檔案被「central」和「持有感測器的 peripheral」兩邊 include：
- *   toucan_left.overlay   — central，把 glidepoint_listener 設 okay
+ *   toucan_left.overlay   — central，把 trackpad_listener 設 okay
  *   toucan.dtsi           — 給 toucan_right / toucan_dongle
  *
- * glidepoint_split 兩邊都要有，而且 reg 必須一致（都是 0）：peripheral 那側
- * 由 toucan_right.overlay 把它綁到真正的 cirque 感測器，central 這側它是接收
- * 端的 proxy。listener 只在 central 上 status = "okay"。
+ * trackpad_split 兩邊都要有，而且 reg 必須一致（都是 0）：peripheral 那側
+ * 由 toucan_right.overlay 把它綁到真正的感測器，central 這側它是接收端的
+ * proxy。listener 只在 central 上 status = "okay"。
+ *
+ * 2026-09-03：感測器從 Cirque Pinnacle 換成 Azoteq TPS43（這台是 toucan2），
+ * 節點名跟著上游 beekeeb 改成 trackpad_*。**底下整條處理鏈完全沒動**——
+ * zip_xy_scaler / zip_scroll_scaler / temp-layer 都是 ZMK 通用的 input
+ * processor，跟 driver 無關，所以三檔調速與自動升層原封不動搬過來。
+ * 唯一要留意的是方位：INPUT_TRANSFORM_*_INVERT 那幾個當年是配合 Cirque
+ * 調出來的，換感測器後可能要翻，見 toucan_right.overlay 的方位註解。
  */
 
 #include <input/processors.dtsi>
@@ -21,8 +28,8 @@
  * 推導可以直接寫在這裡。
  *
  * 對應的 marker layer（見 config/toucan.keymap）：
- *   8  CUR SLOWEST   9  CUR SLOW    10 CUR FAST
- *   11 SCRL SLOWEST  12 SCRL SLOW   13 SCRL FAST
+ *   8  CUR-   9  CUR    10 CUR+
+ *   11 SCR-  12 SCR    13 SCR+
  */
 
 /* ── 手調 ── */
@@ -46,14 +53,14 @@
         #address-cells = <1>;
         #size-cells = <0>;
 
-        glidepoint_split: glidepoint_split@0 {
+        trackpad_split: trackpad_split@0 {
             compatible = "zmk,input-split";
             reg = <0>;
         };
     };
 
     /*
-     * 自動升起 MOUSE 層（6）的處理器。
+     * 自動升起 PAD 層（6）的處理器。
      *
      * timeout 150 ms = 「最後一次觸控板移動之後，layer 6 還留多久」。手指停
      * 在板上不會產生移動事件，所以這個值不能再縮——縮了會直接壞掉「先定位、
@@ -83,7 +90,7 @@
      *
      * 空清單本身「不」解決「用完觸控板打字誤觸」——那個問題的根源是 layer 6
      * 裝了什麼，不是誰能關層。已經一併處理：layer 6 現在只留點擊、六顆調速
-     * 拇指和位置 10 的 &to 0，其餘 32 格全 &trans，進階操作搬到 SCROLL (7)。
+     * 拇指和位置 10 的 &to 0，其餘 32 格全 &trans，進階操作搬到 SCRL (7)。
      * 詳見 config/toucan.keymap 的 layer_6 註解。
      *
      * require-prior-idle-ms 是反方向的保護：剛打過字的 N ms 內，觸控板不會
@@ -112,16 +119,16 @@
      *   3. 三條 cursor_* 都必須帶 &mouse_temp_layer，否則鎖定某一檔之後
      *      layer 6 就不再自動升起。
      *
-     * layer 14 (HJKL SCRL) 和 15 (NAV SCRL) 刻意「不」出現在任何 layers
+     * layer 14 (HJKL) 和 15 (WHEL) 刻意「不」出現在任何 layers
      * 名單裡——那是鍵盤方向鍵的滾輪切換，跟觸控板無關，加進來會讓觸控板
      * 在 NAV 上行為不一致。
      *
      * 同時鎖住兩檔時由較慢的勝出（8 -> 9 -> 10），刻意的安全側；按 P 清掉。
      */
-    glidepoint_listener: glidepoint_listener {
+    trackpad_listener: trackpad_listener {
         compatible = "zmk,input-listener";
         status = "disabled";
-        device = <&glidepoint_split>;
+        device = <&trackpad_split>;
 
         input-processors = <&zip_xy_scaler PAD_BASE_MULT PAD_BASE_DIV &mouse_temp_layer 6 150 &zip_button_behaviors>;
 
@@ -158,7 +165,7 @@
             >;
         };
 
-        // 一般滾動。7 = SCROLL（BASE 按住 G / H 進入）、1 = NAV、2 = NUM。
+        // 一般滾動。7 = SCRL（BASE 按住 G / H 進入）、1 = NAV、2 = NUM。
         scroller_default {
             layers = <1 2 7>;
             input-processors = <
