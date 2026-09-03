@@ -2,132 +2,191 @@
  * Copyright (c) 2024 The ZMK Contributors
  * SPDX-License-Identifier: MIT
  *
- * Radii Layout for Scanner Mode
- * Design and layout based on carrefinho's prospector-zmk-module:
- * https://github.com/carrefinho/prospector-zmk-module
+ * Radii Layout — Toucan 儀表板改版
  *
- * Display: 240x280 with hardware y-offset=20
- * Layout designed for: 240x240 visible area (no software offset needed)
+ * 原始設計來自 carrefinho 的 prospector-zmk-module（輪盤 + 大字層名）。
+ * 2026-09-03 在這個 fork 裡重寫成「儀表板」，動機有四個，全部是原版
+ * 在這台鍵盤上的實際問題：
+ *
+ *   1. 輪盤上限 10 格（Kconfig PROSPECTOR_MAX_LAYERS range 4-10，而且
+ *      draw_wheel() 自己還有一道 layer_count <= 16 的 guard）。這台鍵盤
+ *      有 17 層 ⇒ 一半的層輪盤不亮、轉到哪都沒意義。改成左緣 17 格
+ *      ladder，一格一層。
+ *   2. 三塊高彩度面板（#ACB9D3 淺藍灰 + #1448AA 寶藍 + #E2FF61 螢光黃綠）
+ *      擠在 280px 裡互相搶眼，沒有主從。改成全暗底 + hairline，accent
+ *      只用在「現在是什麼狀態」上。
+ *   3. 小抄面板寫死 240 寬，但螢幕是 280 ⇒ 右邊 40px 漏出底下的面板。
+ *      這是純 bug，順手修掉。
+ *   4. 電量只有兩個 arc，看得出「大概還有」，看不出幾 %。改成數字 + bar。
+ *
+ * 版面（280 x 240，ST7789V，硬體 y-offset 已由 driver 處理）：
+ *
+ *   x=14   17 格 ladder（亮的那格 = 目前層 index）
+ *   x=34   index 兩位數 / 大字層名 / hairline / 副標一 / 副標二
+ *   x=206  垂直 hairline
+ *   x=220  修飾鍵 2x2 / 左右電量（數字 + bar）/ BLE profile 四點
+ *
+ * ⚠️ 大字層名固定 FR_Regular_48、單行、不 wrap 不縮字。這是刻意的：
+ *    keymap 那邊保證每個 display-name 都 ≤ 4 字元（見 config/toucan.keymap
+ *    檔頭的層名表），所以溢出在結構上不可能發生。**如果哪天層名變長了，
+ *    這裡不會自動換行，會直接被切掉**——要嘛改回 ≤4 字，要嘛改這裡。
  */
 
 #include "radii_layout.h"
 #include "fonts_carrefinho.h"
 #include "fonts.h"
 #include <zephyr/logging/log.h>
-#include <math.h>
+#include <zephyr/sys/util.h>
+#include <zephyr/toolchain.h>   /* BUILD_ASSERT */
 #include <string.h>
 #include <stdio.h>
 
 LOG_MODULE_REGISTER(radii_layout, CONFIG_ZMK_LOG_LEVEL);
 
-#ifndef M_PI
-#define M_PI 3.14159265358979323846f
-#endif
+/* ========== 版面常數 ========== */
+#define SCR_W 280
+#define SCR_H 240
 
-/* Wheel dimensions (from original layer_indicator.c) */
-#define WHEEL_SIZE         48
-#define WHEEL_CENTER       (WHEEL_SIZE / 2)
-#define WHEEL_INNER_RADIUS 12
-#define WHEEL_OUTER_RADIUS 20
+#define LADDER_X      14
+#define LADDER_Y      26
+#define LADDER_W       6
+#define LADDER_PITCH  11
+#define TICK_H         4
+#define TICK_ON_W     12
+#define TICK_ON_H      6
 
-/* ========== Color Palette Structure ========== */
-typedef struct {
-    uint32_t left_panel_bg;
-    uint32_t mod_panel_bg;
-    uint32_t battery_panel_bg;
-    uint32_t arc_bg;
-    uint32_t arc_indicator;
-    uint32_t layer_wheel;
-    uint32_t layer_text;
-    uint32_t mod_active;
-    uint32_t mod_inactive;
+#define TEXT_X        34
+#define TEXT_W       (206 - TEXT_X)   /* 172px，副標的可用寬度 */
+
+#define COL_X        206              /* 垂直分隔線 */
+#define RIGHT_X      220
+
+#define BAR_W         44
+#define BAR_H          3
+
+/* ========== 層名表 ==========
+ *
+ * 用廣播帶來的 active_layer 當 index 查。副標不經過 BLE 廣播，所以完全不受
+ * layer_name[4] 那 4 bytes 的限制——大字是「CUR-」，副標可以寫「CURSOR SLOW
+ * / 0.62x / lockable」。
+ *
+ * ⚠️ 這張表鏡射 config/toucan.keymap 的**層順序**。
+ *    - 只改層名（display-name）⇒ 這裡不用動（大字直接用廣播的名字）。
+ *    - 加層 / 刪層 / 重排層 ⇒ 一定要回來更新這張表，否則副標會對到錯的層。
+ *    name 欄位只是廣播層名為空時的 fallback。
+ */
+struct toucan_layer {
     const char *name;
-} radii_color_palette_t;
-
-/* ========== 4 Color Palettes (from carrefinho's device tree themes) ========== */
-static const radii_color_palette_t color_palettes[4] = {
-    /* Blue Theme (default) */
-    {
-        .left_panel_bg = 0xACB9D3,    /* Light blue-gray */
-        .mod_panel_bg = 0x1448AA,     /* Blue */
-        .battery_panel_bg = 0xE2FF61, /* Yellow-green */
-        .arc_bg = 0xA8BF41,           /* Green */
-        .arc_indicator = 0x576610,    /* Dark green */
-        .layer_wheel = 0x000000,      /* Black */
-        .layer_text = 0x000000,       /* Black */
-        .mod_active = 0x61E7FF,       /* Cyan */
-        .mod_inactive = 0x0C2B65,     /* Dark blue */
-        .name = "Blue"
-    },
-    /* Green Theme */
-    {
-        .left_panel_bg = 0x0D2C26,    /* Dark teal */
-        .mod_panel_bg = 0x708066,     /* Olive */
-        .battery_panel_bg = 0x2D373D, /* Dark gray */
-        .arc_bg = 0x445544,           /* Dark olive */
-        .arc_indicator = 0x88AA88,    /* Light olive */
-        .layer_wheel = 0x00FF90,      /* Bright green */
-        .layer_text = 0x00FF90,       /* Bright green */
-        .mod_active = 0xE2FF61,       /* Lime */
-        .mod_inactive = 0x3A4A3A,     /* Dark green */
-        .name = "Green"
-    },
-    /* Red Theme */
-    {
-        .left_panel_bg = 0xD77B7A,    /* Salmon pink */
-        .mod_panel_bg = 0x7B4B5C,     /* Dusty rose */
-        .battery_panel_bg = 0xC7BFAD, /* Beige */
-        .arc_bg = 0x9A8A7A,           /* Tan */
-        .arc_indicator = 0x5A4A3A,    /* Dark brown */
-        .layer_wheel = 0x000000,      /* Black */
-        .layer_text = 0x000000,       /* Black */
-        .mod_active = 0xFFAAAB,       /* Light pink */
-        .mod_inactive = 0x4A2A3A,     /* Dark maroon */
-        .name = "Red"
-    },
-    /* Purple Theme */
-    {
-        .left_panel_bg = 0x212121,    /* Dark gray */
-        .mod_panel_bg = 0x858585,     /* Gray */
-        .battery_panel_bg = 0x8774B4, /* Purple */
-        .arc_bg = 0x6654A4,           /* Dark purple */
-        .arc_indicator = 0xAA99CC,    /* Light purple */
-        .layer_wheel = 0xFFFFFF,      /* White */
-        .layer_text = 0xFFFFFF,       /* White */
-        .mod_active = 0x38FFB3,       /* Mint green */
-        .mod_inactive = 0x444444,     /* Dark gray */
-        .name = "Purple"
-    }
+    const char *sub1;
+    const char *sub2;
 };
 
-#define PALETTE_COUNT 4
+static const struct toucan_layer LAYERS[] = {
+    { "BASE", "TYPING",        "17 layers"        },
+    { "NAV",  "ARROWS",        "windows / claude" },
+    { "NUM",  "NUMPAD",        "keypad + mods"    },
+    { "SYM",  "SYMBOLS",       "cheatsheet"       },
+    { "CMD",  "SHORTCUTS",     "window / clipbrd" },
+    { "FUN",  "FUNCTION",      "F1-F12 / volume"  },
+    { "PAD",  "TRACKPAD",      "click / speed"    },
+    { "SCRL", "WHEEL MODE",    "pad + keyboard"   },
+    { "CUR-", "CURSOR SLOW",   "0.62x / lockable" },
+    { "CUR",  "CURSOR BASE",   "1.25x"            },
+    { "CUR+", "CURSOR FAST",   "3.75x / lockable" },
+    { "SCR-", "SCROLL SLOW",   "25%"              },
+    { "SCR",  "SCROLL BASE",   "50%"              },
+    { "SCR+", "SCROLL FAST",   "150%"             },
+    { "HJKL", "WHEEL STANDBY", "hold NAV = WHEL"  },
+    { "WHEL", "HJKL SCROLLS",  "nav keys = wheel" },
+    { "BT",   "PAIRING",       "profile / output" },
+};
+
+/*
+ * ladder 的格數。寫成字面常數而不是 ARRAY_SIZE(LAYERS)，因為它同時要當
+ * ticks[] 的陣列維度——Zephyr 的 ARRAY_SIZE 展開帶 __builtin_types_compatible_p，
+ * 拿來當維度在某些版本會出事。下面的 BUILD_ASSERT 保證兩者不會脫鉤：
+ * 在 keymap 加一層卻忘了更新 LAYERS[]，會直接編譯失敗而不是默默對錯副標。
+ */
+#define LAYER_COUNT 17
+BUILD_ASSERT(ARRAY_SIZE(LAYERS) == LAYER_COUNT,
+             "LAYERS[] must have one entry per keymap layer (see config/toucan.keymap)");
+
+/* ========== 調色盤 ==========
+ *
+ * 全部是暗底 + 單一 accent 的變體。非觸控模式開機固定用第 0 個；觸控版本
+ * 可以用 radii_layout_cycle_palette() 循環（prospector_layouts.c 在用）。
+ */
+typedef struct {
+    uint32_t bg;       /* 螢幕底色 */
+    uint32_t rule;     /* hairline、未亮的 ladder 格、bar 底 */
+    uint32_t name;     /* 大字層名 */
+    uint32_t index;    /* 兩位數 index */
+    uint32_t accent;   /* 目前層、副標一、亮起的修飾鍵、電量 bar、BLE */
+    uint32_t mod_off;  /* 沒按下的修飾鍵 */
+    uint32_t sub2;     /* 副標二 */
+    uint32_t value;    /* 電量數字 */
+    const char *pname;
+} radii_color_palette_t;
+
+static const radii_color_palette_t color_palettes[] = {
+    { 0x0B0E0C, 0x232A26, 0xF2F7F4, 0x4E5A53, 0x43CBA6, 0x2A322D, 0x57635B, 0xE4EAE6, "Mint"  },
+    { 0x0E0C0A, 0x2A2620, 0xF7F4F0, 0x5A5348, 0xE0A24E, 0x322D26, 0x635B4E, 0xEAE6E0, "Amber" },
+    { 0x0A0C0E, 0x202730, 0xF0F4F7, 0x4B5560, 0x5AA9E6, 0x28303A, 0x53606B, 0xE0E7EA, "Ice"   },
+    { 0x0E0A0C, 0x2E2228, 0xF7F0F3, 0x5E4A52, 0xE06E93, 0x352730, 0x6B535D, 0xEAE0E4, "Rose"  },
+};
+
+#define PALETTE_COUNT ((int)ARRAY_SIZE(color_palettes))
 static uint8_t current_palette = 0;
 
-/* ========== Static storage ========== */
+#define PAL (&color_palettes[current_palette])
+
+/* ========== 物件 ========== */
 static lv_obj_t *parent_screen = NULL;
 static bool layout_created = false;
 
-/* Left panel */
-static lv_obj_t *left_panel = NULL;
-static lv_obj_t *wheel_canvas = NULL;
-static lv_obj_t *wheel_image = NULL;
-static lv_obj_t *layer_label = NULL;
-static uint8_t current_layer = 0;
-static uint8_t current_layer_count = 6;
+static lv_obj_t *bg_obj = NULL;
+static lv_obj_t *ticks[LAYER_COUNT] = { NULL };
+static lv_obj_t *index_label = NULL;
+static lv_obj_t *name_label = NULL;
+static lv_obj_t *hrule = NULL;
+static lv_obj_t *sub1_label = NULL;
+static lv_obj_t *sub2_label = NULL;
+static lv_obj_t *vrule = NULL;
+static lv_obj_t *mod_labels[4] = { NULL };
+static lv_obj_t *bat_value[2] = { NULL };
+static lv_obj_t *bat_tag[2] = { NULL };
+static lv_obj_t *bat_bar_bg[2] = { NULL };
+static lv_obj_t *bat_bar_fill[2] = { NULL };
+static lv_obj_t *ble_dots[4] = { NULL };
 
-/* Modifier panel */
-static lv_obj_t *mod_panel = NULL;
-static lv_obj_t *mod_labels[4] = {NULL};
+static uint8_t current_layer = 0xFF;   /* 0xFF = 尚未設定，強制第一次更新 */
 
-/* Battery panel */
-static lv_obj_t *bat_panel = NULL;
-static lv_obj_t *bat_arc_left = NULL;
-static lv_obj_t *bat_arc_right = NULL;
+/* ========== 小工具 ========== */
 
-/* Canvas buffer for wheel */
-static uint8_t wheel_canvas_buf[LV_CANVAS_BUF_SIZE(WHEEL_SIZE, WHEEL_SIZE, 32, 1)];
+static lv_obj_t *rl_rect(lv_obj_t *parent, int x, int y, int w, int h, uint32_t color, int radius) {
+    lv_obj_t *o = lv_obj_create(parent);
+    lv_obj_set_size(o, w, h);
+    lv_obj_set_pos(o, x, y);
+    lv_obj_set_style_bg_color(o, lv_color_hex(color), LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(o, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_style_border_width(o, 0, LV_PART_MAIN);
+    lv_obj_set_style_radius(o, radius, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(o, 0, LV_PART_MAIN);
+    lv_obj_clear_flag(o, LV_OBJ_FLAG_SCROLLABLE);
+    return o;
+}
 
-/* ========== SYM 按鍵小抄 overlay（本 fork 加的，上游沒有） ==========
+static lv_obj_t *rl_label(lv_obj_t *parent, int x, int y, const lv_font_t *font,
+                       uint32_t color, const char *text) {
+    lv_obj_t *l = lv_label_create(parent);
+    lv_obj_set_style_text_font(l, font, LV_PART_MAIN);
+    lv_obj_set_style_text_color(l, lv_color_hex(color), LV_PART_MAIN);
+    lv_obj_set_pos(l, x, y);
+    lv_label_set_text(l, text);
+    return l;
+}
+
+/* ========== SYM 按鍵小抄 overlay（本 fork 加的，上游沒有）==========
  *
  * 廣播的層名等於 CHEAT_LAYER_NAME 時，蓋一層全螢幕小抄；離開該層就藏起來。
  * 手寫表，鏡射 config/toucan.keymap 的 SYM 層。改 SYM 層 bindings 時
@@ -136,15 +195,17 @@ static uint8_t wheel_canvas_buf[LV_CANVAS_BUF_SIZE(WHEEL_SIZE, WHEEL_SIZE, 32, 1
  *   2. boards/shields/nice_view_gem/widgets/cheatsheet.c（鍵盤螢幕的小抄）
  *   3. 這裡（dongle 螢幕的小抄）
  *
- * 廣播的層名欄位只有 4 字元（status_advertisement.h 的 layer_name[4]），
- * 所以比對目標必須 ≤ 4 字。還原方式見 repo 根目錄 DONGLE-RESTORE.md。
+ * 廣播的層名欄位只有 4 字元，所以比對目標必須 ≤ 4 字。SYM 刻意不改名，
+ * 就是因為這裡和 cheatsheet.c 都是用「層名字串」查表，不是用 index。
  */
 #define CHEAT_LAYER_NAME "SYM"
 #define CHEAT_ROWS 3
 
 static lv_obj_t *cheat_panel = NULL;
 static lv_obj_t *cheat_title = NULL;
-static lv_obj_t *cheat_row_labels[CHEAT_ROWS] = {NULL};
+static lv_obj_t *cheat_sub = NULL;
+static lv_obj_t *cheat_rule = NULL;
+static lv_obj_t *cheat_row_labels[CHEAT_ROWS] = { NULL };
 
 /* 每格 1 字元、格間 1 空白、兩手之間 3 空白。UNSCII 是等寬字型，欄位
  * 天生對齊。空白格（LGUI/LCTRL 那兩顆純 modifier）用空格佔位。
@@ -156,31 +217,20 @@ static const char *cheat_rows[CHEAT_ROWS] = {
 };
 
 static void create_cheat_panel(lv_obj_t *parent) {
-    /* 最後建立 ⇒ 疊在所有 panel 之上；平常隱藏 */
-    cheat_panel = lv_obj_create(parent);
-    lv_obj_set_size(cheat_panel, 240, 240);
-    lv_obj_set_pos(cheat_panel, 0, 0);
-    lv_obj_set_style_bg_color(cheat_panel, lv_color_hex(0x000000), LV_PART_MAIN);
-    lv_obj_set_style_bg_opa(cheat_panel, LV_OPA_COVER, LV_PART_MAIN);
-    lv_obj_set_style_border_width(cheat_panel, 0, LV_PART_MAIN);
-    lv_obj_set_style_radius(cheat_panel, 0, LV_PART_MAIN);
-    lv_obj_set_style_pad_all(cheat_panel, 0, LV_PART_MAIN);
-    lv_obj_clear_flag(cheat_panel, LV_OBJ_FLAG_SCROLLABLE);
+    /* 最後建立 ⇒ 疊在所有東西之上；平常隱藏。
+     * ⚠️ 寬度必須是 SCR_W(280)，不是 240——原版寫死 240，右邊 40px 會漏出
+     *    底下的面板。那是這次改版順手修掉的 bug 之一。 */
+    cheat_panel = rl_rect(parent, 0, 0, SCR_W, SCR_H, PAL->bg, 0);
     lv_obj_add_flag(cheat_panel, LV_OBJ_FLAG_HIDDEN);
 
-    cheat_title = lv_label_create(cheat_panel);
-    lv_obj_set_style_text_font(cheat_title, &DINishExpanded_Light_36, LV_PART_MAIN);
-    lv_obj_set_style_text_color(cheat_title, lv_color_hex(0x61E7FF), LV_PART_MAIN);
-    lv_obj_set_pos(cheat_title, 12, 12);
-    lv_label_set_text_static(cheat_title, CHEAT_LAYER_NAME);
+    cheat_title = rl_label(cheat_panel, 20, 14, &FR_Regular_48, PAL->accent, CHEAT_LAYER_NAME);
+    cheat_sub   = rl_label(cheat_panel, 104, 32, &DINishCondensed_SemiBold_22, PAL->index, "SYMBOLS");
+    cheat_rule  = rl_rect(cheat_panel, 20, 74, 240, 1, PAL->rule, 0);
 
     for (int r = 0; r < CHEAT_ROWS; r++) {
-        cheat_row_labels[r] = lv_label_create(cheat_panel);
-        lv_obj_set_style_text_font(cheat_row_labels[r], &lv_font_unscii_16, LV_PART_MAIN);
-        lv_obj_set_style_text_color(cheat_row_labels[r], lv_color_hex(0xFFFFFF), LV_PART_MAIN);
+        cheat_row_labels[r] = rl_label(cheat_panel, 20, 96 + r * 46,
+                                    &lv_font_unscii_16, PAL->name, cheat_rows[r]);
         lv_obj_set_style_text_letter_space(cheat_row_labels[r], 2, LV_PART_MAIN);
-        lv_obj_set_pos(cheat_row_labels[r], 12, 92 + r * 48);
-        lv_label_set_text_static(cheat_row_labels[r], cheat_rows[r]);
     }
 }
 
@@ -208,286 +258,154 @@ static void update_cheat_panel(const char *layer_name) {
     }
 }
 
-/* ========== Wheel Drawing ========== */
+/* ========== 建立 ========== */
 
-static void draw_wheel(uint8_t layer_count) {
-    if (!wheel_canvas) return;
-
-    const radii_color_palette_t *p = &color_palettes[current_palette];
-    int num_ticks = (layer_count > 0 && layer_count <= 16) ? layer_count : 6;
-
-    lv_canvas_fill_bg(wheel_canvas, lv_color_hex(0x000000), LV_OPA_TRANSP);
-
-    lv_layer_t layer;
-    lv_canvas_init_layer(wheel_canvas, &layer);
-
-    lv_draw_line_dsc_t line_dsc;
-    lv_draw_line_dsc_init(&line_dsc);
-    line_dsc.color = lv_color_hex(p->layer_wheel);
-    line_dsc.width = 4;
-    line_dsc.opa = LV_OPA_COVER;
-    line_dsc.round_start = 1;
-    line_dsc.round_end = 1;
-
-    for (int i = 0; i < num_ticks; i++) {
-        float angle = ((float)i * 360.0f / num_ticks - 90.0f) * M_PI / 180.0f;
-
-        line_dsc.p1.x = WHEEL_CENTER + (int)(WHEEL_INNER_RADIUS * cosf(angle));
-        line_dsc.p1.y = WHEEL_CENTER + (int)(WHEEL_INNER_RADIUS * sinf(angle));
-        line_dsc.p2.x = WHEEL_CENTER + (int)(WHEEL_OUTER_RADIUS * cosf(angle));
-        line_dsc.p2.y = WHEEL_CENTER + (int)(WHEEL_OUTER_RADIUS * sinf(angle));
-
-        lv_draw_line(&layer, &line_dsc);
+static void create_ladder(lv_obj_t *parent) {
+    for (int i = 0; i < LAYER_COUNT; i++) {
+        ticks[i] = rl_rect(parent, LADDER_X, LADDER_Y + i * LADDER_PITCH,
+                        LADDER_W, TICK_H, PAL->rule, 1);
     }
-
-    lv_canvas_finish_layer(wheel_canvas, &layer);
 }
 
-static void rotate_wheel(uint8_t target_layer, uint8_t layer_count) {
-    if (!wheel_image) return;
+static void create_text_column(lv_obj_t *parent) {
+    index_label = rl_label(parent, TEXT_X + 2, 34, &DINishCondensed_SemiBold_22, PAL->index, "00");
+    lv_obj_set_style_text_letter_space(index_label, 2, LV_PART_MAIN);
 
-    int num_layers = (layer_count > 0 && layer_count <= 16) ? layer_count : 6;
-    int32_t angle_per_layer = 3600 / num_layers;
-    int32_t target_angle = -(target_layer * angle_per_layer);
+    /* 固定單行大字。刻意不設 width、不設 long mode ⇒ 不 wrap。 */
+    name_label = rl_label(parent, TEXT_X, 62, &FR_Regular_48, PAL->name, "BASE");
 
-    int32_t current_angle = lv_image_get_rotation(wheel_image);
+    hrule = rl_rect(parent, TEXT_X, 126, 150, 1, PAL->rule, 0);
 
-    int32_t diff = target_angle - current_angle;
-    while (diff > 1800) { target_angle -= 3600; diff = target_angle - current_angle; }
-    while (diff < -1800) { target_angle += 3600; diff = target_angle - current_angle; }
-
-    lv_anim_t a;
-    lv_anim_init(&a);
-    lv_anim_set_var(&a, wheel_image);
-    lv_anim_set_values(&a, current_angle, target_angle);
-    lv_anim_set_time(&a, 150);
-    lv_anim_set_path_cb(&a, lv_anim_path_ease_in_out);
-    lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t)lv_image_set_rotation);
-    lv_anim_start(&a);
+    sub1_label = rl_label(parent, TEXT_X, 136, &DINishCondensed_SemiBold_22, PAL->accent, "TYPING");
+    sub2_label = rl_label(parent, TEXT_X, 164, &DINishCondensed_SemiBold_20, PAL->sub2, "17 layers");
 }
 
-/* ========== Create Functions ========== */
+static void create_right_column(lv_obj_t *parent) {
+    vrule = rl_rect(parent, COL_X, LADDER_Y, 1, 188, PAL->rule, 0);
 
-static void create_left_panel(lv_obj_t *parent) {
-    const radii_color_palette_t *p = &color_palettes[current_palette];
-
-    /* Left panel: 172x240 at (0, 0) - ORIGINAL POSITION */
-    left_panel = lv_obj_create(parent);
-    lv_obj_set_size(left_panel, 172, 240);
-    lv_obj_set_pos(left_panel, 0, 0);
-    lv_obj_set_style_bg_color(left_panel, lv_color_hex(p->left_panel_bg), LV_PART_MAIN);
-    lv_obj_set_style_bg_opa(left_panel, LV_OPA_COVER, LV_PART_MAIN);
-    lv_obj_set_style_radius(left_panel, 24, LV_PART_MAIN);
-    lv_obj_set_style_border_width(left_panel, 0, LV_PART_MAIN);
-    lv_obj_set_style_pad_all(left_panel, 0, LV_PART_MAIN);
-    lv_obj_clear_flag(left_panel, LV_OBJ_FLAG_SCROLLABLE);
-
-    /* Layer indicator container at (14, 20) inside left_panel */
-    lv_obj_t *layer_container = lv_obj_create(left_panel);
-    lv_obj_set_size(layer_container, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-    lv_obj_set_pos(layer_container, 14, 20);
-    lv_obj_set_style_bg_opa(layer_container, LV_OPA_TRANSP, LV_PART_MAIN);
-    lv_obj_set_style_border_width(layer_container, 0, LV_PART_MAIN);
-    lv_obj_set_style_pad_all(layer_container, 0, LV_PART_MAIN);
-    lv_obj_set_flex_flow(layer_container, LV_FLEX_FLOW_COLUMN);
-    lv_obj_set_flex_align(layer_container, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
-    lv_obj_set_style_pad_row(layer_container, 12, LV_PART_MAIN);
-    lv_obj_clear_flag(layer_container, LV_OBJ_FLAG_SCROLLABLE);
-
-    /* Wheel canvas (hidden, used as image source) */
-    wheel_canvas = lv_canvas_create(layer_container);
-    lv_canvas_set_buffer(wheel_canvas, wheel_canvas_buf, WHEEL_SIZE, WHEEL_SIZE, LV_COLOR_FORMAT_ARGB8888);
-    lv_obj_add_flag(wheel_canvas, LV_OBJ_FLAG_HIDDEN);
-    draw_wheel(6);
-
-    /* Wheel image (rotatable) */
-    wheel_image = lv_image_create(layer_container);
-    lv_image_set_src(wheel_image, lv_canvas_get_image(wheel_canvas));
-    lv_image_set_pivot(wheel_image, WHEEL_CENTER, WHEEL_CENTER);
-    lv_image_set_rotation(wheel_image, 0);
-
-    /* Layer name label - using DINishExpanded_Light_36 */
-    layer_label = lv_label_create(layer_container);
-    lv_obj_set_style_text_font(layer_label, &DINishExpanded_Light_36, LV_PART_MAIN);
-    lv_obj_set_style_text_color(layer_label, lv_color_hex(p->layer_text), LV_PART_MAIN);
-    lv_obj_set_width(layer_label, 148);
-    lv_label_set_long_mode(layer_label, LV_LABEL_LONG_WRAP);
-    lv_label_set_text(layer_label, "BASE");
-
-    current_layer = 0;
-    current_layer_count = 6;
-}
-
-static void create_modifier_panel(lv_obj_t *parent) {
-    const radii_color_palette_t *p = &color_palettes[current_palette];
-
-    /* Modifier panel: 108x178, BOTTOM_RIGHT aligned with (0, -62) offset */
-    mod_panel = lv_obj_create(parent);
-    lv_obj_set_size(mod_panel, 108, 178);
-    lv_obj_align(mod_panel, LV_ALIGN_BOTTOM_RIGHT, 0, -62);
-    lv_obj_set_style_bg_color(mod_panel, lv_color_hex(p->mod_panel_bg), LV_PART_MAIN);
-    lv_obj_set_style_bg_opa(mod_panel, LV_OPA_COVER, LV_PART_MAIN);
-    lv_obj_set_style_radius(mod_panel, 24, LV_PART_MAIN);
-    lv_obj_set_style_border_width(mod_panel, 0, LV_PART_MAIN);
-    lv_obj_set_style_pad_all(mod_panel, 0, LV_PART_MAIN);
-    lv_obj_clear_flag(mod_panel, LV_OBJ_FLAG_SCROLLABLE);
-
-    /* 2x2 grid of modifier symbols - Mac style (⌘, ⌥, ⌃, ⇧) */
-    /* Adjusted positions for symbol font centering */
-    static const int32_t mod_positions[4][2] = {
-        {18, 24}, {56, 24},   /* Row 1: CMD, OPT */
-        {18, 62}, {56, 62}    /* Row 2: CTRL, SHIFT */
+    /* 修飾鍵 2x2，Mac 符號。順序：CMD(GUI) / OPT(ALT) / CTRL / SHIFT */
+    static const int mod_pos[4][2] = { {0, 30}, {30, 30}, {0, 64}, {30, 64} };
+    static const char *mod_symbols[4] = {
+        SYMBOL_COMMAND, SYMBOL_OPTION, SYMBOL_CONTROL, SYMBOL_SHIFT
     };
-    /* Order: CMD (GUI), OPT (ALT), CTRL, SHIFT */
-    static const char *mod_symbols[] = {
-        SYMBOL_COMMAND,   /* ⌘ GUI */
-        SYMBOL_OPTION,    /* ⌥ ALT */
-        SYMBOL_CONTROL,   /* ⌃ CTRL */
-        SYMBOL_SHIFT      /* ⇧ SHIFT */
-    };
-
     for (int i = 0; i < 4; i++) {
-        mod_labels[i] = lv_label_create(mod_panel);
-        lv_label_set_text(mod_labels[i], mod_symbols[i]);
-        lv_obj_set_style_text_font(mod_labels[i], &Symbols_Semibold_32, LV_PART_MAIN);
-        lv_obj_set_style_text_color(mod_labels[i], lv_color_hex(p->mod_inactive), LV_PART_MAIN);
-        lv_obj_set_pos(mod_labels[i], mod_positions[i][0], mod_positions[i][1]);
+        mod_labels[i] = rl_label(parent, RIGHT_X + mod_pos[i][0], mod_pos[i][1],
+                              &Symbols_Semibold_28, PAL->mod_off, mod_symbols[i]);
+    }
+
+    /* 電量：左半(central) 在上，右半(peripheral) 在下 */
+    static const char *tags[2] = { "L", "R" };
+    static const int rows[2] = { 114, 150 };
+    for (int i = 0; i < 2; i++) {
+        bat_tag[i]   = rl_label(parent, RIGHT_X, rows[i] + 6,
+                             &DINishCondensed_SemiBold_20, PAL->index, tags[i]);
+        bat_value[i] = rl_label(parent, RIGHT_X + 14, rows[i],
+                             &FG_Medium_21, PAL->value, "--");
+        bat_bar_bg[i]   = rl_rect(parent, RIGHT_X, rows[i] + 26, BAR_W, BAR_H, PAL->rule, 1);
+        bat_bar_fill[i] = rl_rect(parent, RIGHT_X, rows[i] + 26, 1, BAR_H, PAL->accent, 1);
+        lv_obj_add_flag(bat_bar_fill[i], LV_OBJ_FLAG_HIDDEN);
+    }
+
+    /* BLE profile 四點（模組廣播的 profile slot 0-4，這裡畫 4 個） */
+    for (int i = 0; i < 4; i++) {
+        ble_dots[i] = rl_rect(parent, RIGHT_X + i * 12, 200, 8, 8, PAL->rule, 4);
     }
 }
 
-static lv_obj_t *create_arc(lv_obj_t *parent, int size, int x, int y, int width) {
-    const radii_color_palette_t *p = &color_palettes[current_palette];
+/* ========== 更新 ========== */
 
-    lv_obj_t *arc = lv_arc_create(parent);
-    lv_obj_set_size(arc, size, size);
-    lv_obj_set_pos(arc, x, y);
-    lv_arc_set_range(arc, 0, 100);
-    lv_arc_set_value(arc, 0);
-    lv_arc_set_bg_angles(arc, 0, 360);
-    lv_arc_set_rotation(arc, 270);
-    lv_obj_set_style_arc_width(arc, width, LV_PART_MAIN);
-    lv_obj_set_style_arc_color(arc, lv_color_hex(p->arc_bg), LV_PART_MAIN);
-    lv_obj_set_style_arc_rounded(arc, true, LV_PART_MAIN);
-    lv_obj_set_style_arc_width(arc, width, LV_PART_INDICATOR);
-    lv_obj_set_style_arc_color(arc, lv_color_hex(p->arc_bg), LV_PART_INDICATOR);
-    lv_obj_set_style_arc_rounded(arc, true, LV_PART_INDICATOR);
-    lv_obj_remove_style(arc, NULL, LV_PART_KNOB);
-    lv_obj_clear_flag(arc, LV_OBJ_FLAG_CLICKABLE);
-    return arc;
+static void update_ladder(uint8_t active_layer) {
+    for (int i = 0; i < LAYER_COUNT; i++) {
+        if (!ticks[i]) continue;
+        bool on = (i == active_layer);
+        lv_obj_set_size(ticks[i], on ? TICK_ON_W : LADDER_W, on ? TICK_ON_H : TICK_H);
+        lv_obj_set_pos(ticks[i],
+                       on ? LADDER_X - 3 : LADDER_X,
+                       LADDER_Y + i * LADDER_PITCH - (on ? 1 : 0));
+        lv_obj_set_style_bg_color(ticks[i],
+                                  lv_color_hex(on ? PAL->accent : PAL->rule), LV_PART_MAIN);
+    }
 }
-
-static void create_battery_panel(lv_obj_t *parent) {
-    const radii_color_palette_t *p = &color_palettes[current_palette];
-
-    /* Battery panel: 108x62 at (172, 178) - ORIGINAL POSITION */
-    bat_panel = lv_obj_create(parent);
-    lv_obj_set_size(bat_panel, 108, 62);
-    lv_obj_set_pos(bat_panel, 172, 178);
-    lv_obj_set_style_bg_color(bat_panel, lv_color_hex(p->battery_panel_bg), LV_PART_MAIN);
-    lv_obj_set_style_bg_opa(bat_panel, LV_OPA_COVER, LV_PART_MAIN);
-    lv_obj_set_style_radius(bat_panel, 24, LV_PART_MAIN);
-    lv_obj_set_style_border_width(bat_panel, 0, LV_PART_MAIN);
-    lv_obj_set_style_pad_all(bat_panel, 0, LV_PART_MAIN);
-    lv_obj_clear_flag(bat_panel, LV_OBJ_FLAG_SCROLLABLE);
-
-    /* Two battery arcs (for 2-peripheral layout from original) */
-    int arc_size = 30;
-    int left_pad = 19;
-    int arc_gap = 10;
-    int y_center = (62 - arc_size) / 2;
-
-    bat_arc_left = create_arc(bat_panel, arc_size, left_pad, y_center, 6);
-    bat_arc_right = create_arc(bat_panel, arc_size, left_pad + arc_size + arc_gap, y_center, 6);
-}
-
-/* ========== Update Functions ========== */
 
 static void update_modifiers(uint8_t flags) {
-    const radii_color_palette_t *p = &color_palettes[current_palette];
-
-    /* Order: CMD (GUI), OPT (ALT), CTRL, SHIFT (indices 0-3) */
-    /* HID flags: bit 0/4=Ctrl, bit 1/5=Shift, bit 2/6=Alt, bit 3/7=GUI */
-    bool mods[4] = {
-        (flags & 0x88) != 0,  /* GUI */
-        (flags & 0x44) != 0,  /* ALT */
-        (flags & 0x11) != 0,  /* CTRL */
-        (flags & 0x22) != 0,  /* SHIFT */
+    /* HID flags: bit 0/4=Ctrl, 1/5=Shift, 2/6=Alt, 3/7=GUI */
+    const bool mods[4] = {
+        (flags & 0x88) != 0,  /* GUI  -> ⌘ */
+        (flags & 0x44) != 0,  /* ALT  -> ⌥ */
+        (flags & 0x11) != 0,  /* CTRL -> ⌃ */
+        (flags & 0x22) != 0,  /* SHFT -> ⇧ */
     };
-
     for (int i = 0; i < 4; i++) {
-        if (mod_labels[i]) {
-            lv_color_t color = mods[i] ? lv_color_hex(p->mod_active)
-                                       : lv_color_hex(p->mod_inactive);
-            lv_obj_set_style_text_color(mod_labels[i], color, LV_PART_MAIN);
-        }
+        if (!mod_labels[i]) continue;
+        lv_obj_set_style_text_color(mod_labels[i],
+                                    lv_color_hex(mods[i] ? PAL->accent : PAL->mod_off),
+                                    LV_PART_MAIN);
     }
 }
 
-static void update_battery(lv_obj_t *arc, uint8_t level, bool connected) {
-    const radii_color_palette_t *p = &color_palettes[current_palette];
+static void update_battery(int slot, uint8_t level, bool connected) {
+    if (!bat_value[slot]) return;
 
-    if (!arc) return;
     if (connected && level > 0) {
-        lv_arc_set_value(arc, level);
-        lv_obj_set_style_arc_color(arc, lv_color_hex(p->arc_indicator), LV_PART_INDICATOR);
+        char buf[8];
+        snprintf(buf, sizeof(buf), "%u", level);
+        lv_label_set_text(bat_value[slot], buf);
+        lv_obj_set_style_text_color(bat_value[slot], lv_color_hex(PAL->value), LV_PART_MAIN);
+
+        int w = (int)level * BAR_W / 100;
+        if (w < 1) w = 1;
+        lv_obj_set_width(bat_bar_fill[slot], w);
+        lv_obj_clear_flag(bat_bar_fill[slot], LV_OBJ_FLAG_HIDDEN);
     } else {
-        lv_arc_set_value(arc, 0);
-        lv_obj_set_style_arc_color(arc, lv_color_hex(p->arc_bg), LV_PART_INDICATOR);
+        lv_label_set_text(bat_value[slot], "--");
+        lv_obj_set_style_text_color(bat_value[slot], lv_color_hex(PAL->index), LV_PART_MAIN);
+        lv_obj_add_flag(bat_bar_fill[slot], LV_OBJ_FLAG_HIDDEN);
     }
 }
 
-/* ========== Palette Application ========== */
+static void update_ble(bool usb_connected, uint8_t ble_profile) {
+    for (int i = 0; i < 4; i++) {
+        if (!ble_dots[i]) continue;
+        bool on = !usb_connected && (i == ble_profile);
+        lv_obj_set_style_bg_color(ble_dots[i],
+                                  lv_color_hex(on ? PAL->accent : PAL->rule), LV_PART_MAIN);
+    }
+}
+
+/* ========== 套用調色盤 ========== */
 
 static void apply_palette(void) {
     if (!layout_created) return;
 
-    const radii_color_palette_t *p = &color_palettes[current_palette];
+    if (bg_obj)       lv_obj_set_style_bg_color(bg_obj, lv_color_hex(PAL->bg), LV_PART_MAIN);
+    if (parent_screen) lv_obj_set_style_bg_color(parent_screen, lv_color_hex(PAL->bg), LV_PART_MAIN);
+    if (name_label)   lv_obj_set_style_text_color(name_label, lv_color_hex(PAL->name), LV_PART_MAIN);
+    if (index_label)  lv_obj_set_style_text_color(index_label, lv_color_hex(PAL->index), LV_PART_MAIN);
+    if (sub1_label)   lv_obj_set_style_text_color(sub1_label, lv_color_hex(PAL->accent), LV_PART_MAIN);
+    if (sub2_label)   lv_obj_set_style_text_color(sub2_label, lv_color_hex(PAL->sub2), LV_PART_MAIN);
+    if (hrule)        lv_obj_set_style_bg_color(hrule, lv_color_hex(PAL->rule), LV_PART_MAIN);
+    if (vrule)        lv_obj_set_style_bg_color(vrule, lv_color_hex(PAL->rule), LV_PART_MAIN);
 
-    /* Update left panel background */
-    if (left_panel) {
-        lv_obj_set_style_bg_color(left_panel, lv_color_hex(p->left_panel_bg), LV_PART_MAIN);
+    for (int i = 0; i < 2; i++) {
+        if (bat_tag[i])     lv_obj_set_style_text_color(bat_tag[i], lv_color_hex(PAL->index), LV_PART_MAIN);
+        if (bat_bar_bg[i])  lv_obj_set_style_bg_color(bat_bar_bg[i], lv_color_hex(PAL->rule), LV_PART_MAIN);
+        if (bat_bar_fill[i])lv_obj_set_style_bg_color(bat_bar_fill[i], lv_color_hex(PAL->accent), LV_PART_MAIN);
     }
 
-    /* Update layer label text color */
-    if (layer_label) {
-        lv_obj_set_style_text_color(layer_label, lv_color_hex(p->layer_text), LV_PART_MAIN);
+    if (cheat_panel) lv_obj_set_style_bg_color(cheat_panel, lv_color_hex(PAL->bg), LV_PART_MAIN);
+    if (cheat_title) lv_obj_set_style_text_color(cheat_title, lv_color_hex(PAL->accent), LV_PART_MAIN);
+    if (cheat_sub)   lv_obj_set_style_text_color(cheat_sub, lv_color_hex(PAL->index), LV_PART_MAIN);
+    if (cheat_rule)  lv_obj_set_style_bg_color(cheat_rule, lv_color_hex(PAL->rule), LV_PART_MAIN);
+    for (int r = 0; r < CHEAT_ROWS; r++) {
+        if (cheat_row_labels[r])
+            lv_obj_set_style_text_color(cheat_row_labels[r], lv_color_hex(PAL->name), LV_PART_MAIN);
     }
 
-    /* Redraw wheel with new colors */
-    if (wheel_canvas && wheel_image) {
-        draw_wheel(current_layer_count);
-        lv_image_set_src(wheel_image, lv_canvas_get_image(wheel_canvas));
-    }
-
-    /* Update modifier panel background */
-    if (mod_panel) {
-        lv_obj_set_style_bg_color(mod_panel, lv_color_hex(p->mod_panel_bg), LV_PART_MAIN);
-    }
-
-    /* Update modifier labels (inactive color for now) */
-    for (int i = 0; i < 4; i++) {
-        if (mod_labels[i]) {
-            lv_obj_set_style_text_color(mod_labels[i], lv_color_hex(p->mod_inactive), LV_PART_MAIN);
-        }
-    }
-
-    /* Update battery panel background */
-    if (bat_panel) {
-        lv_obj_set_style_bg_color(bat_panel, lv_color_hex(p->battery_panel_bg), LV_PART_MAIN);
-    }
-
-    /* Update battery arc colors */
-    if (bat_arc_left) {
-        lv_obj_set_style_arc_color(bat_arc_left, lv_color_hex(p->arc_bg), LV_PART_MAIN);
-    }
-    if (bat_arc_right) {
-        lv_obj_set_style_arc_color(bat_arc_right, lv_color_hex(p->arc_bg), LV_PART_MAIN);
-    }
-
-    LOG_INF("Applied palette: %s", p->name);
+    /* ladder / 修飾鍵 / BLE 的顏色跟狀態綁在一起，下一次 update 會刷到。 */
+    LOG_INF("Applied palette: %s", PAL->pname);
 }
 
-/* ========== Public API ========== */
+/* ========== 公開 API ========== */
 
 lv_obj_t *radii_layout_create(lv_obj_t *parent) {
     if (layout_created) {
@@ -497,75 +415,74 @@ lv_obj_t *radii_layout_create(lv_obj_t *parent) {
 
     parent_screen = parent;
 
-    /* Set parent background to black */
-    lv_obj_set_style_bg_color(parent, lv_color_hex(0x000000), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(parent, lv_color_hex(PAL->bg), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(parent, LV_OPA_COVER, LV_PART_MAIN);
 
-    /* Create all elements directly on parent - ORIGINAL ORDER */
-    create_left_panel(parent);
-    create_modifier_panel(parent);
-    create_battery_panel(parent);
-    create_cheat_panel(parent); /* 一定要最後：z-order 蓋在其他 panel 上 */
+    bg_obj = rl_rect(parent, 0, 0, SCR_W, SCR_H, PAL->bg, 0);
+
+    create_ladder(parent);
+    create_text_column(parent);
+    create_right_column(parent);
+    create_cheat_panel(parent);   /* 一定要最後：z-order 蓋在其他東西上 */
 
     layout_created = true;
-    LOG_INF("Radii layout created (%s theme)", color_palettes[current_palette].name);
+    current_layer = 0xFF;
+    LOG_INF("Radii layout created (dashboard, %d layers, %s theme)",
+            LAYER_COUNT, PAL->pname);
     return parent;
 }
 
 void radii_layout_update(uint8_t active_layer, const char *layer_name,
-                        uint8_t battery_level, bool battery_connected,
-                        uint8_t peripheral_battery, bool peripheral_connected,
-                        uint8_t modifier_flags, bool usb_connected, uint8_t ble_profile) {
+                         uint8_t battery_level, bool battery_connected,
+                         uint8_t peripheral_battery, bool peripheral_connected,
+                         uint8_t modifier_flags, bool usb_connected, uint8_t ble_profile) {
     if (!layout_created) return;
 
-    /* Layer count from config */
-    uint8_t layer_count = 6;
-#ifdef CONFIG_PROSPECTOR_MAX_LAYERS
-    layer_count = CONFIG_PROSPECTOR_MAX_LAYERS;
-#endif
+    bool known = (active_layer < LAYER_COUNT);
 
-    /* Redraw wheel if layer count changed */
-    if (layer_count != current_layer_count && wheel_canvas && wheel_image) {
-        draw_wheel(layer_count);
-        lv_image_set_src(wheel_image, lv_canvas_get_image(wheel_canvas));
-        current_layer_count = layer_count;
-    }
-
-    /* Rotate wheel on layer change */
     if (active_layer != current_layer) {
-        rotate_wheel(active_layer, layer_count);
+        update_ladder(active_layer);
+
+        /* index 兩位數 */
+        if (index_label) {
+            char buf[8];
+            snprintf(buf, sizeof(buf), "%02u", active_layer);
+            lv_label_set_text(index_label, buf);
+        }
+
+        /* 大字層名：優先用廣播帶來的（那是 keymap 的 display-name 本尊），
+         * 空的才退回本地表，再不行才用 index。
+         * 廣播欄位不保證 null-terminated，所以只複製 4 bytes 再自己補 0。 */
+        if (name_label) {
+            char name[5] = {0};
+            if (layer_name && layer_name[0]) {
+                memcpy(name, layer_name, 4);
+                for (int i = 0; i < 4; i++) {
+                    if (name[i] >= 'a' && name[i] <= 'z') name[i] -= 32;
+                }
+                lv_label_set_text(name_label, name);
+            } else if (known) {
+                lv_label_set_text(name_label, LAYERS[active_layer].name);
+            } else {
+                char buf[8];
+                snprintf(buf, sizeof(buf), "L%u", active_layer);
+                lv_label_set_text(name_label, buf);
+            }
+        }
+
+        /* 副標：本地表，不受 4 bytes 限制 */
+        if (sub1_label) lv_label_set_text(sub1_label, known ? LAYERS[active_layer].sub1 : "");
+        if (sub2_label) lv_label_set_text(sub2_label, known ? LAYERS[active_layer].sub2 : "");
+
         current_layer = active_layer;
     }
 
-    /* Update layer name (uppercase) */
-    if (layer_label) {
-        if (layer_name && layer_name[0]) {
-            static char upper_name[32];
-            int i;
-            for (i = 0; layer_name[i] && i < 31; i++) {
-                upper_name[i] = (layer_name[i] >= 'a' && layer_name[i] <= 'z')
-                                ? layer_name[i] - 32 : layer_name[i];
-            }
-            upper_name[i] = '\0';
-            lv_label_set_text(layer_label, upper_name);
-        } else {
-            char text[16];
-            snprintf(text, sizeof(text), "%d", active_layer);
-            lv_label_set_text(layer_label, text);
-        }
-    }
-
-    /* Update batteries */
-    update_battery(bat_arc_left, battery_level, battery_connected);
-    update_battery(bat_arc_right, peripheral_battery, peripheral_connected);
-
-    /* Update modifiers */
+    update_battery(0, battery_level, battery_connected);
+    update_battery(1, peripheral_battery, peripheral_connected);
     update_modifiers(modifier_flags);
-
-    /* SYM 小抄 overlay（本 fork 加的） */
+    update_ble(usb_connected, ble_profile);
     update_cheat_panel(layer_name);
 
-    /* Force LVGL to redraw updated widgets */
     if (parent_screen) {
         lv_obj_invalidate(parent_screen);
     }
@@ -574,35 +491,46 @@ void radii_layout_update(uint8_t active_layer, const char *layer_name,
 void radii_layout_destroy(void) {
     if (!layout_created) return;
 
-    /* Delete all created objects */
-    if (left_panel) { lv_obj_del(left_panel); left_panel = NULL; }
-    if (mod_panel) { lv_obj_del(mod_panel); mod_panel = NULL; }
-    if (bat_panel) { lv_obj_del(bat_panel); bat_panel = NULL; }
+    if (bg_obj)      { lv_obj_del(bg_obj);      bg_obj = NULL; }
+    if (index_label) { lv_obj_del(index_label); index_label = NULL; }
+    if (name_label)  { lv_obj_del(name_label);  name_label = NULL; }
+    if (hrule)       { lv_obj_del(hrule);       hrule = NULL; }
+    if (sub1_label)  { lv_obj_del(sub1_label);  sub1_label = NULL; }
+    if (sub2_label)  { lv_obj_del(sub2_label);  sub2_label = NULL; }
+    if (vrule)       { lv_obj_del(vrule);       vrule = NULL; }
     if (cheat_panel) { lv_obj_del(cheat_panel); cheat_panel = NULL; }
-    cheat_title = NULL;
-    for (int i = 0; i < CHEAT_ROWS; i++) cheat_row_labels[i] = NULL;
 
-    /* Clear pointers */
-    wheel_canvas = NULL;
-    wheel_image = NULL;
-    layer_label = NULL;
-    for (int i = 0; i < 4; i++) mod_labels[i] = NULL;
-    bat_arc_left = NULL;
-    bat_arc_right = NULL;
+    cheat_title = NULL;
+    cheat_sub = NULL;
+    cheat_rule = NULL;
+    for (int r = 0; r < CHEAT_ROWS; r++) cheat_row_labels[r] = NULL;
+
+    for (int i = 0; i < LAYER_COUNT; i++) {
+        if (ticks[i]) { lv_obj_del(ticks[i]); ticks[i] = NULL; }
+    }
+    for (int i = 0; i < 4; i++) {
+        if (mod_labels[i]) { lv_obj_del(mod_labels[i]); mod_labels[i] = NULL; }
+        if (ble_dots[i])   { lv_obj_del(ble_dots[i]);   ble_dots[i] = NULL; }
+    }
+    for (int i = 0; i < 2; i++) {
+        if (bat_tag[i])      { lv_obj_del(bat_tag[i]);      bat_tag[i] = NULL; }
+        if (bat_value[i])    { lv_obj_del(bat_value[i]);    bat_value[i] = NULL; }
+        if (bat_bar_bg[i])   { lv_obj_del(bat_bar_bg[i]);   bat_bar_bg[i] = NULL; }
+        if (bat_bar_fill[i]) { lv_obj_del(bat_bar_fill[i]); bat_bar_fill[i] = NULL; }
+    }
 
     parent_screen = NULL;
     layout_created = false;
-    current_layer = 0;
-    current_layer_count = 6;
+    current_layer = 0xFF;
 
     LOG_INF("Radii layout destroyed");
 }
 
 void radii_layout_cycle_palette(void) {
     if (!layout_created) return;
-
     current_palette = (current_palette + 1) % PALETTE_COUNT;
     apply_palette();
+    current_layer = 0xFF;   /* 強制下一次 update 重刷 ladder / 層名顏色 */
 }
 
 uint8_t radii_layout_get_palette(void) {
@@ -610,5 +538,5 @@ uint8_t radii_layout_get_palette(void) {
 }
 
 const char *radii_layout_get_palette_name(void) {
-    return color_palettes[current_palette].name;
+    return color_palettes[current_palette].pname;
 }
