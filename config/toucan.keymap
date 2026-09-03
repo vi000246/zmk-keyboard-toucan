@@ -9,12 +9,14 @@
  */
 
 #include <behaviors/num_word.dtsi>
-#include <behaviors.dtsi>
-#include <dt-bindings/zmk/keys.h>
-#include <dt-bindings/zmk/pointing.h>
+
 /* 左半改當 split central 之後才需要的：主機配對與輸出切換都歸鍵盤自己管。 */
+
+#include <behaviors.dtsi>
 #include <dt-bindings/zmk/bt.h>
+#include <dt-bindings/zmk/keys.h>
 #include <dt-bindings/zmk/outputs.h>
+#include <dt-bindings/zmk/pointing.h>
 
 /*
  * 鍵盤滑鼠鍵的速度（&mmv 游標 / &msc 滾輪）。這裡只管「用鍵盤推游標 / 滾輪」，
@@ -35,7 +37,6 @@
  *     SCRL SLOW(12)   ：游標 ±750   滾輪 ±25
  *     SCRL FAST(13)   ：游標 ±2250  滾輪 ±75
  */
-
 /*
  * SCROLL (7) 的 42 格 bindings。
  *
@@ -78,7 +79,6 @@
  * （這一層跟 SCRL 三檔的 bindings 以前是用巨集展開共用的，為了
  * keymap-editor 已攞平成字面 bindings——見檔頭速度對照表。）
  */
-
 /*
  * Hold-tap feel, carried over from the .vil's QMK settings.
  *   tapping-term-ms — Vial "Tapping Term"
@@ -99,15 +99,19 @@
 
     time-to-max-speed-ms = <50>;
 };
+
 &mmv {
     // 預設通常是 300，數字越小，游標加速到最高速的時間越短，滑起來會感覺越快、越靈敏
+
     time-to-max-speed-ms = <100>;
 
     // 加速曲線指數。預設通常是 1 (線性加速) 或 2 (拋物線加速)。
     // 如果你希望「一按下去就直接用最高速移動」，可以將它設為 0。
+
     acceleration-exponent = <0>;
-    
+
     // 延遲啟動時間 (與滾輪相同，設為 0 代表隨按隨動)
+
     delay-ms = <0>;
 };
 
@@ -171,6 +175,7 @@
          * 爆文）就照 z30 再寫一個 macro，bindings 後面補上 <&z100>，
          * 三連點觸發。
          */
+
         td_ptt: tap_dance_ptt {
             compatible = "zmk,behavior-tap-dance";
             #binding-cells = <0>;
@@ -187,6 +192,7 @@
      * 這裡才把 NAV SCRL(15) 疊上去，蓋掉 hjkl 那四格。所以 flag 開著
      * 回 BASE 打字，hjkl 仍是字母，不會漏滾輪出來。
      */
+
     conditional_layers {
         compatible = "zmk,conditional-layers";
 
@@ -288,6 +294,7 @@
          * /clear 會清掉整段對話——不想要自動送出的話，把最後那組
          * <&macro_tap>, <&kp ENTER> 兩行刪掉即可（只打字、不按 Enter）。
          */
+
         cc_clear: cc_clear {
             compatible = "zmk,behavior-macro";
             #binding-cells = <0>;
@@ -470,6 +477,7 @@
          * HJKL SCRL flag（14）開著時這四組會暫時失效（最高層變 14、不在
          * 名單內）。刻意不把 14 加進名單，原因見 layer_14 的註解。
          */
+
         combo_lock_fast_l {
             timeout-ms = <50>;
             key-positions = <36 37>;
@@ -546,6 +554,7 @@
              *   2. Prospector 廣播的層名欄位只有 4 字元，SYMBOL 本來就會被截斷。
              * 改這裡必須同步改 cheatsheet.c 的 .layer_name（它用層名找表）。
              */
+
             display-name = "SYM";
             bindings = <
 &none  &kp QMARK  &kp EXCL  &kp LBKT  &kp RBKT  &kp KP_PLUS  &kp AT  &kp HASH  &kp DLLR  &kp DQT  &kp GRAVE  &none  &none  &kp LT  &kp GT  &kp LPAR  &kp RPAR  &kp MINUS  &kp TILDE  &mt LSHFT SQT  &kp LGUI  &kp LCTRL  &mt LALT COLON  &none  &none  &kp PIPE  &kp AMPS  &kp LBRC  &kp RBRC  &kp KP_EQUAL  &kp CARET  &kp STAR  &kp COMMA  &kp BSLH  &kp FSLH  &none  &kp UNDER  &kp DOT  &kp PRCNT  &kp LS(LC(LA(LG(E))))  &kp LA(SPACE)  &kp LC(LG(A))
@@ -589,6 +598,7 @@
          *   38/39 (最外，layer 0 的 ESC / BSPC 位) = 最慢 0.62x
          * 鎖定走 combo（見上面的 combo_lock_*），拇指上沒有 toggle。
          */
+
         layer_6 {
             display-name = "MOUSE";
             bindings = <
@@ -602,6 +612,7 @@
          * 拇指位置與 MOUSE 相同，但指向滾動三檔；滾動刻意不提供鎖定。
          * 游標 ±1500 / 滾輪 ±50 = 全鍵盤速度基準，見檔頭對照表。
          */
+
         layer_7 {
             display-name = "SCROLL";
             bindings = <
@@ -628,6 +639,7 @@
          * 按住時左手一定壓在 G/H 上，不會同時打字。其餘格子全 &trans 落回
          * SCROLL（位置 10 的 &to 0 逃生口也是這樣落下去）。
          */
+
         layer_8 {
             display-name = "CUR SLOWEST";
             bindings = <
@@ -650,6 +662,7 @@
         };
 
         /* 基準的 25%：游標 ±375、滾輪 ±12 */
+
         layer_11 {
             display-name = "SCRL SLOWEST";
             bindings = <
@@ -658,6 +671,7 @@
         };
 
         /* 基準的 50%：游標 ±750、滾輪 ±25 */
+
         layer_12 {
             display-name = "SCRL SLOW";
             bindings = <
@@ -666,6 +680,7 @@
         };
 
         /* 基準的 150%：游標 ±2250、滾輪 ±75 */
+
         layer_13 {
             display-name = "SCRL FAST";
             bindings = <
@@ -688,6 +703,7 @@
          *   2. 任何 &to（NAV 的 P、PAD 層位置 10、combo_to_nav）都會把
          *      flag 一併清掉——&to 只保留目標層和 default 層。
          */
+
         layer_14 {
             display-name = "HJKL SCRL";
             bindings = <
@@ -701,6 +717,7 @@
          * 右手 home row 完全相同；其餘 &trans 落回 NAV——位置 34 也因此
          * 落回 &tog 14，再按一次就切回方向鍵。
          */
+
         layer_15 {
             display-name = "NAV SCRL";
             bindings = <
@@ -729,10 +746,11 @@
          *
          * 右手整排 &trans 是刻意的：這層只用左手，右手保持 MEDIA 的行為。
          */
+
         layer_16 {
             display-name = "BT";
             bindings = <
-&none  &bt BT_SEL 0  &bt BT_SEL 1  &bt BT_SEL 2  &bt BT_SEL 3  &bt BT_SEL 4  &trans  &trans  &trans  &trans  &to 0  &none  &none  &out OUT_USB  &out OUT_BLE  &out OUT_TOG  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &none  &none  &bt BT_CLR  &trans  &trans  &trans  &bootloader  &trans  &trans  &trans  &trans  &trans  &none  &trans  &trans  &trans  &trans  &trans  &trans
+&none  &bt BT_SEL 0  &bt BT_SEL 1  &bt BT_SEL 2  &bt BT_SEL 3  &bt BT_SEL 4  &trans  &trans  &trans  &trans  &to 0  &none  &none  &out OUT_USB  &out OUT_BLE  &out OUT_TOG  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &none  &none  &bt BT_CLR  &trans  &trans  &trans  &bootloader  &bootloader  &trans  &trans  &trans  &trans  &none  &trans  &trans  &trans  &trans  &trans  &trans
             >;
         };
     };
