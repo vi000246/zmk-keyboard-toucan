@@ -43,24 +43,34 @@ manifest:
     # 官方相容性標示：scanner 端需要 ZMK main，但「keyboard-side supported
     # via compatibility macros」對 ZMK 0.3 有效——我們只用鍵盤端。
     #
-    # ⚠️ 釘 v2.0.0 = 原廠 beekeeb prospector-scanner 分支所用的版本（同樣是
-    # 左半 central 的拓撲）。2026-09-02 曾釘 v2.2.2，結果左半收不到觸控板的
-    # split input（按鍵正常、MOUSE 層不升、游標不動）：v2.2.1 起鍵盤端會註冊
-    # bt_conn_cb、在 split 連線前後 bt_le_adv_start/stop、並跑 burst/silent
-    # 廣播循環——它自己的註解就承認會跟 central 的 scan/connect 搶無線電
-    # （CONNECT_REQ 只有 150µs 的硬體期限），嫌疑是同時也干擾了連上之後的
-    # GATT discovery，讓 input characteristic 的訂閱鏈（char → CCC → CPF →
-    # subscribe，見 zmk v0.3 central.c）走不完。v2.0.0 沒有這整套。
-    # v2.2.3 只修 scanner 端，鍵盤端與 v2.2.2 相同，升上去沒有意義。
+    # ⚠️ 為什麼是 v2.2.3 而不是 v2.0.0（2026-09-03 更正）
     #
-    # v2.0.0 / v2.2.0 / v2.2.3 的 ZMK_STATUS_ADV_VERSION 都是 1，廣播格式
-    # 相同，dongle 那顆刷 v2.2.0 或 v2.2.3 的 scanner .uf2 都收得到。
+    # 2026-09-02 曾經從 v2.2.2 降回 v2.0.0，理由寫的是「v2.2.1 起鍵盤端會註冊
+    # bt_conn_cb、跑 burst/silent 廣播循環，干擾 split GATT discovery，害觸控板
+    # 收不到 input」。**那個理論是錯的，已作廢。**
     #
-    # 注意：v2.0.0 沒有 PROSPECTOR_EXPECTED_PERIPHERAL_COUNT 這個符號，
-    # toucan_left.conf 對應那行已註解，升回 v2.2.x 時要一起打開。
+    # 真正的原因：出問題的那台是 toucan2，硬體跟這個 repo 描述的 toucan1 不同
+    # ——v1 是 Cirque Pinnacle 掛 SPI0，v2 是 Azoteq TPS43 掛 I2C0 @0x74，而且
+    # P1.13 / P1.15 / P1.14 / P0.02 四根腳兩代用途完全相反（SCK/MOSI/MISO/DR
+    # vs SDA/SCL/RST/RDY）。v1 韌體在 I2C 匯流排上打 SPI，感測器永遠不回話，
+    # input event 恆為 0。按鍵正常是因為 kscan 那 10 根腳兩代逐字相同。
+    # 換句話說：當時所有「證據」都在一台本來就不可能動的機器上取得，
+    # 資訊量為零，那次降版沒有修到任何東西。
+    #
+    # 而降版本身有實際代價：v2.0.0 的 src/status_advertisement.c:511 無條件
+    # `snprintf(layer_name, "L%d", layer)`，**根本不讀 keymap 的 display-name**，
+    # 沒有任何 config 能繞過 ⇒ dongle 螢幕只能顯示 L0 / L6。v2.2.x 才改成
+    # zmk_keymap_layer_name()（見 scanner-module/src/status_advertisement.c:802）。
+    # 要層名就必須 ≥ v2.2.3。
+    #
+    # v2.0.0 / v2.2.0 / v2.2.3 的 ZMK_STATUS_ADV_VERSION 都是 1，廣播格式相同，
+    # dongle 端刷哪一版的 scanner .uf2 都收得到，升這裡不用重刷 dongle。
+    #
+    # 注意：v2.2.x 才有 PROSPECTOR_EXPECTED_PERIPHERAL_COUNT 這個符號，
+    # toucan_left.conf 對應那行已經跟著打開。
     - name: prospector-zmk-module
       remote: prospector
-      revision: v2.0.0
+      revision: v2.2.3
       path: modules/prospector-zmk-module
     - name: zmk-dongle-screen
       remote: albertclee

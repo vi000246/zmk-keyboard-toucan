@@ -8,6 +8,53 @@
  * cleanly from QMK to ZMK.
  */
 
+/*
+ * ── 層名：全部 ≤ 4 字元，這是硬約束 ─────────────────────────────────────
+ *
+ * 2026-09-03 改名。三個獨立的理由指向同一個上限：
+ *
+ *   1. Prospector 廣播欄位 `layer_name[4]` 就是 4 bytes（見
+ *      status_advertisement.h）。超過直接截斷，而截斷會「撞名」——舊的
+ *      CUR SLOWEST / CUR SLOW / CUR FAST 三層全部塌成 "CUR "，
+ *      三個 SCRL 檔全部塌成 "SCRL"，NAV SCRL 撞 NAV。
+ *   2. dongle 的儀表板版面把層名排成固定 50px 單行、不 wrap 不縮字。
+ *      只要每個名字都 ≤4 字，溢出就不是「大概不會」而是不可能。
+ *   3. 鍵盤自己的 nice_view 用 quinquefive_24（每字約 29px）、畫布寬
+ *      144px ⇒ 一行也就 4–5 字。
+ *
+ *   #  名稱   舊名           說明
+ *   ─────────────────────────────────────────────────────────────────
+ *   0  BASE                  打字
+ *   1  NAV                   方向鍵 / 視窗 / Claude Code 巨集
+ *   2  NUM                   數字鍵盤
+ *   3  SYM                   符號（小抄靠這名字查表，見下方 layer_3）
+ *   4  CMD    MEDIA          Cmd 快捷 / 視窗 / 剪貼——跟「媒體」無關
+ *   5  FUN                   F1-F12 / 音量 / Hyper 巨集
+ *   6  PAD    MOUSE          觸控板自動升起的點擊層
+ *   7  SCRL   SCROLL         按住 G/H：觸控板變滾輪
+ *   8  CUR-   CUR SLOWEST    游標 0.62x（可鎖定）
+ *   9  CUR    CUR SLOW       游標 1.25x（中檔＝基準，故不帶符號）
+ *  10  CUR+   CUR FAST       游標 3.75x（可鎖定）
+ *  11  SCR-   SCRL SLOWEST   滾動 25%
+ *  12  SCR    SCRL SLOW      滾動 50%
+ *  13  SCR+   SCRL FAST      滾動 150%
+ *  14  HJKL   HJKL SCRL      flag 層：hjkl 滾輪模式待命
+ *  15  WHEL   NAV SCRL       flag 開著又按住 NAV 時才是這層
+ *  16  BT                    配對 / 輸出切換 / bootloader
+ *
+ * ⚠️ 改名時要一起動的地方：
+ *   - regen.sh 的 LAYER_NAMES（層 0-5）與 Patch 3 的硬編碼 MOUSE_LAYER
+ *     字串——不改的話下次 regen 會把舊名寫回來。
+ *   - SYM 若改名，還要同步 nice_view_gem/widgets/cheatsheet.c 和
+ *     scanner-module/.../radii_layout.c 的 CHEAT_LAYER_NAME（兩者都只
+ *     認 "SYM"）。所以 SYM 刻意不改。
+ *   - dongle 儀表板的副標表是用 layer index 查的，只有「加/刪/重排層」
+ *     才要動，改名不用。
+ *
+ * ⚠️ 刷進去後 dongle 若仍顯示舊名 → 先做 ZMK Studio 的
+ *    Restore Stock Settings（flash 裡的 Studio 設定會蓋掉 keymap）。
+ */
+
 #include <behaviors/num_word.dtsi>
 #include <behaviors.dtsi>
 #include <dt-bindings/zmk/keys.h>
@@ -540,11 +587,14 @@
 
         layer_3 {
             /*
-             * 名字刻意縮短成 SYM：
-             *   1. nice_view 的層名用 quinquefive_24（每字約 29px），畫布寬 144px，
-             *      SYMBOL 六個字會折行，第二行剛好壓在 y98 起的按鍵小抄上。
-             *   2. Prospector 廣播的層名欄位只有 4 字元，SYMBOL 本來就會被截斷。
-             * 改這裡必須同步改 cheatsheet.c 的 .layer_name（它用層名找表）。
+             * SYM 是第一個被縮短的層名（當年只有它超標），現在全部 17 層
+             * 都收進 4 字元了——理由見檔頭的層名表。
+             *
+             * ⚠️ 這一個名字比其他層多兩個綁定：小抄是用「層名字串」查表的，
+             * 不是用 index。改成別的字要同步這兩處，否則小抄直接消失：
+             *   boards/shields/nice_view_gem/widgets/cheatsheet.c 的 .layer_name
+             *   scanner-module/.../src/radii_layout.c 的 CHEAT_LAYER_NAME
+             * 所以 SYM 刻意維持原樣。
              */
             display-name = "SYM";
             bindings = <
@@ -553,7 +603,7 @@
         };
 
         layer_4 {
-            display-name = "MEDIA";
+            display-name = "CMD";
             bindings = <
 &none  &kp LG(Q)  &kp LG(W)  &kp LG(E)  &kp LS(LG(Z))  &kp LG(T)  &kp LC(U)  &kp LC(W)  &kp LA(DEL)  &kp LC(K)  &to 0  &none  &none  &mt LALT LG(A)  &mt LCTRL LG(S)  &mt LGUI LG(D)  &mt LSHFT LG(F)  &kp LG(L)  &trans  &kp LG(LEFT)  &kp LG(RIGHT)  &kp LS(LA(LC(LG(E))))  &kp LG(LS(T))  &none  &none  &kp LG(Z)  &kp LG(X)  &kp LG(C)  &kp LG(V)  &kp LG(B)  &kp LC(A)  &kp LA(LEFT)  &kp LA(RIGHT)  &kp LA(LS(RIGHT))  &kp LG(W)  &none  &kp LS(LC(LA(LG(GRAVE))))  &sl 5  &none  &mo 1  &mo 16  &kp F19
             >;
@@ -590,7 +640,7 @@
          * 鎖定走 combo（見上面的 combo_lock_*），拇指上沒有 toggle。
          */
         layer_6 {
-            display-name = "MOUSE";
+            display-name = "PAD";
             bindings = <
 &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &to 0  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mo 10  &mo 9  &mo 8  &mo 8  &mo 9  &mo 10
             >;
@@ -603,7 +653,7 @@
          * 游標 ±1500 / 滾輪 ±50 = 全鍵盤速度基準，見檔頭對照表。
          */
         layer_7 {
-            display-name = "SCROLL";
+            display-name = "SCRL";
             bindings = <
 &trans  &kp LG(W)  &msc MOVE_Y(50)  &mmv MOVE_Y(-1500)  &msc MOVE_Y(-50)  &trans  &kp LG(LS(LEFT_BRACKET))  &kp LG(LS(RIGHT_BRACKET))  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &to 0  &trans  &trans  &msc MOVE_X(50)  &mmv MOVE_X(-1500)  &mmv MOVE_Y(1500)  &mmv MOVE_X(1500)  &msc MOVE_X(-50)  &msc MOVE_X(50)  &msc MOVE_Y(50)  &msc MOVE_Y(-50)  &msc MOVE_X(-50)  &trans  &trans  &trans  &kp LS(LG(T))  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &kp END  &kp PAGE_DOWN  &kp PAGE_UP  &kp HOME  &trans  &trans  &mo 13  &mo 12  &mo 11  &mo 11  &mo 12  &mo 13
             >;
@@ -629,21 +679,21 @@
          * SCROLL（位置 10 的 &to 0 逃生口也是這樣落下去）。
          */
         layer_8 {
-            display-name = "CUR SLOWEST";
+            display-name = "CUR-";
             bindings = <
 &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &to 0  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
             >;
         };
 
         layer_9 {
-            display-name = "CUR SLOW";
+            display-name = "CUR";
             bindings = <
 &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
             >;
         };
 
         layer_10 {
-            display-name = "CUR FAST";
+            display-name = "CUR+";
             bindings = <
 &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &to 0  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
             >;
@@ -651,7 +701,7 @@
 
         /* 基準的 25%：游標 ±375、滾輪 ±12 */
         layer_11 {
-            display-name = "SCRL SLOWEST";
+            display-name = "SCR-";
             bindings = <
 &trans  &trans  &msc MOVE_Y(12)  &mmv MOVE_Y(-375)  &msc MOVE_Y(-12)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &msc MOVE_X(12)  &mmv MOVE_X(-375)  &mmv MOVE_Y(375)  &mmv MOVE_X(375)  &msc MOVE_X(-12)  &msc MOVE_X(12)  &msc MOVE_Y(12)  &msc MOVE_Y(-12)  &msc MOVE_X(-12)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
             >;
@@ -659,7 +709,7 @@
 
         /* 基準的 50%：游標 ±750、滾輪 ±25 */
         layer_12 {
-            display-name = "SCRL SLOW";
+            display-name = "SCR";
             bindings = <
 &trans  &trans  &msc MOVE_Y(25)  &mmv MOVE_Y(-750)  &msc MOVE_Y(-25)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &msc MOVE_X(25)  &mmv MOVE_X(-750)  &mmv MOVE_Y(750)  &mmv MOVE_X(750)  &msc MOVE_X(-25)  &msc MOVE_X(25)  &msc MOVE_Y(25)  &msc MOVE_Y(-25)  &msc MOVE_X(-25)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
             >;
@@ -667,7 +717,7 @@
 
         /* 基準的 150%：游標 ±2250、滾輪 ±75 */
         layer_13 {
-            display-name = "SCRL FAST";
+            display-name = "SCR+";
             bindings = <
 &trans  &trans  &msc MOVE_Y(75)  &mmv MOVE_Y(-2250)  &msc MOVE_Y(-75)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &msc MOVE_X(75)  &mmv MOVE_X(-2250)  &mmv MOVE_Y(2250)  &mmv MOVE_X(2250)  &msc MOVE_X(-75)  &msc MOVE_X(75)  &msc MOVE_Y(75)  &msc MOVE_Y(-75)  &msc MOVE_X(-75)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
             >;
@@ -689,7 +739,7 @@
          *      flag 一併清掉——&to 只保留目標層和 default 層。
          */
         layer_14 {
-            display-name = "HJKL SCRL";
+            display-name = "HJKL";
             bindings = <
 &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
             >;
@@ -702,7 +752,7 @@
          * 落回 &tog 14，再按一次就切回方向鍵。
          */
         layer_15 {
-            display-name = "NAV SCRL";
+            display-name = "WHEL";
             bindings = <
 &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &msc MOVE_X(50)  &msc MOVE_Y(50)  &msc MOVE_Y(-50)  &msc MOVE_X(-50)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
             >;

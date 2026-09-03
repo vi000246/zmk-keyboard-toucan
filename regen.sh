@@ -47,10 +47,16 @@ sys.path.insert(0, str(km_repo))
 from backend.parsers import zmk_export
 from backend.parsers.vial import parse
 
-# Layer names as the user calls them. Max 12 chars — the dongle screen's layer
-# widget truncates at `char text[13]`.
-LAYER_NAMES = ["BASE", "NAV", "NUM", "SYM", "MEDIA", "FUN"]
-assert all(len(n) <= 12 for n in LAYER_NAMES), "a name would be truncated on screen"
+# Layer names as the user calls them.
+#
+# Max 4 chars, not 12. The old limit came from the dongle layer widget's
+# `char text[13]`; the binding constraint is now the Prospector status
+# advertisement, whose `layer_name[4]` field is exactly 4 bytes — anything
+# longer is truncated, and truncation collides (CUR SLOWEST / CUR SLOW /
+# CUR FAST all became "CUR "). Full table and reasoning: the layer-name
+# block at the top of config/toucan.keymap.
+LAYER_NAMES = ["BASE", "NAV", "NUM", "SYM", "CMD", "FUN"]
+assert all(len(n) <= 4 for n in LAYER_NAMES), "a name would be truncated in the BLE advertisement"
 
 result = zmk_export.export(
     parse(vil), "toucan", source_name=vil.name, layer_names=LAYER_NAMES
@@ -119,16 +125,23 @@ patch(
     r'\2&none  &none  &none  &studio_unlock  &bootloader\3',
 )
 
-# ── Patch 3: the MOUSE layer ────────────────────────────────────────────────
+# ── Patch 3: the PAD layer ──────────────────────────────────────────────────
 # A .vil has no concept of "the layer that turns itself on when the trackpad
-# moves", so this layer only exists here. It is driven by `&mouse_temp_layer 6
-# 1000` on the input listener in boards/shields/toucan/toucan.dtsi, and the
-# seven positions bound below must stay in step with that node's
-# `excluded-positions` — a key that is not excluded switches the layer off the
-# moment it is pressed, which for a click key means it never works.
+# moves", so this layer only exists here.
+#
+# ⚠️ THIS BLOCK IS STALE and running regen.sh will regress the keymap.
+#    It still describes the 2026-08 design: `&mouse_temp_layer 6 1000`, seven
+#    live keys (PG_UP/PG_DN/HOME/END + three clicks) and a non-empty
+#    `excluded-positions`. The layer shipping in config/toucan.keymap today is
+#    a different thing entirely — 150 ms timeout, `excluded-positions = <>`,
+#    everything &trans except three click keys, six speed-tier thumbs and a
+#    `&to 0` escape hatch at position 10. See the layer_6 comment there.
+#    Rewriting this to match is a separate job; until then treat regen.sh as
+#    "regenerates layers 0-5, then needs a manual diff on 6+".
+#    (The script header says the same thing about the file as a whole.)
 MOUSE_LAYER = """\
         /*
-         * MOUSE — hand-added, see regen.sh. Switched on automatically while
+         * PAD — hand-added, see regen.sh. Switched on automatically while
          * the trackpad is moving, by `&mouse_temp_layer 6 1000` in
          * boards/shields/toucan/toucan.dtsi. It drops again 1 s after the last
          * movement, or as soon as you press a key that is not in that node's
@@ -143,7 +156,7 @@ MOUSE_LAYER = """\
          * under you.
          */
         layer_6 {
-            display-name = "MOUSE";
+            display-name = "PAD";
             bindings = <
             &trans  &trans  &trans  &trans      &kp PG_UP   &kp PG_DN   &trans  &trans  &trans  &trans  &trans  &trans
             &trans  &trans  &trans  &mkp LCLK   &mkp RCLK   &mkp MCLK   &trans  &trans  &trans  &trans  &trans  &trans
