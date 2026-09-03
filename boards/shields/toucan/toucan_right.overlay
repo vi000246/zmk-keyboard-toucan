@@ -73,16 +73,89 @@
         rst-gpios = <&gpio1 14 GPIO_ACTIVE_HIGH>;
         rdy-gpios = <&gpio0 2 GPIO_ACTIVE_HIGH>;
 
+        /*
+         * ── 省電與「碰下去要等多久才動」──────────────────────────────
+         *
+         * 兩套機制完全獨立，別搞混：
+         *
+         * (A) ZMK 這一側：`enable-power-management` 讓驅動訂閱 ZMK 的
+         *     activity 狀態。**沒設 `idle-sleep` 的話，ZMK IDLE（本 repo
+         *     30 秒）不會碰觸控板**，只有 ZMK SLEEP（CONFIG_ZMK_IDLE_SLEEP_
+         *     TIMEOUT，本 repo 20 分鐘）才真的 suspend。驅動自己沒有另外
+         *     的自動 suspend 計時器。⇒ 平常打字時這一套幾乎不會觸發。
+         *
+         * (B) 感測器自己的狀態機（**日常感受到的延遲來自這裡**）：
+         *       ACTIVE -> IDLE-TOUCH -> IDLE -> LP1 -> LP2
+         *     每一階有自己的掃描間隔（report-rate-*），停止觸摸後依
+         *     timeout-* 逐階往下掉。**手指放上去到游標會動的最壞延遲，
+         *     就等於它當下那一階的 report rate。**
+         *
+         * 2026-09-03：原本照抄 beekeeb 的 `report-rate-lp2 = <640>`，那是
+         * 省電取向——他自己的註解寫得很清楚：640 ms ≈ 55µA，而晶片預設的
+         * 160 ms ≈ 174µA。也就是我們把喚醒調成比原廠慢 4 倍，實際用起來
+         * 就是「碰了要等一下」。改成 240 ms，落在兩個已知錨點之間：
+         *
+         *     還要更快 -> 160（＝晶片預設，約 174µA）
+         *     還要更省 -> 往 640 調回去（約 55µA）
+         *
+         * 另外把 timeout-lp1 拉長，延後掉進最慢的 LP2（beekeeb 註解過同一
+         * 行，單位是 20 秒；他寫 3=60 秒，晶片預設 1=20 秒）。
+         */
         enable-power-management;
-        /* LP2 狀態 640 ms 回報率：55µA，而不是預設 160 ms 的 174µA。 */
-        report-rate-lp2 = <640>;
-        /* idle-sleep 省更多電，但 ZMK idle 之後觸控板會完全不動，不建議。 */
+        report-rate-lp2 = <240>;   /* 最壞喚醒延遲。160=晶片預設 / 640=最省電 */
+        timeout-lp1 = <9>;         /* 9 x 20s = 180s 才掉進 LP2 */
+        /* 設了 idle-sleep 會讓 ZMK IDLE（30 秒）就 suspend 觸控板，
+         * 省電但「30 秒沒打字就要等醒來」，不建議。 */
         // idle-sleep;
 
+        /*
+         * ── 手感 ──────────────────────────────────────────────────────
+         * sensitivity        觸控靈敏度 %，binding 預設 100
+         * scroll-sensitivity 滾動靈敏度 %，**binding 預設是 50，不是 100**
+         *                    ——這行不是冗餘，拿掉行為會變
+         * filter-settings    座標濾波。0x0F=全開（最平滑、延遲最高，binding
+         *                    預設）/ 0x0B=IIR+MAV+ALP 動態 IIR（平衡，現用）
+         *                    / 0x03=只有 IIR+MAV / 0x01=只有 IIR（最低延遲）
+         *                    / 0x00=不濾（原始資料，會抖）
+         *                    覺得「游標黏黏的、跟不上手」就往 0x03 或 0x01 調。
+         * hold-time          press-and-hold 的判定時間（ms）。目前沒開那個
+         *                    手勢，所以這行暫時不影響任何行為。
+         */
         sensitivity = <100>;
         scroll-sensitivity = <100>;
         filter-settings = <0x0B>;
         hold-time = <500>;
+
+        /*
+         * ── 還有這些旋鈕，需要再打開（完整清單見驅動的
+         *    dts/bindings/input/azoteq,tps43-common.yaml）──────────────
+         *
+         * 點擊手感：
+         *   tap-time = <ms>          點擊的最長按壓時間
+         *   tap-distance = <px>      點擊時容許的最大位移（手抖會誤判成拖曳時調大）
+         *
+         * 追蹤與解析度：
+         *   report-rate-active = <ms>   移動中的回報間隔（越小越跟手、越耗電）
+         *   x-resolution / y-resolution 觸控板解析度
+         *   filter-dynamic-bottom / -lower / -upper
+         *                               低速時的濾波強度與速度門檻，
+         *                               「慢慢移很鈍」就是調這組
+         *
+         * 其他省電階段（⚠️ 晶片預設值未查證，真的不夠再動）：
+         *   report-rate-idle / -idle-touch / -lp1
+         *   timeout-active / -idle-touch / -idle
+         *
+         * 手勢細節（要先開對應的手勢才有意義）：
+         *   scroll-initial-distance / scroll-angle
+         *   zoom-initial-distance / zoom-consecutive-distance / zoom-sensitivity
+         *   swipe-initial-distance / -initial-time / -angle
+         *   swipe-consecutive-distance / -consecutive-time
+         *
+         * ATI（自動調校，碰到誤觸或不靈敏才動，動錯會整個壞掉）：
+         *   ati-target / ref-drift-limit / reati-lower-limit /
+         *   reati-upper-limit / max-count-limit / ati-retry-time /
+         *   ref-update-time
+         */
 
         /*
          * ── 方位 ──────────────────────────────────────────────────────
