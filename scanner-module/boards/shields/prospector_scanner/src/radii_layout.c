@@ -10,8 +10,8 @@
  *
  *   1. 輪盤上限 10 格（Kconfig PROSPECTOR_MAX_LAYERS range 4-10，而且
  *      draw_wheel() 自己還有一道 layer_count <= 16 的 guard）。這台鍵盤
- *      有 17 層 ⇒ 一半的層輪盤不亮、轉到哪都沒意義。改成左緣 17 格
- *      ladder，一格一層。
+ *      當時有 17 層 ⇒ 一半的層輪盤不亮、轉到哪都沒意義。改成左緣一格一層
+ *      的 ladder（2026-09-04 起是 13 格，見 LAYER_COUNT）。
  *   2. 三塊高彩度面板（#ACB9D3 淺藍灰 + #1448AA 寶藍 + #E2FF61 螢光黃綠）
  *      擠在 280px 裡互相搶眼，沒有主從。改成全暗底 + hairline，accent
  *      只用在「現在是什麼狀態」上。
@@ -21,7 +21,7 @@
  *
  * 版面（280 x 240，ST7789V，硬體 y-offset 已由 driver 處理）：
  *
- *   x=14   17 格 ladder（亮的那格 = 目前層 index）
+ *   x=14   13 格 ladder（亮的那格 = 目前層 index）
  *   x=34   index 兩位數 / 大字層名 / hairline / 副標一 / 副標二
  *   x=206  垂直 hairline
  *   x=220  修飾鍵 2x2 / 左右電量（數字 + bar）/ BLE profile 四點
@@ -82,23 +82,19 @@ struct toucan_layer {
 };
 
 static const struct toucan_layer LAYERS[] = {
-    { "BASE", "TYPING",        "17 layers"        },
-    { "NAV",  "ARROWS",        "windows / claude" },
-    { "NUM",  "NUMPAD",        "keypad + mods"    },
-    { "SYM",  "SYMBOLS",       "cheatsheet"       },
-    { "CMD",  "SHORTCUTS",     "window / clipbrd" },
-    { "FUN",  "FUNCTION",      "F1-F12 / volume"  },
-    { "PAD",  "TRACKPAD",      "click / speed"    },
-    { "SCRL", "WHEEL MODE",    "pad + keyboard"   },
-    { "CUR-", "CURSOR SLOW",   "0.62x / lockable" },
-    { "CUR",  "CURSOR BASE",   "1.25x"            },
-    { "CUR+", "CURSOR FAST",   "3.75x / lockable" },
-    { "SCR-", "SCROLL SLOW",   "25%"              },
-    { "SCR",  "SCROLL BASE",   "50%"              },
-    { "SCR+", "SCROLL FAST",   "150%"             },
-    { "HJKL", "WHEEL STANDBY", "hold NAV = WHEL"  },
-    { "WHEL", "HJKL SCROLLS",  "nav keys = wheel" },
-    { "BT",   "PAIRING",       "profile / output" },
+    { "BASE", "TYPING",      "13 layers"        },
+    { "NAV",  "ARROWS",      "windows / claude" },
+    { "NUM",  "NUMPAD",      "keypad + mods"    },
+    { "SYM",  "SYMBOLS",     "cheatsheet"       },
+    { "CMD",  "SHORTCUTS",   "window / clipbrd" },
+    { "FUN",  "FUNCTION",    "F1-F12 / volume"  },
+    { "PAD",  "TRACKPAD",    "click / speed"    },
+    { "SCRL", "WHEEL MODE",  "pad + keyboard"   },
+    { "CUR-", "CURSOR SLOW", "1.25x"            },
+    { "CUR+", "CURSOR FAST", "3.75x"            },
+    { "SCR-", "SCROLL SLOW", "50%"              },
+    { "SCR+", "SCROLL FAST", "200%"             },
+    { "BT",   "PAIRING",     "profile / output" },
 };
 
 /*
@@ -107,7 +103,7 @@ static const struct toucan_layer LAYERS[] = {
  * 拿來當維度在某些版本會出事。下面的 BUILD_ASSERT 保證兩者不會脫鉤：
  * 在 keymap 加一層卻忘了更新 LAYERS[]，會直接編譯失敗而不是默默對錯副標。
  */
-#define LAYER_COUNT 17
+#define LAYER_COUNT 13
 BUILD_ASSERT(ARRAY_SIZE(LAYERS) == LAYER_COUNT,
              "LAYERS[] must have one entry per keymap layer (see config/toucan.keymap)");
 
@@ -200,26 +196,76 @@ static lv_obj_t *rl_label(lv_obj_t *parent, int x, int y, const lv_font_t *font,
  */
 #define CHEAT_LAYER_NAME "SYM"
 #define CHEAT_ROWS 3
+#define CHEAT_COLS 5                  /* 每隻手 5 欄 */
+#define CHEAT_HANDS 2
+
+/*
+ * ── 2026-09-04：為什麼從「一排一個 label」改成「一欄一個 label」──────────
+ *
+ * 原本是三個 label、每個放一整排字串（"? ! [ ] +   @ # $ \" `"），靠
+ * lv_font_unscii_16 是等寬字型讓欄位自然對齊。實機上右手只看得到第一欄
+ * （@ / ~ / ^，也就是 Y H N 那一直排），後面全被切掉。
+ *
+ * 原因是字寬算錯了：**lv_font_unscii_16 的 adv_w = 256（單位 1/16 px）
+ * ⇒ 每個字 16px 寬**，不是 UNSCII 點陣原始的 8px。加上 letter_space 2：
+ *
+ *     21 個字元 x 18px = 376px   而螢幕只有 280px
+ *
+ * 從 x=20 起算，切在第 (280-20)/18 = 14.4 個字元 ⇒ index 12 的 '@' 是最後
+ * 一個完整字，index 14 的 '#' 開始被切。跟實機看到的完全吻合。
+ *
+ * 改法是「不要再依賴字寬」：每一欄自己一個 label、x 座標直接算出來，欄內
+ * 三個字用 '\n' 疊成三排。字型換成什麼、letter_space 設多少，欄位都不會跑，
+ * 而且每個 label 一行只有 1 個字元，結構上不可能 wrap。
+ *
+ * 版面（螢幕 280 寬）：
+ *     欄寬 24px x 10 欄 = 240，兩手之間 20px 溝，左右各留 10px
+ *     左手 x = 10  34  58  82 106     (溝)     右手 x = 150 174 198 222 246
+ * 右端 246+24 = 270 < 280 ✓
+ *
+ * 鍵盤端的 nice_view 小抄（cheatsheet.c）本來就是逐格畫的，所以沒中這個雷，
+ * 不用跟著改。
+ */
+
+/* 版面常數 */
+#define CHEAT_CELL_W   24
+#define CHEAT_GUTTER   20
+#define CHEAT_X0       10
+#define CHEAT_X1       (CHEAT_X0 + CHEAT_COLS * CHEAT_CELL_W + CHEAT_GUTTER)  /* 150 */
+#define CHEAT_Y0       92
+#define CHEAT_LINE_SP  32             /* 排距（unscii_16 的 line-height 是 17px）*/
+#define CHEAT_FONT_LH  17
+#define CHEAT_DIV_X    (CHEAT_X0 + CHEAT_COLS * CHEAT_CELL_W + CHEAT_GUTTER / 2 - 1)
 
 static lv_obj_t *cheat_panel = NULL;
 static lv_obj_t *cheat_title = NULL;
 static lv_obj_t *cheat_sub = NULL;
 static lv_obj_t *cheat_rule = NULL;
-static lv_obj_t *cheat_row_labels[CHEAT_ROWS] = { NULL };
+static lv_obj_t *cheat_divider = NULL;
+static lv_obj_t *cheat_col_labels[CHEAT_COLS * CHEAT_HANDS] = { NULL };
 
-/* 每格 1 字元、格間 1 空白、兩手之間 3 空白。UNSCII 是等寬字型，欄位
- * 天生對齊。空白格（LGUI/LCTRL 那兩顆純 modifier）用空格佔位。
- * 對照 keymap 鍵位 index：row0=1-5|6-10、row1=13-17|18-22、row2=25-29|30-34。 */
-static const char *cheat_rows[CHEAT_ROWS] = {
-    "? ! [ ] +   @ # $ \" `",
-    "< > ( ) -   ~ '     :",
-    "| & { } =   ^ * , \\ /",
+/*
+ * 來源表維持「一排一排」寫，跟 keymap 的鍵位圖同構，好對照；欄字串在
+ * create_cheat_panel() 裡才組出來。空字串 = 那顆不是符號（純 modifier）。
+ * 對照 keymap 鍵位 index：row0=1-5|6-10、row1=13-17|18-22、row2=25-29|30-34。
+ */
+static const char *cheat_cells[CHEAT_ROWS][CHEAT_COLS * CHEAT_HANDS] = {
+    /*  1    2    3    4    5   |   6    7    8    9   10  */
+    { "?", "!", "[", "]", "+",   "@", "#", "$", "\"", "`" },
+    /* 13   14   15   16   17   |  18   19   20   21   22  */
+    /* 20/21 是 LGUI/LCTRL，純 modifier，留白 */
+    { "<", ">", "(", ")", "-",   "~", "'",  "",  "",  ":" },
+    /* 25   26   27   28   29   |  30   31   32   33   34  */
+    { "|", "&", "{", "}", "=",   "^", "*", ",", "\\", "/" },
 };
+
+/* 每欄最多 3 個字元 + 2 個 '\n' + 結尾 '\0'，這裡給到 8 純粹是留餘裕。 */
+static char cheat_col_text[CHEAT_COLS * CHEAT_HANDS][8];
 
 static void create_cheat_panel(lv_obj_t *parent) {
     /* 最後建立 ⇒ 疊在所有東西之上；平常隱藏。
      * ⚠️ 寬度必須是 SCR_W(280)，不是 240——原版寫死 240，右邊 40px 會漏出
-     *    底下的面板。那是這次改版順手修掉的 bug 之一。 */
+     *    底下的面板。那是 2026-09-03 改版順手修掉的 bug 之一。 */
     cheat_panel = rl_rect(parent, 0, 0, SCR_W, SCR_H, PAL->bg, 0);
     lv_obj_add_flag(cheat_panel, LV_OBJ_FLAG_HIDDEN);
 
@@ -227,10 +273,38 @@ static void create_cheat_panel(lv_obj_t *parent) {
     cheat_sub   = rl_label(cheat_panel, 104, 32, &DINishCondensed_SemiBold_22, PAL->index, "SYMBOLS");
     cheat_rule  = rl_rect(cheat_panel, 20, 74, 240, 1, PAL->rule, 0);
 
-    for (int r = 0; r < CHEAT_ROWS; r++) {
-        cheat_row_labels[r] = rl_label(cheat_panel, 20, 96 + r * 46,
-                                    &lv_font_unscii_16, PAL->name, cheat_rows[r]);
-        lv_obj_set_style_text_letter_space(cheat_row_labels[r], 2, LV_PART_MAIN);
+    /* 兩手之間的細線，讓「哪五欄是右手」一眼看得出來 */
+    cheat_divider = rl_rect(cheat_panel, CHEAT_DIV_X, CHEAT_Y0 - 6,
+                            1, (CHEAT_ROWS - 1) * CHEAT_LINE_SP + CHEAT_FONT_LH + 12,
+                            PAL->rule, 0);
+
+    for (int col = 0; col < CHEAT_COLS * CHEAT_HANDS; col++) {
+        char *dst = cheat_col_text[col];
+        size_t len = 0;
+
+        for (int row = 0; row < CHEAT_ROWS; row++) {
+            const char *cell = cheat_cells[row][col];
+            if (row > 0) {
+                dst[len++] = '\n';
+            }
+            if (cell != NULL && cell[0] != '\0') {
+                dst[len++] = cell[0];   /* 每格都是單一 ASCII 字元 */
+            }
+        }
+        dst[len] = '\0';
+
+        lv_coord_t x = (col < CHEAT_COLS)
+                           ? CHEAT_X0 + col * CHEAT_CELL_W
+                           : CHEAT_X1 + (col - CHEAT_COLS) * CHEAT_CELL_W;
+
+        lv_obj_t *l = rl_label(cheat_panel, x, CHEAT_Y0,
+                               &lv_font_unscii_16, PAL->name, dst);
+        /* 固定寬度 + 置中：欄位對齊與字寬無關，而且一行只有 1 個字元，
+         * 不管 long mode 是什麼都不可能 wrap。 */
+        lv_obj_set_width(l, CHEAT_CELL_W);
+        lv_obj_set_style_text_align(l, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
+        lv_obj_set_style_text_line_space(l, CHEAT_LINE_SP - CHEAT_FONT_LH, LV_PART_MAIN);
+        cheat_col_labels[col] = l;
     }
 }
 
@@ -277,7 +351,7 @@ static void create_text_column(lv_obj_t *parent) {
     hrule = rl_rect(parent, TEXT_X, 126, 150, 1, PAL->rule, 0);
 
     sub1_label = rl_label(parent, TEXT_X, 136, &DINishCondensed_SemiBold_22, PAL->accent, "TYPING");
-    sub2_label = rl_label(parent, TEXT_X, 164, &DINishCondensed_SemiBold_20, PAL->sub2, "17 layers");
+    sub2_label = rl_label(parent, TEXT_X, 164, &DINishCondensed_SemiBold_20, PAL->sub2, "13 layers");
 }
 
 static void create_right_column(lv_obj_t *parent) {
@@ -396,9 +470,10 @@ static void apply_palette(void) {
     if (cheat_title) lv_obj_set_style_text_color(cheat_title, lv_color_hex(PAL->accent), LV_PART_MAIN);
     if (cheat_sub)   lv_obj_set_style_text_color(cheat_sub, lv_color_hex(PAL->index), LV_PART_MAIN);
     if (cheat_rule)  lv_obj_set_style_bg_color(cheat_rule, lv_color_hex(PAL->rule), LV_PART_MAIN);
-    for (int r = 0; r < CHEAT_ROWS; r++) {
-        if (cheat_row_labels[r])
-            lv_obj_set_style_text_color(cheat_row_labels[r], lv_color_hex(PAL->name), LV_PART_MAIN);
+    if (cheat_divider) lv_obj_set_style_bg_color(cheat_divider, lv_color_hex(PAL->rule), LV_PART_MAIN);
+    for (int c = 0; c < CHEAT_COLS * CHEAT_HANDS; c++) {
+        if (cheat_col_labels[c])
+            lv_obj_set_style_text_color(cheat_col_labels[c], lv_color_hex(PAL->name), LV_PART_MAIN);
     }
 
     /* ladder / 修飾鍵 / BLE 的顏色跟狀態綁在一起，下一次 update 會刷到。 */
@@ -503,7 +578,8 @@ void radii_layout_destroy(void) {
     cheat_title = NULL;
     cheat_sub = NULL;
     cheat_rule = NULL;
-    for (int r = 0; r < CHEAT_ROWS; r++) cheat_row_labels[r] = NULL;
+    cheat_divider = NULL;
+    for (int c = 0; c < CHEAT_COLS * CHEAT_HANDS; c++) cheat_col_labels[c] = NULL;
 
     for (int i = 0; i < LAYER_COUNT; i++) {
         if (ticks[i]) { lv_obj_del(ticks[i]); ticks[i] = NULL; }

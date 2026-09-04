@@ -11,9 +11,10 @@
 #           match, so this is a hard error rather than a silent skip.
 #   Patch 3 injects a MOUSE layer whose bindings, excluded-positions and
 #           `&mouse_temp_layer 6 1000` comment all describe a design that no
-#           longer exists, and it knows nothing about layers 7-13 (SCROLL plus
-#           the six speed marker layers) or the PAD_BINDINGS macro they share.
-#           Running it would delete all of them.
+#           longer exists, and it knows nothing about layers 7-12 (SCRL plus the
+#           four speed marker layers, and BT). Running it would delete all of
+#           them. Note the numbering changed on 2026-09-04: the keymap went from
+#           17 layers to 13 (CUR / SCR / HJKL / WHEL removed).
 #
 # If you need to regenerate from the .vil again, first port both patches to the
 # current layout. See the layer table at the top of config/toucan.keymap.

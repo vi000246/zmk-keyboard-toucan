@@ -21,32 +21,41 @@
 #include <dt-bindings/zmk/input_transform.h>
 
 /*
- * ─── 觸控板速度：三檔由 base 推導 ────────────────────────────────────────
+ * ─── 觸控板速度：兩檔由 base 推導 ────────────────────────────────────────
  *
- * 只要調下面那組「手調」的數字，游標與滾動的三檔都會跟著同步——因為兩者
- * 共用同一組百分比，比例永遠一致。devicetree 的 cell 支援括號內算式，所以
- * 推導可以直接寫在這裡。
+ * 只要調下面那組「手調」的數字，游標與滾動的兩檔都會跟著同步。devicetree 的
+ * cell 支援括號內算式，所以推導可以直接寫在這裡。
  *
  * 對應的 marker layer（見 config/toucan.keymap）：
- *   8  CUR-   9  CUR    10 CUR+
- *   11 SCR-  12 SCR    13 SCR+
+ *   8  CUR-   9  CUR+     （PAD(6) 拇指 38/39 = 慢、37/40 = 快）
+ *   10 SCR-  11 SCR+      （SCRL(7) 拇指同上）
+ *
+ * ── 2026-09-04 的三處改動 ────────────────────────────────────────────
+ *
+ *   1. 三檔收成兩檔。舊的中檔（CUR / SCR）刪掉，**留下的慢檔直接繼承中檔的
+ *      數值**——舊的最慢檔 0.62x / 25% 實測鈍到不堪用。
+ *   2. 游標和滾動的百分比**拆成兩組**（PAD_CUR_*_PCT / PAD_SCRL_*_PCT）。
+ *      以前共用一組，現在滾動的快檔要 200%、游標只要 150%，共用會綁死。
+ *   3. `PAD_SCRL_DIV` 9 -> 18，一般滾動速度減半（使用者回報按住 G/H 時
+ *      觸控板滾太快）。⚠️ 這條鏈 NAV(1) / NUM(2) 也共用，那兩層一起變慢。
+ *      改完之後新的預設 = 舊的中檔，新的快檔 = 舊的預設，沒有任何檔位比
+ *      改版前的預設更快。
  */
 
 /* ── 手調 ── */
-#define PAD_BASE_MULT     250      /* 一般游標 = 250/100 = 2.50x */
-#define PAD_BASE_DIV      100
-#define PAD_SLOWEST_PCT    25      /* 最慢 = base 的 25%  -> 0.62x */
-#define PAD_SLOW_PCT       50      /* 中檔 = base 的 50%  -> 1.25x */
-#define PAD_FAST_PCT      150      /* 最快 = base 的 150% -> 3.75x */
-#define PAD_SCRL_DIV        9      /* 一般滾動 zip_scroll_scaler 1 N，N 越大越慢 */
+#define PAD_BASE_MULT      250     /* 一般游標 = 250/100 = 2.50x */
+#define PAD_BASE_DIV       100
+#define PAD_CUR_SLOW_PCT    50     /* 游標慢檔 = base 的 50%  -> 1.25x */
+#define PAD_CUR_FAST_PCT   150     /* 游標快檔 = base 的 150% -> 3.75x */
+#define PAD_SCRL_DIV        18     /* 一般滾動 zip_scroll_scaler 1 N，N 越大越慢 */
+#define PAD_SCRL_SLOW_PCT   50     /* 滾動慢檔 = 一般滾動的 50%  */
+#define PAD_SCRL_FAST_PCT  200     /* 滾動快檔 = 一般滾動的 200% */
 
 /* ── 推導，不要手改 ── */
-#define PAD_SLOWEST_MULT     (PAD_BASE_MULT * PAD_SLOWEST_PCT / 100)   /*  62 */
-#define PAD_SLOW_MULT        (PAD_BASE_MULT * PAD_SLOW_PCT    / 100)   /* 125 */
-#define PAD_FAST_MULT        (PAD_BASE_MULT * PAD_FAST_PCT    / 100)   /* 375 */
-#define PAD_SCRL_SLOWEST_DIV (PAD_SCRL_DIV * 100 / PAD_SLOWEST_PCT)    /*  36 */
-#define PAD_SCRL_SLOW_DIV    (PAD_SCRL_DIV * 100 / PAD_SLOW_PCT)       /*  18 */
-#define PAD_SCRL_FAST_DIV    (PAD_SCRL_DIV * 100 / PAD_FAST_PCT)       /*   6 */
+#define PAD_CUR_SLOW_MULT  (PAD_BASE_MULT * PAD_CUR_SLOW_PCT / 100)   /* 125 */
+#define PAD_CUR_FAST_MULT  (PAD_BASE_MULT * PAD_CUR_FAST_PCT / 100)   /* 375 */
+#define PAD_SCRL_SLOW_DIV  (PAD_SCRL_DIV * 100 / PAD_SCRL_SLOW_PCT)   /*  36 */
+#define PAD_SCRL_FAST_DIV  (PAD_SCRL_DIV * 100 / PAD_SCRL_FAST_PCT)   /*   9 */
 
 / {
     split_inputs {
@@ -90,7 +99,8 @@
      *
      * 空清單本身「不」解決「用完觸控板打字誤觸」——那個問題的根源是 layer 6
      * 裝了什麼，不是誰能關層。已經一併處理：layer 6 現在只留點擊、六顆調速
-     * 拇指和位置 10 的 &to 0，其餘 32 格全 &trans，進階操作搬到 SCRL (7)。
+     * 拇指和位置 10 的 &to 0，共 11 格，其餘 31 格全 &trans，進階操作搬到
+     * SCRL (7)。
      * 詳見 config/toucan.keymap 的 layer_6 註解。
      *
      * require-prior-idle-ms 是反方向的保護：剛打過字的 N ms 內，觸控板不會
@@ -112,18 +122,17 @@
      * 觸控板處理鏈。只在 central 上跑（toucan_left.overlay 把它設 okay）。
      *
      * 子節點是「第一個命中的取代整條 base 鏈」——不是疊加。所以：
-     *   1. 宣告順序 = 優先權。滾動的三檔排在 scroller_default 之前，
+     *   1. 宣告順序 = 優先權。滾動的兩檔排在 scroller_default 之前，
      *      cursor_* 排在它之後（否則按住 ESC 進 NAV 時會被搶走）。
      *   2. 每一條鏈都必須帶 &zip_button_behaviors，漏掉的那幾層會重新
      *      開放 tap-and-drag（見 config/toucan.keymap 檔頭的說明）。
-     *   3. 三條 cursor_* 都必須帶 &mouse_temp_layer，否則鎖定某一檔之後
-     *      layer 6 就不再自動升起。
+     *   3. 兩條 cursor_* 都必須帶 &mouse_temp_layer，否則按住調速鍵時
+     *      layer 6 的 timeout 不會續期，滑到一半層就掉下去了。
      *
-     * layer 14 (HJKL) 和 15 (WHEL) 刻意「不」出現在任何 layers
-     * 名單裡——那是鍵盤方向鍵的滾輪切換，跟觸控板無關，加進來會讓觸控板
-     * 在 NAV 上行為不一致。
-     *
-     * 同時鎖住兩檔時由較慢的勝出（8 -> 9 -> 10），刻意的安全側；按 P 清掉。
+     * ⚠️ 這些 `layers = <>` 是寫死的 layer index，config/toucan.keymap 加層 /
+     *    刪層 / 重排層一定要回來同步。2026-09-04 那次（17 -> 13 層）就是連
+     *    這裡一起改的：11 -> 10、13 -> 11、10 -> 9，並刪掉舊的 scroll_slow
+     *    (12) 和 cursor_slow (9) 兩條鏈。
      */
     trackpad_listener: trackpad_listener {
         compatible = "zmk,input-listener";
@@ -132,19 +141,8 @@
 
         input-processors = <&zip_xy_scaler PAD_BASE_MULT PAD_BASE_DIV &mouse_temp_layer 6 150 &zip_button_behaviors>;
 
-        scroll_slowest {
-            layers = <11>;
-            input-processors = <
-                &zip_xy_to_scroll_mapper
-                &zip_scroll_scaler 1 PAD_SCRL_SLOWEST_DIV
-                &zip_scroll_transform INPUT_TRANSFORM_X_INVERT
-                &zip_scroll_transform INPUT_TRANSFORM_Y_INVERT
-                &zip_button_behaviors
-            >;
-        };
-
         scroll_slow {
-            layers = <12>;
+            layers = <10>;
             input-processors = <
                 &zip_xy_to_scroll_mapper
                 &zip_scroll_scaler 1 PAD_SCRL_SLOW_DIV
@@ -155,7 +153,7 @@
         };
 
         scroll_fast {
-            layers = <13>;
+            layers = <11>;
             input-processors = <
                 &zip_xy_to_scroll_mapper
                 &zip_scroll_scaler 1 PAD_SCRL_FAST_DIV
@@ -177,19 +175,14 @@
             >;
         };
 
-        cursor_slowest {
-            layers = <8>;
-            input-processors = <&zip_xy_scaler PAD_SLOWEST_MULT PAD_BASE_DIV &mouse_temp_layer 6 150 &zip_button_behaviors>;
-        };
-
         cursor_slow {
-            layers = <9>;
-            input-processors = <&zip_xy_scaler PAD_SLOW_MULT PAD_BASE_DIV &mouse_temp_layer 6 150 &zip_button_behaviors>;
+            layers = <8>;
+            input-processors = <&zip_xy_scaler PAD_CUR_SLOW_MULT PAD_BASE_DIV &mouse_temp_layer 6 150 &zip_button_behaviors>;
         };
 
         cursor_fast {
-            layers = <10>;
-            input-processors = <&zip_xy_scaler PAD_FAST_MULT PAD_BASE_DIV &mouse_temp_layer 6 150 &zip_button_behaviors>;
+            layers = <9>;
+            input-processors = <&zip_xy_scaler PAD_CUR_FAST_MULT PAD_BASE_DIV &mouse_temp_layer 6 150 &zip_button_behaviors>;
         };
     };
 };

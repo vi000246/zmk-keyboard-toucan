@@ -21,34 +21,46 @@
  *   3. 鍵盤自己的 nice_view 用 quinquefive_24（每字約 29px）、畫布寬
  *      144px ⇒ 一行也就 4–5 字。
  *
- *   #  名稱   舊名           說明
+ *   #  名稱   說明
  *   ─────────────────────────────────────────────────────────────────
- *   0  BASE                  打字
- *   1  NAV                   方向鍵 / 視窗 / Claude Code 巨集
- *   2  NUM                   數字鍵盤
- *   3  SYM                   符號（小抄靠這名字查表，見下方 layer_3）
- *   4  CMD    MEDIA          Cmd 快捷 / 視窗 / 剪貼——跟「媒體」無關
- *   5  FUN                   F1-F12 / 音量 / Hyper 巨集
- *   6  PAD    MOUSE          觸控板自動升起的點擊層
- *   7  SCRL   SCROLL         按住 G/H：觸控板變滾輪
- *   8  CUR-   CUR SLOWEST    游標 0.62x（可鎖定）
- *   9  CUR    CUR SLOW       游標 1.25x（中檔＝基準，故不帶符號）
- *  10  CUR+   CUR FAST       游標 3.75x（可鎖定）
- *  11  SCR-   SCRL SLOWEST   滾動 25%
- *  12  SCR    SCRL SLOW      滾動 50%
- *  13  SCR+   SCRL FAST      滾動 150%
- *  14  HJKL   HJKL SCRL      flag 層：hjkl 滾輪模式待命
- *  15  WHEL   NAV SCRL       flag 開著又按住 NAV 時才是這層
- *  16  BT                    配對 / 輸出切換 / bootloader
+ *   0  BASE   打字
+ *   1  NAV    方向鍵 / 視窗 / Claude Code 巨集
+ *   2  NUM    數字鍵盤
+ *   3  SYM    符號（小抄靠這名字查表，見下方 layer_3）
+ *   4  CMD    Cmd 快捷 / 視窗 / 剪貼
+ *   5  FUN    F1-F12 / 音量 / Hyper 巨集
+ *   6  PAD    觸控板自動升起的點擊層
+ *   7  SCRL   按住 G/H：觸控板變滾輪
+ *   8  CUR-   游標 1.25x（PAD 拇指 38/39）
+ *   9  CUR+   游標 3.75x（PAD 拇指 37/40）
+ *  10  SCR-   滾動 50%（SCRL 拇指 38/39）
+ *  11  SCR+   滾動 200%（SCRL 拇指 37/40）
+ *  12  BT     配對 / 輸出切換 / bootloader
  *
- * ⚠️ 改名時要一起動的地方：
+ * ── 2026-09-04 這一版砍掉四層（17 → 13）──────────────────────────────
+ *
+ *   CUR (舊 9) / SCR (舊 12)  三檔調速收成兩檔，中間那顆拇指空出來。
+ *                             留下的慢檔直接繼承舊中檔的速度（1.25x / 50%），
+ *                             因為舊的最慢檔（0.62x / 25%）實測太鈍。
+ *   HJKL (舊 14) / WHEL (舊 15)  hjkl 方向鍵⇄滾輪的 flag 層。常常誤觸而且
+ *                             會 latch 住，使用者要求移除；conditional_layers
+ *                             節點也跟著整個刪掉。
+ *
+ * 連帶刪掉的還有四組 combo_lock_*（觸控板速度鎖定）——三檔變兩檔之後，
+ * 僅存的兩顆調速鍵 37/38 相鄰，拇指滾動時會誤觸 `37+38` 那組而鎖住速度。
+ * 以後真的需要鎖定再重做，屆時建議用空出來的 36/41 當「鎖定修飾鍵」
+ * （36+37 鎖快、36+38 鎖慢），兩顆調速鍵之間怎麼滾都不會誤觸。
+ *
+ * ⚠️ 改名 / 改層數時要一起動的地方：
  *   - regen.sh 的 LAYER_NAMES（層 0-5）與 Patch 3 的硬編碼 MOUSE_LAYER
  *     字串——不改的話下次 regen 會把舊名寫回來。
  *   - SYM 若改名，還要同步 nice_view_gem/widgets/cheatsheet.c 和
  *     scanner-module/.../radii_layout.c 的 CHEAT_LAYER_NAME（兩者都只
  *     認 "SYM"）。所以 SYM 刻意不改。
- *   - dongle 儀表板的副標表是用 layer index 查的，只有「加/刪/重排層」
- *     才要動，改名不用。
+ *   - boards/shields/toucan/toucan-trackpad.dtsi 各處理鏈的 `layers = <>`
+ *     是寫死的 index，加/刪/重排層一定要同步。
+ *   - dongle 儀表板的副標表（radii_layout.c 的 LAYERS[] 與 LAYER_COUNT）
+ *     是用 layer index 查的，只有「加/刪/重排層」才要動，改名不用。
  *
  * ⚠️ 刷進去後 dongle 若仍顯示舊名 → 先做 ZMK Studio 的
  *    Restore Stock Settings（flash 裡的 Studio 設定會蓋掉 keymap）。
@@ -73,15 +85,22 @@
  * 看到就整份拒收（MOVE_X/MOVE_Y/LS() 這類 ZMK 官方巨集沒問題）。
  * 代價是「改速度要同步改多處」，對照表：
  *
+ * 單位（ZMK behavior-input-two-axis：speed 的單位是「每秒」，trigger-period-ms
+ * 預設 16 只決定更新顆粒，不影響速度）：
+ *   &mmv MOVE_x(N) = N 像素 / 秒
+ *   &msc MOVE_x(N) = N 格滾輪 / 秒
+ *
  *   游標基準 1500（ZMK 預設 600；下面 &mmv 設 accel-exponent=0 ⇒ 全程等速）
  *     出現處：SCRL(7) 的 ±1500 四格
  *   滾輪基準 50（ZMK 預設 10）
- *     出現處：SCRL(7) 與 WHEL(15) 的 ±50
- *   調速三檔 = 基準 × 25% / 50% / 150%（跟 toucan-trackpad.dtsi 的
- *   PAD_*_PCT 同比例，改比例請兩邊一起改）：
- *     SCR-(11)：游標 ±375   滾輪 ±12
- *     SCR (12)：游標 ±750   滾輪 ±25
- *     SCR+(13)：游標 ±2250  滾輪 ±75
+ *     出現處：SCRL(7) 的 ±50 八格
+ *   調速兩檔：
+ *     SCR-(10)：游標 ±750   滾輪 ±25   （游標 50%、滾輪 50%）
+ *     SCR+(11)：游標 ±2250  滾輪 ±100  （游標 150%、滾輪 200%）
+ *
+ * ⚠️ 游標和滾輪的百分比刻意不同（150% vs 200%），跟 toucan-trackpad.dtsi
+ *    的 PAD_CUR_*_PCT / PAD_SCRL_*_PCT 兩組分開的定義一致。滾輪吃加速度
+ *    曲線（見下面的 &msc），最高速要拉得比游標開，短按才不會太鈍。
  */
 /*
  * SCRL (7) 的 42 格 bindings。
@@ -107,7 +126,7 @@
  *   位置 30-33 End/PgDn/PgUp/Home → NAV 層同位置就有
  *   位置 1     &kp LG(W)          → CMD 層位置 2
  *   位置 25    &kp LS(LG(T))      → CMD 層位置 22
- *   鍵盤滾動   → 這一層，或 NAV 的 &tog 14（HJKL 滾輪切換）
+ *   鍵盤滾動   → 這一層
  *
  * ── 為什麼 6 / 7 必須是兩個 index ─────────────────────────────────────
  *
@@ -115,15 +134,18 @@
  * 游標永遠動不了。也不能讓 7 去 hold 6——ZMK 的 layer state 是沒有 reference
  * counting 的共用 bitmask，temp-layer 的 timeout 會跟手動 hold 互相打架。
  *
- * 位置 10 (P) 是 &to 0：&to 會把目標層以上的所有層一併關掉，所以它同時也是
- * 「解除速度鎖定」的逃生口。
+ * 位置 10 (P) 是 &to 0：&to 會把目標層以上的所有層一併關掉，是「回到 BASE」
+ * 的逃生口。（2026-09-04 之後整份 keymap **已經沒有任何 &tog**——速度鎖定
+ * 那四組 combo 和 NAV 的 &tog 14 都刪了——所以沒有層會被 latch 住。唯一還會
+ * 「暫時黏住」的是 CMD 位置 37 的 &sl 5，但 sticky layer 打完下一顆就自己
+ * 放掉，不需要逃生口。這顆 &to 0 現在純粹是保險。）
  *
  * 拇指 36-41 不需要登記在任何名單裡：toucan-trackpad.dtsi 的
  * excluded-positions 已經留空，語意是「沒有任何鍵能提前結束滑鼠層」，所以動
  * 這裡的 bindings 不用回頭同步那邊。原因見該檔的註解。
  *
- * （這一層跟 SCRL 三檔的 bindings 以前是用巨集展開共用的，為了
- * keymap-editor 已攞平成字面 bindings——見檔頭速度對照表。）
+ * （這一層跟 SCR± 兩檔的 bindings 以前是用巨集展開共用的，為了
+ * keymap-editor 已攤平成字面 bindings——見檔頭速度對照表。）
  */
 /*
  * Hold-tap feel, carried over from the .vil's QMK settings.
@@ -134,25 +156,65 @@
  *                     the most eager. See zmk.dev/docs/keymaps/behaviors/hold-tap
  */
 
+/*
+ * ── 鍵盤滾輪的加速度曲線（2026-09-04 才真正啟用）─────────────────────────
+ *
+ * ⚠️ 先講一個之前踩到的坑：`time-to-max-speed-ms` 在 `acceleration-exponent`
+ *    是 0 的時候**完全沒有作用**。ZMK 的 speed() 長這樣
+ *    （zmk/app/src/behaviors/behavior_input_two_axis.c）：
+ *
+ *      if (... || config->time_to_max_speed_ms == 0 || accel_exp == 0) {
+ *          return max_speed;      // ← 直接回傳最高速，根本不看 time-to-max
+ *      }
+ *      return max_speed * powf(time_fraction, accel_exp);
+ *
+ *    而 ZMK 的 mouse_scroll.dtsi 預設就是 acceleration-exponent = <0>。
+ *    所以這裡以前寫的 `time-to-max-speed-ms = <50>` 是死設定，滾輪一直都是
+ *    「按下去立刻全速、全程等速」。
+ *
+ * 現在的設定 = 線性加速（exponent 1），450 ms 爬到最高速：
+ *
+ *      速度(t) = max × t / 450ms   （t ≥ 450ms 之後定在 max）
+ *      累積格數(t) = max × t² / 900ms
+ *
+ * 以預設檔 max=50 為例：134ms 滾出第一格、379ms 捲半頁(8格)、545ms 捲一頁。
+ * 慢檔 max=25：190ms 第一格。快檔 max=100：95ms 第一格。
+ *
+ * ⚠️ `&msc` 是**單一節點**，這條曲線 SCRL / SCR- / SCR+ 三檔共用，沒辦法
+ *    只給某一檔不同的爬升時間——只有 max（各層寫死的字面數字）能分別調。
+ *    這也是慢檔不敢設太低的原因：max 越小，第一格出來得越晚（max=12 要
+ *    274ms），會有「按了沒反應」的錯覺。
+ *
+ * ⚠️ 加速度「放開就歸零」。連續看長文（按住不放）是純賺；半頁半頁地按放
+ *    按放則每次都要重跑一次爬升。真的要整頁跳轉，這一層右手底排已經有
+ *    M = PgDn、逗號 = PgUp，比硬捲快得多。
+ *
+ * 想調的話只有兩個旋鈕：這裡的 450（越大越慢熱、加速感越明顯），以及各層
+ * 的 max 字面數字（見檔頭對照表）。觸控板不吃這條曲線——它走 input
+ * processor，跟 &msc 無關。
+ */
 &msc {
-    // 每次滾動訊號送出的間隔時間 (預設通常是 10 或 15)
-    // 數字越小 ➜ 滾動越快；數字越大 ➜ 滾動越慢
+    // 延遲啟動時間，0 = 隨按隨動
 
     delay-ms = <0>;
 
-    // 長按時，花多少毫秒加速到最高滾動速度 (預設通常是 300)
-    // 數字越小 ➜ 越快達到最高速；設為 0 代表不加速，直接用最高速滾動
+    // 花多少毫秒線性加速到最高速。必須搭配下面的 exponent >= 1 才有意義
 
-    time-to-max-speed-ms = <50>;
+    time-to-max-speed-ms = <450>;
+
+    // 1 = 線性加速（速度從 0 開始爬）。設 0 就退回「按下去立刻全速」
+
+    acceleration-exponent = <1>;
 };
 
 &mmv {
-    // 預設通常是 300，數字越小，游標加速到最高速的時間越短，滑起來會感覺越快、越靈敏
+    // ⚠️ 下面 exponent = 0 ⇒ 這一行不會生效（理由見上面 &msc 的說明）。
+    //    留著只是為了改回 exponent >= 1 時不用重查數字。
 
     time-to-max-speed-ms = <100>;
 
-    // 加速曲線指數。預設通常是 1 (線性加速) 或 2 (拋物線加速)。
-    // 如果你希望「一按下去就直接用最高速移動」，可以將它設為 0。
+    // 0 = 一按下去就直接用最高速移動。游標刻意維持等速：加速度用在滾輪上
+    // 是「看長文越滾越快」，用在游標上則是每次要點東西都要等它熱身。
 
     acceleration-exponent = <0>;
 
@@ -243,22 +305,11 @@
     };
 
     /*
-     * NAV 的 hjkl：方向鍵 ⇄ 滾輪切換。
-     *
-     * NAV 位置 34 的 &tog 14 開關 flag 層（HJKL, 14）。flag 全
-     * &trans、自己不做事；只有「NAV(1) 和 flag(14) 同時 active」時，
-     * 這裡才把 WHEL(15) 疊上去，蓋掉 hjkl 那四格。所以 flag 開著
-     * 回 BASE 打字，hjkl 仍是字母，不會漏滾輪出來。
+     * 2026-09-04：這裡原本有一個 conditional_layers 節點（NAV(1) + HJKL(14)
+     * ⇒ WHEL(15)，把 NAV 的 hjkl 四格換成滾輪）。整套 HJKL / WHEL 機制已經
+     * 連同那兩層一起刪掉——&tog 14 太容易誤觸，而且會 latch 住，回 BASE 之後
+     * 得再按一次才解得開。鍵盤滾動請用 SCRL(7)（按住 G / H）。
      */
-
-    conditional_layers {
-        compatible = "zmk,conditional-layers";
-
-        nav_hjkl_scroll {
-            if-layers = <1 14>;
-            then-layer = <15>;
-        };
-    };
 
     macros {
         /*
@@ -519,50 +570,24 @@
         };
 
         /*
-         * 觸控板速度鎖定。最快 + 中檔 → 鎖最快；最慢 + 中檔 → 鎖最慢。
-         * 兩手各一組，中檔本身不可鎖（它是預設的「按住」檔）。
+         * 2026-09-04：這裡原本有四組 combo_lock_*（拇指兩顆同時按 ⇒ &tog 8 /
+         * &tog 10，鎖住觸控板游標的最慢 / 最快檔）。跟著三檔收成兩檔一起刪掉。
          *
-         * layers 一定要含 8 和 10：ZMK 是拿「按下第一顆鍵當下最高的 active
-         * layer」去比對這份名單（combo.c 的 zmk_keymap_highest_layer_active），
-         * 少了它們，鎖定之後同一組 combo 就解不開。
+         * 刪掉的理由是位置衝突：調速鍵從「36 快 / 37 中 / 38 慢」改成
+         * 「37 快 / 38 慢」之後，僅存的兩顆變成相鄰，而 combo_lock_slowest_l
+         * 正好就是 <37 38>——拇指從快檔滾到慢檔時只要在 50 ms 內壓到兩顆就會
+         * 鎖住，是個標準的 latch 陷阱。
          *
-         * 刻意不含 0（BASE 的 TAB+SPACE / RET+F19 滾鍵永遠不會誤觸）也不含
-         * 7（鎖住滾動速度是陷阱：放開 G 之後觸控板會在非滾動狀態持續滾動）。
+         * 以後要重做的話，建議用空出來的 36 / 41 當「鎖定修飾鍵」：
+         *   左手 36+37 鎖快、36+38 鎖慢；右手 41+40 鎖快、41+39 鎖慢。
+         * 這樣兩顆調速鍵之間怎麼滾都不會誤觸。
          *
-         * 必須「同時」按下兩顆，先按住一顆再補第二顆不會觸發。50 ms 比其他
-         * combo 的 27 ms 寬鬆，因為這幾組已經被 layers 擋在 BASE 之外。
-         *
-         * HJKL flag（14）開著時這四組會暫時失效（最高層變 14、不在
-         * 名單內）。刻意不把 14 加進名單，原因見 layer_14 的註解。
+         * 屆時 `layers` 名單一定要含被鎖的那兩層（ZMK 是拿「按下第一顆鍵當下
+         * 最高的 active layer」去比對，見 combo.c 的
+         * zmk_keymap_highest_layer_active），少了它們鎖上就解不開；而且刻意
+         * 不要含 SCRL(7)——鎖住滾動速度是陷阱，放開 G 之後觸控板會在非滾動
+         * 狀態持續滾動。
          */
-
-        combo_lock_fast_l {
-            timeout-ms = <50>;
-            key-positions = <36 37>;
-            bindings = <&tog 10>;
-            layers = <6 8 10>;
-        };
-
-        combo_lock_fast_r {
-            timeout-ms = <50>;
-            key-positions = <40 41>;
-            bindings = <&tog 10>;
-            layers = <6 8 10>;
-        };
-
-        combo_lock_slowest_l {
-            timeout-ms = <50>;
-            key-positions = <37 38>;
-            bindings = <&tog 8>;
-            layers = <6 8 10>;
-        };
-
-        combo_lock_slowest_r {
-            timeout-ms = <50>;
-            key-positions = <39 40>;
-            bindings = <&tog 8>;
-            layers = <6 8 10>;
-        };
     };
 
     keymap {
@@ -579,21 +604,34 @@
             display-name = "NAV";
 
             /*
-             * Positions 3 and 4 are hand-added (see regen.sh):
-             *   &studio_unlock — a second way in if the Z + / combo ever
-             *                    stops working. Left thumb ESC + E, and
-             *                    the thumb must be held past 200 ms.
-             *   &bootloader    — left thumb ESC + R. Saves prying the
-             *                    dongle out to double-tap RST on a reflash.
+             * ⚠️ 2026-09-04 更正：這裡原本寫「位置 3 和 4 是手動加的
+             *    &studio_unlock / &bootloader」——**那已經不是事實**。
+             *    5b6ab49 當年確實把它們放在位置 3/4，但 3860f1b（add macro）
+             *    起陸續被 Claude Code 巨集覆蓋，現在是：
              *
-             * Positions 22 and 34 are also hand-changed:
+             *      0 &none      1 &cc_exit    2 &cc_clear
+             *      3 &none      4 &cc_rename  5 &macro4
+             *
+             *    也就是 **位置 3 是空的**，是這一層唯一的現成空位。
+             *
+             *    兩條逃生路徑沒有消失，只是搬家了，不用急著補回來：
+             *      Studio 解鎖 → combo_studio_unlock（Z + /，見上面 combos）
+             *      bootloader → BT(12) 層的 B 和 N 兩顆（見 layer_12 註解）
+             *
+             *    regen.sh 的 Patch 2 仍然假設位置 0-4 是五顆 &none，所以
+             *    重跑 regen 會直接硬錯——那是刻意的，見 regen.sh 檔頭。
+             *
+             * Position 22 is hand-changed:
              *   22 &td_ptt — z30 / z50 合併：點一下 z30、連點兩下 z50。
-             *   34 &tog 14 — hjkl 方向鍵 ⇄ 滾輪切換，見 conditional_layers
-             *                和 layer_14 / layer_15 的註解。
+             *
+             * 位置 34 以前是 &tog 14（hjkl 方向鍵 ⇄ 滾輪切換）。2026-09-04
+             * 連同 HJKL / WHEL 兩層一起刪掉，改成 &trans 落回 BASE 的 `/`。
+             * 這顆同時是 combo_studio_unlock 的一半（<25 34>），combo 是看
+             * 位置不是看 binding，所以改成 &trans 不影響解鎖。
              */
 
             bindings = <
-&none  &cc_exit  &cc_clear  &none  &cc_rename  &macro4  &kp LS(LG(LEFT_BRACKET))  &kp LS(LG(RIGHT_BRACKET))  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &to 0  &none  &none  &kp LALT  &kp LCTRL  &kp LGUI  &kp LSHFT  &trans  &kp LEFT  &kp DOWN  &kp UP  &kp RIGHT  &td_ptt  &none  &none  &cc_effort  &kp LA(P)  &cc_continue  &cc_usage  &claude  &kp END  &kp PG_DN  &kp PG_UP  &kp HOME  &tog 14  &none  &none  &none  &kp ESC  &kp BSPC  &kp DEL  &kp F19
+&none  &cc_exit  &cc_clear  &none  &cc_rename  &macro4  &kp LS(LG(LEFT_BRACKET))  &kp LS(LG(RIGHT_BRACKET))  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &to 0  &none  &none  &kp LALT  &kp LCTRL  &kp LGUI  &kp LSHFT  &trans  &kp LEFT  &kp DOWN  &kp UP  &kp RIGHT  &td_ptt  &none  &none  &cc_effort  &kp LA(P)  &cc_continue  &cc_usage  &claude  &kp END  &kp PG_DN  &kp PG_UP  &kp HOME  &trans  &none  &none  &none  &kp ESC  &kp BSPC  &kp DEL  &kp F19
             >;
         };
 
@@ -606,7 +644,7 @@
 
         layer_3 {
             /*
-             * SYM 是第一個被縮短的層名（當年只有它超標），現在全部 17 層
+             * SYM 是第一個被縮短的層名（當年只有它超標），現在全部 13 層
              * 都收進 4 字元了——理由見檔頭的層名表。
              *
              * ⚠️ 這一個名字比其他層多兩個綁定：小抄是用「層名字串」查表的，
@@ -622,10 +660,35 @@
             >;
         };
 
+        /*
+         * 位置 6-9 (Y/U/I/O) = 四顆刪除鍵，送 macOS 原生鍵碼：
+         *   6 (Y) &kp LG(BACKSPACE)  ⌘⌫  刪到行首
+         *   7 (U) &kp LA(BACKSPACE)  ⌥⌫  刪前一字
+         *   8 (I) &kp LA(DEL)        ⌥⌦  刪後一字
+         *   9 (O) &kp LC(K)          ⌃K  刪到行尾
+         *
+         * ⚠️ 2026-09-04 曾短暫改成中性訊號 F13-F16（想讓 macOS / Windows 兩邊
+         *    行為一致，由各環境的翻譯層各自展開），當天就退回來了。兩個理由：
+         *
+         *    1. **Chrome 擴充套件吃不到 F 鍵。** 官方 Commands API 的允許清單只有
+         *       字母 / 數字 / 方向鍵 / Home / End / Delete 那一類，F1-F12 都不在，
+         *       F13 以上更沒有；而套件自己的選項頁抓鍵通常寫成
+         *       `if (e.key.length === 1)`，"F13" 長度 3 一樣被濾掉。這一層有幾顆
+         *       同時要餵 Chrome 擴充，中性鍵碼直接把那條路堵死。
+         *    2. **中性鍵碼把免費的原生行為也犧牲掉了。** 這四個組合在 macOS 的
+         *       Cocoa 文字系統本來就對，不需要任何 Karabiner 規則；換成 F13-F16
+         *       之後反而要靠翻譯層才動得了，沒裝的機器上等於沒作用。
+         *
+         *    現行分工：鍵盤送各平台原生鍵碼，**只在終端機做轉譯**（WezTerm 把
+         *    ⌘⌫ 映成 ^U、⌥⌦ 映成 ESC+d，另外兩顆終端機原生就通）。翻譯設定在
+         *    使用者的 MyConfig repo，不在這裡。Windows 那把（Piantor Pro）送的是
+         *    Ctrl+U / Ctrl+Backspace / Ctrl+Delete / Ctrl+K，語意對齊、鍵碼各自原生。
+         */
+
         layer_4 {
             display-name = "CMD";
             bindings = <
-&none  &kp LG(Q)  &kp LG(W)  &kp LG(E)  &kp LS(LG(Z))  &kp LG(T)  &kp LG(BACKSPACE)  &kp LA(BACKSPACE)  &kp LA(DEL)  &kp LC(K)  &to 0  &none  &none  &mt LALT LG(A)  &mt LCTRL LG(S)  &mt LGUI LG(D)  &mt LSHFT LG(F)  &kp LG(L)  &lt 7 LG(LEFT)  &kp LA(LEFT)  &kp LA(RIGHT)  &kp LG(RIGHT)  &kp LG(LS(T))  &none  &none  &kp LG(Z)  &kp LG(X)  &kp LG(C)  &kp LG(V)  &kp LG(B)  &kp LS(LG(LEFT))  &kp LS(LA(LEFT))  &kp LS(LA(RIGHT))  &kp LS(LG(RIGHT))  &kp LG(W)  &none  &kp LS(LC(LA(LG(GRAVE))))  &sl 5  &none  &mo 1  &mo 16  &kp F19
+&none  &kp LG(Q)  &kp LG(W)  &kp LG(E)  &kp LS(LG(Z))  &kp LG(T)  &kp LG(BACKSPACE)  &kp LA(BACKSPACE)  &kp LA(DEL)  &kp LC(K)  &to 0  &none  &none  &mt LALT LG(A)  &mt LCTRL LG(S)  &mt LGUI LG(D)  &mt LSHFT LG(F)  &kp LG(L)  &lt 7 LG(LEFT)  &kp LA(LEFT)  &kp LA(RIGHT)  &kp LG(RIGHT)  &kp LG(LS(T))  &none  &none  &kp LG(Z)  &kp LG(X)  &kp LG(C)  &kp LG(V)  &kp LG(B)  &kp LS(LG(LEFT))  &kp LS(LA(LEFT))  &kp LS(LA(RIGHT))  &kp LS(LG(RIGHT))  &kp LG(W)  &none  &kp LS(LC(LA(LG(GRAVE))))  &sl 5  &none  &mo 1  &mo 12  &kp F19
             >;
         };
 
@@ -644,145 +707,117 @@
          * 所以 timeout 窗口內你打的每一顆字都會落在這裡。只留三類東西：
          *
          *   26/27/28 (Z/X/C)  左 / 右 / 中鍵——滑鼠層的存在理由
-         *   36-41 (六顆拇指)   三檔調速
-         *   10 (P)            &to 0 逃生口（連速度鎖定一起清掉）
+         *   30/31 (N/M)       左 / 右鍵，右手也搆得到
+         *   6 (Y)             中鍵
+         *   37/38/39/40       兩檔調速（四顆拇指）
+         *   10 (P)            &to 0 逃生口
          *
-         * 其餘 33 格全部 &trans，落回下面的層。所以誤按的代價是「打出原本
-         * 那個字」，而不是關掉分頁或讓頁面亂跳。
+         * 以上 11 格，其餘 31 格全部 &trans，落回下面的層。所以誤按的代價是
+         * 「打出原本那個字」，而不是關掉分頁或讓頁面亂跳。
          *
          * 進階操作（鍵盤滾動、分頁切換、Page Up/Down）搬到 SCRL (7) 了——
          * 那層要按住 G / H 才進來，是刻意的，可以放任何東西。理由與各項的
          * 替代位置見上面 SCRL (7) 的註解。
          *
-         * 拇指規則：越內側越快、越外側越慢，兩手對稱，全部是「按住」。
-         *   36/41 (最內) = 最快 3.75x     37/40 (中)  = 中檔 1.25x
-         *   38/39 (最外，layer 0 的 ESC / BSPC 位) = 最慢 0.62x
-         * 鎖定走 combo（見上面的 combo_lock_*），拇指上沒有 toggle。
+         * ── 拇指（2026-09-04 大改）────────────────────────────────────
+         *
+         * 拇指實體座標（toucan-layouts.dtsi，x 越大越靠右）：
+         *   36=350  37=450  38=548 ｜ 39=752  40=850  41=950
+         * 對照同一排的欄位：C=300 V=400 B=500 ｜ N=800 M=900 逗號=1000
+         * 也就是 36 卡在 C/V 之間、41 卡在 M/逗號之間，38/39 最靠中間縫。
+         *
+         * 舊配置是三檔散在「36 快 / 37 中 / 38 慢」，中檔實測沒在用，而且
+         * 快檔在最外側的 36 很難按。新配置砍掉中檔，把快檔往內搬一格，
+         * 兩檔變成相鄰的兩顆，拇指用滾的就能切換：
+         *
+         *   37 / 40 (中間)   = 快 3.75x   &mo 9
+         *   38 / 39 (靠縫)   = 慢 1.25x   &mo 8   ← 繼承舊中檔的速度
+         *   36 / 41 (靠V/靠M) = &trans，空出來
+         *
+         * 慢檔刻意用 1.25x 而不是舊的最慢 0.62x——實測 0.62x 鈍到不堪用。
+         * 全部是「按住」，速度鎖定的 combo 已經刪掉（理由見上面 combos）。
          */
 
         layer_6 {
             display-name = "PAD";
             bindings = <
-&trans  &trans  &trans  &trans  &trans  &trans  &mkp MCLK  &trans  &trans  &trans  &to 0  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &mkp LCLK  &mkp RCLK  &trans  &trans  &trans  &trans  &mo 10  &mo 9  &mo 8  &mo 8  &mo 9  &mo 10
+&trans  &trans  &trans  &trans  &trans  &trans  &mkp MCLK  &trans  &trans  &trans  &to 0  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &mkp LCLK  &mkp RCLK  &trans  &trans  &trans  &trans  &trans  &mo 9  &mo 8  &mo 8  &mo 9  &trans
             >;
         };
 
         /*
          * SCRL — BASE 按住 G / H (&lt 7) 進入，觸控板變滾輪。
-         * scroller_default 在 toucan.dtsi 用 layers = <1 2 7> 認這一層。
-         * 拇指位置與 PAD 相同，但指向滾動三檔；滾動刻意不提供鎖定。
+         * scroller_default 在 toucan-trackpad.dtsi 用 layers = <1 2 7> 認這一層。
+         * 拇指位置與 PAD 相同，但指向滾動兩檔；滾動刻意不提供鎖定。
          * 游標 ±1500 / 滾輪 ±50 = 全鍵盤速度基準，見檔頭對照表。
+         *
+         * 滾輪那八格吃 &msc 的加速度曲線（線性、450 ms 爬滿），所以 ±50 是
+         * 「按住 450 ms 之後的最高速」，不是按下去的瞬間速度。
+         *
+         * 右手底排是整頁跳轉，要一頁一頁翻用這個比硬捲滾輪快：
+         *   30 (N) = End   31 (M) = PgDn   32 (,) = PgUp   33 (.) = Home
          */
 
         layer_7 {
             display-name = "SCRL";
             bindings = <
-&trans  &kp LG(W)  &msc MOVE_Y(50)  &mmv MOVE_Y(-1500)  &msc MOVE_Y(-50)  &trans  &kp LG(LS(LEFT_BRACKET))  &kp LG(LS(RIGHT_BRACKET))  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &to 0  &trans  &trans  &msc MOVE_X(50)  &mmv MOVE_X(-1500)  &mmv MOVE_Y(1500)  &mmv MOVE_X(1500)  &msc MOVE_X(-50)  &msc MOVE_X(50)  &msc MOVE_Y(50)  &msc MOVE_Y(-50)  &msc MOVE_X(-50)  &kp LG(LS(T))  &trans  &trans  &kp LS(LG(T))  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &kp END  &kp PAGE_DOWN  &kp PAGE_UP  &kp HOME  &kp LG(W)  &trans  &mo 13  &mo 12  &mo 11  &mo 11  &mo 12  &mo 13
+&trans  &kp LG(W)  &msc MOVE_Y(50)  &mmv MOVE_Y(-1500)  &msc MOVE_Y(-50)  &trans  &kp LG(LS(LEFT_BRACKET))  &kp LG(LS(RIGHT_BRACKET))  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &to 0  &trans  &trans  &msc MOVE_X(50)  &mmv MOVE_X(-1500)  &mmv MOVE_Y(1500)  &mmv MOVE_X(1500)  &msc MOVE_X(-50)  &msc MOVE_X(50)  &msc MOVE_Y(50)  &msc MOVE_Y(-50)  &msc MOVE_X(-50)  &kp LG(LS(T))  &trans  &trans  &kp LS(LG(T))  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &kp END  &kp PAGE_DOWN  &kp PAGE_UP  &kp HOME  &kp LG(W)  &trans  &trans  &mo 11  &mo 10  &mo 10  &mo 11  &trans
             >;
         };
 
         /*
-         * 以下六層是調速用的 marker layer：讓 toucan-trackpad.dtsi 的
+         * 以下四層是調速用的 marker layer：讓 toucan-trackpad.dtsi 的
          * input-listener 知道要換哪一條處理鏈。
          *
-         * CUR 三檔 (8/9/10) 全 &trans——8/10 可以被 combo 鎖定，鎖著打字時
-         * 每一格都必須落回底下的層。可鎖定的兩層在位置 10 (P) 放 &to 0：
-         * 鎖定之後觸控板停下、layer 6 掉了，這是唯一能清掉鎖定的逃生口。
+         * ⚠️ 2026-09-04 從六層收成四層：CUR (舊 9) 和 SCR (舊 12) 兩個中檔
+         *    刪掉，留下的慢檔直接繼承它們的速度。連帶把 8-16 全部往前移，
+         *    toucan-trackpad.dtsi 的 `layers = <>` 和 radii_layout.c 的
+         *    LAYERS[] 都跟著改過了。
          *
-         * SCRL 三檔 (11/12/13) 不只是記號：同時把 SCRL 層上所有
-         * &msc / &mmv 的格子用「縮放過的字面數字」再蓋一次（&msc/&mmv 是
-         * behavior、不走觸控板的 input processor 鏈，不蓋的話調速鍵對鍵盤
-         * 游標完全沒效果）。於是「按住 G/H + 拇指調速」對觸控板和鍵盤
-         * 游標 / 滾輪同時生效。數字對照表在檔頭。
+         * CUR 兩檔 (8/9) 全 &trans，純粹是給 input-listener 認的記號。位置 10
+         * 的 &to 0 也拿掉了——這兩層只能「按住」，落回 PAD(6) 就有同一顆
+         * &to 0，重複沒有意義。
          *
-         * 刻意「不」蓋可鎖定的 CUR 三檔 (8/10)：鎖著打字時這些格子若不是
-         * &trans，E/D/F 那排會變成游標鍵、字打不出來。SCRL 檔只能按住、
-         * 按住時左手一定壓在 G/H 上，不會同時打字。其餘格子全 &trans 落回
-         * SCRL（位置 10 的 &to 0 逃生口也是這樣落下去）。
+         * SCR 兩檔 (10/11) 不只是記號：同時把 SCRL 層上所有 &msc / &mmv 的
+         * 格子用「縮放過的字面數字」再蓋一次（&msc / &mmv 是 behavior、不走
+         * 觸控板的 input processor 鏈，不蓋的話調速鍵對鍵盤游標 / 滾輪完全
+         * 沒效果）。於是「按住 G/H + 拇指調速」對觸控板和鍵盤同時生效。
+         * 數字對照表在檔頭。
+         *
+         * 刻意「不」蓋 CUR 兩檔 (8/9)：那兩層是觸控板自動升起的 PAD(6) 疊上來
+         * 的，手指還在打字範圍內，格子若不是 &trans，E/D/F 那排會變成游標鍵、
+         * 字打不出來。SCR 檔只能按住，按住時左手一定壓在 G/H 上，不會同時打字。
          */
 
         layer_8 {
             display-name = "CUR-";
             bindings = <
-&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &to 0  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
             >;
         };
 
         layer_9 {
-            display-name = "CUR";
+            display-name = "CUR+";
             bindings = <
 &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
             >;
         };
 
+        /* 慢檔：游標 ±750（基準 50%）、滾輪 ±25（基準 50%）*/
+
         layer_10 {
-            display-name = "CUR+";
-            bindings = <
-&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &to 0  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
-            >;
-        };
-
-        /* 基準的 25%：游標 ±375、滾輪 ±12 */
-
-        layer_11 {
             display-name = "SCR-";
-            bindings = <
-&trans  &trans  &msc MOVE_Y(12)  &mmv MOVE_Y(-375)  &msc MOVE_Y(-12)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &msc MOVE_X(12)  &mmv MOVE_X(-375)  &mmv MOVE_Y(375)  &mmv MOVE_X(375)  &msc MOVE_X(-12)  &msc MOVE_X(12)  &msc MOVE_Y(12)  &msc MOVE_Y(-12)  &msc MOVE_X(-12)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
-            >;
-        };
-
-        /* 基準的 50%：游標 ±750、滾輪 ±25 */
-
-        layer_12 {
-            display-name = "SCR";
             bindings = <
 &trans  &trans  &msc MOVE_Y(25)  &mmv MOVE_Y(-750)  &msc MOVE_Y(-25)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &msc MOVE_X(25)  &mmv MOVE_X(-750)  &mmv MOVE_Y(750)  &mmv MOVE_X(750)  &msc MOVE_X(-25)  &msc MOVE_X(25)  &msc MOVE_Y(25)  &msc MOVE_Y(-25)  &msc MOVE_X(-25)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
             >;
         };
 
-        /* 基準的 150%：游標 ±2250、滾輪 ±75 */
+        /* 快檔：游標 ±2250（基準 150%）、滾輪 ±100（基準 200%）*/
 
-        layer_13 {
+        layer_11 {
             display-name = "SCR+";
             bindings = <
-&trans  &trans  &msc MOVE_Y(75)  &mmv MOVE_Y(-2250)  &msc MOVE_Y(-75)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &msc MOVE_X(75)  &mmv MOVE_X(-2250)  &mmv MOVE_Y(2250)  &mmv MOVE_X(2250)  &msc MOVE_X(-75)  &msc MOVE_X(75)  &msc MOVE_Y(75)  &msc MOVE_Y(-75)  &msc MOVE_X(-75)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
-            >;
-        };
-
-        /*
-         * HJKL — hand-added 的 flag 層。全 &trans，只當開關狀態用：
-         * NAV 位置 34 的 &tog 14 切換。開著時 dongle 螢幕顯示的最高層就是
-         * 這個名字，等於免費的狀態指示燈。實際蓋鍵的是下面的 WHEL(15)，
-         * 由 conditional_layers 在 NAV+flag 同時 active 時自動疊上。
-         *
-         * 兩個已知取捨：
-         *   1. 這層 index (14) 高於 PAD(6)/CUR*(8/10)，flag 開著時
-         *      combo_lock_*（觸控板調速鎖定）比對到的最高層是 14、不在
-         *      名單內 ⇒ 那四組 combo 暫時失效。刻意「不」把 14 加進名單：
-         *      加了它們就會在 BASE 打字時活過來，拇指快速連按會誤觸
-         *      &tog 8/10。要鎖速度就先把 flag 關掉。
-         *   2. 任何 &to（NAV 的 P、PAD 層位置 10、combo_to_nav）都會把
-         *      flag 一併清掉——&to 只保留目標層和 default 層。
-         */
-
-        layer_14 {
-            display-name = "HJKL";
-            bindings = <
-&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
-            >;
-        };
-
-        /*
-         * WHEL — 由 conditional_layers 自動疊上，不要手動 &tog/&mo 它。
-         * 只蓋 NAV 的 hjkl 四格（18-21），方向與 SCRL 層
-         * 右手 home row 完全相同；其餘 &trans 落回 NAV——位置 34 也因此
-         * 落回 &tog 14，再按一次就切回方向鍵。
-         */
-
-        layer_15 {
-            display-name = "WHEL";
-            bindings = <
-&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &msc MOVE_X(50)  &msc MOVE_Y(50)  &msc MOVE_Y(-50)  &msc MOVE_X(-50)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &msc MOVE_Y(100)  &mmv MOVE_Y(-2250)  &msc MOVE_Y(-100)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &msc MOVE_X(100)  &mmv MOVE_X(-2250)  &mmv MOVE_Y(2250)  &mmv MOVE_X(2250)  &msc MOVE_X(-100)  &msc MOVE_X(100)  &msc MOVE_Y(100)  &msc MOVE_Y(-100)  &msc MOVE_X(-100)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
             >;
         };
 
@@ -790,7 +825,7 @@
          * BT — 主機配對與輸出切換。2026-09-01 左半改當 split central 之後
          * 才需要：以前所有主機配對都在 dongle 上，鍵盤本身一顆 &bt 都沒有。
          *
-         * 進入方式：CMD(4) 位置 40 的 &mo 16。CMD 自己由 BASE 按住
+         * 進入方式：CMD(4) 位置 40 的 &mo 12。CMD 自己由 BASE 按住
          * SPACE（&lt 4 SPACE，左拇指）或 combo_media 的 &to 4 進入，所以
          * 兩種握法都按得到——左拇指 + 右拇指 + 左手指。
          *
@@ -799,16 +834,22 @@
          *
          *   Q W E R T  = BT profile 0-4        A S D = 輸出 USB / BLE / 切換
          *   Z          = BT_CLR（清掉目前 profile 的配對）
-         *   B          = &bootloader           P     = &to 0 逃生口
+         *   B          = &bootloader（重置左半）  N = &bootloader（重置右半）
+         *   P          = &to 0 逃生口
          *
-         * &bootloader 重置的是「按下它的那一側」，也就是左半——而左半現在
-         * 正是最常刷的那顆板子，所以這顆鍵第一次真正有用了。（FLASHING.md
-         * 那次事故正是因為當年它重置的是左半、使用者以為是 dongle。）
+         * ⚠️ 2026-09-04 更正：這段原本寫「&bootloader 重置的是按下它的那一側，
+         *    也就是左半」和「右手整排 &trans 是刻意的」——**兩句都不對**。
+         *    位置 29 (B) 和位置 30 (N) 都是 &bootloader，而 30 在右半。
          *
-         * 右手整排 &trans 是刻意的：這層只用左手，右手保持 CMD 的行為。
+         *    「重置按下它的那一側」這個機制本身是對的，所以這兩顆其實是
+         *    **一邊一顆**：B 在左半 ⇒ 重置左半，N 在右半 ⇒ 重置右半。兩半都
+         *    刷得到，不用拆殼按 RST。（FLASHING.md 那次事故正是因為當年只有
+         *    一顆、重置的是左半，使用者以為是 dongle。）
+         *
+         *    右手其餘格子確實是 &trans（保持 CMD 的行為），只有位置 30 例外。
          */
 
-        layer_16 {
+        layer_12 {
             display-name = "BT";
             bindings = <
 &none  &bt BT_SEL 0  &bt BT_SEL 1  &bt BT_SEL 2  &bt BT_SEL 3  &bt BT_SEL 4  &trans  &trans  &trans  &trans  &to 0  &none  &none  &out OUT_USB  &out OUT_BLE  &out OUT_TOG  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &none  &none  &bt BT_CLR  &trans  &trans  &trans  &bootloader  &bootloader  &trans  &trans  &trans  &trans  &none  &trans  &trans  &trans  &trans  &trans  &trans

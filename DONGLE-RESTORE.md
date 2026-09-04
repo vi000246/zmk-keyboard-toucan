@@ -9,10 +9,10 @@
 | 項目 | 內容 |
 |---|---|
 | 預設 layout | Radii（layout 3）。2026-09-03 起**整個重寫成 Toucan 專用的儀表板**，見下表。仍是唯一**沒有 WPM 手速統計**的 layout |
-| 儀表板版面 | 左緣 17 格 ladder（一格一層）＋ 大字層名（固定 4 字元單行）＋ 兩行英文副標 ＋ 電量數字/bar ＋ 修飾鍵 2×2 ＋ BLE 四點。全暗底 |
+| 儀表板版面 | 左緣 13 格 ladder（一格一層）＋ 大字層名（固定 4 字元單行）＋ 兩行英文副標 ＋ 電量數字/bar ＋ 修飾鍵 2×2 ＋ BLE 四點。全暗底 |
 | 層名來源 | 大字用**廣播帶來的 display-name**；副標走 `radii_layout.c` 的本地 `LAYERS[]` 表，用 `active_layer` 當 index 查，不受廣播 4 bytes 限制 |
-| SYM 按鍵小抄 | 廣播層名 = `SYM` 時，dongle 全螢幕蓋一張 3×10 的符號小抄；離開該層自動消失。面板寬度已從 240 修正為 280（原本右邊會漏 40px） |
-| ladder 格數 | 由 `radii_layout.c` 的 `LAYERS[]` 筆數決定（目前 17），配 `BUILD_ASSERT`。**不再讀 `CONFIG_PROSPECTOR_MAX_LAYERS`**——那個上限只到 10，裝不下 17 層，正是改寫的原因之一 |
+| SYM 按鍵小抄 | 廣播層名 = `SYM` 時，dongle 全螢幕蓋一張 3×10 的符號小抄；離開該層自動消失。面板寬度已從 240 修正為 280（原本右邊會漏 40px）。2026-09-04 改成**一欄一個 label、x 座標寫死**——原本一排一個 label 靠等寬字型對齊，但 `lv_font_unscii_16` 的 adv_w 是 **16px** 不是 8px，整排 376px 塞不進 280px，右手五欄只看得到第一欄 |
+| ladder 格數 | 由 `radii_layout.c` 的 `LAYERS[]` 筆數決定（目前 13），配 `BUILD_ASSERT`。**不再讀 `CONFIG_PROSPECTOR_MAX_LAYERS`**——那個上限只到 10，當時裝不下 17 層，正是改寫的原因之一 |
 
 ## 動到的檔案（= 要還原就動這些）
 
@@ -46,7 +46,7 @@ dongle 刷什麼、還原成什麼，都不影響鍵盤，也不用重新配對�
 改 SYM 層的按鍵時，小抄表有**三份**要手動同步：
 `config/toucan.keymap`（鍵位本體）→
 `boards/shields/nice_view_gem/widgets/cheatsheet.c`（鍵盤螢幕）→
-`scanner-module/.../src/radii_layout.c` 的 `cheat_rows`（dongle 螢幕）。
+`scanner-module/.../src/radii_layout.c` 的 `cheat_cells`（dongle 螢幕）。
 
 ## 還原 Step A：把 dongle 刷回官方韌體（硬體層，隨時可做）
 
@@ -91,6 +91,6 @@ repo 還原後，dongle 上如果還跑著自訂韌體，照 Step A 刷回官方
 | 配色 | 同檔 `color_palettes[]`，4 組暗色（Mint / Amber / Ice / Rose）。非觸控模式開機固定用第 0 個 |
 | 版面座標 | 同檔頂端的 `LADDER_* / TEXT_X / COL_X / RIGHT_X / BAR_*` 常數 |
 | 大字層名字級 | 同檔 `create_text_column()` 的 `FR_Regular_48`。⚠️ 換字型前先看 `fonts_carrefinho.h` 記的 glyph 範圍——`FG_Medium_20` / `FG_Medium_26` 只到 0x60，**沒有小寫**，而層名有 `-` `+`、副標有小寫 |
-| 小抄的內容 / 觸發層名 | 同檔 `cheat_rows` / `CHEAT_LAYER_NAME` |
+| 小抄的內容 / 觸發層名 | 同檔 `cheat_cells` / `CHEAT_LAYER_NAME`；欄寬與間距是同檔的 `CHEAT_CELL_W` / `CHEAT_GUTTER` / `CHEAT_LINE_SP` |
 | 亮度、逾時變暗、轉 180° | `scanner/prospector_scanner.conf` 加 `CONFIG_PROSPECTOR_FIXED_BRIGHTNESS` / `CONFIG_PROSPECTOR_SCANNER_TIMEOUT_MS` / `CONFIG_PROSPECTOR_ROTATE_DISPLAY_180`（完整清單見 `scanner-module/Kconfig`） |
 | 升級 upstream 模組 | 下載新版 tarball 覆蓋 `scanner-module/`，再把 radii_layout.c 的小抄 patch 重新套上（搜 CHEAT_LAYER_NAME 的四段），必要時更新 `scanner/west.yml` 釘的 zmk SHA |
