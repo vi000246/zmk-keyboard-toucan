@@ -8,7 +8,10 @@ keymap 一起版本控管，方便兩邊對照。
 | 檔案 | `settings` QSID 21 | 說明 |
 |---|---|---|
 | `piantor-20260903-swap-on.vil` | `256`（swap **開**） | **改動前的原始備份**（2026-09-03 13:42）。要回退載入這個即可。 |
-| `piantor-windows-20260904.vil` | `0`（swap **關**） | 對齊 Toucan keymap 的 Windows 版。**已在實機驗證並由 Vial 重新匯出**。 |
+| `piantor-windows-20260904.vil` | `0`（swap **關**） | 對齊 Toucan keymap 的 Windows 版。 |
+
+⚠️ `piantor-windows-20260904.vil` 曾刷進實機並由 Vial 重新匯出驗證過，
+**但之後又改了 L4 上排四顆的刪除鍵（見下），這部分尚未刷入**。要用請重新 Load 一次。
 
 ## `Magic → Swap Control and GUI` 的旗標就存在 .vil 裡
 
@@ -43,15 +46,58 @@ keymap 一起版本控管，方便兩邊對照。
 
 | | 行首 | 前一字 | 後一字 | 行尾 |
 |---|---|---|---|---|
-| **刪除** | `Y` = M12 | `U` = `LCTL(KC_BSPACE)` | `I` = `LCTL(KC_DELETE)` | `O` = M13 |
+| **刪除** | `Y` = `LCTL(KC_U)` | `U` = `LCTL(KC_BSPACE)` | `I` = `LCTL(KC_DELETE)` | `O` = `LCTL(KC_K)` |
 | **移動** | `H` = `LT8(KC_HOME)` | `J` = `LCTL(KC_LEFT)` | `K` = `LCTL(KC_RIGHT)` | `L` = `KC_END` |
 | **選取** | `N` = `LSFT(KC_HOME)` | `M` = `C_S(KC_LEFT)` | `,` = `C_S(KC_RIGHT)` | `.` = `LSFT(KC_END)` |
 
 `;` = `C_S(KC_T)`（重開分頁）、`/` = `LCTL(KC_W)`（關分頁）、`P` = `TO(0)`。
 
-Windows 沒有「刪到行首/行尾」的單鍵，所以用巨集兩步做。
 `H` 用 `LT8(...)` 而非裸 `KC_HOME`，因為 Toucan 是 `&lt 7 LG(LEFT)`，
 Piantor 對應的是第 8 層（base 已在用 `LT8`）。
+
+⚠️ **Toucan 在 ce0602d 之後層數從 17 減為 13**，8 以後全部往前重排
+（BT 16→12、SCR+ 13→11、SCR- 11→10、CUR+ 10→9；CUR/SCR/HJKL/WHEL 已刪除）。
+**層 0-7 沒有變動**，所以上面 `LT8` 對應 `&lt 7` 的推論仍然成立。
+
+#### 上排四顆：送各平台原生鍵碼，只在終端機轉譯
+
+| 實體鍵 | Piantor（Windows） | Toucan（macOS） | GUI 要設定嗎 | 終端機要設定嗎 |
+|:---:|---|---|---|---|
+| `Y` 刪到行首 | `LCTL(KC_U)` | `⌘⌫` | **要**（AHK 展開） | 不用（`^U` 原生） |
+| `U` 刪前一字 | `LCTL(KC_BSPACE)` | `⌥⌫` | 不用 | **要**（轉 `ESC+DEL`） |
+| `I` 刪後一字 | `LCTL(KC_DELETE)` | `⌥⌦` | 不用 | **要**（轉 `ESC+d`） |
+| `O` 刪到行尾 | `LCTL(KC_K)` | `⌃K` | 不用 | 不用（`^K` 原生） |
+
+翻譯層全部在 **MyConfig repo**（chezmoi 同步）：
+
+| 環境 | 檔案 | 做什麼 |
+|---|---|---|
+| Windows 終端機 | `AppData/.../WindowsTerminal/settings.json` | `Ctrl+Backspace`→`ESC+DEL`、`Ctrl+Delete`→`ESC+d` |
+| Windows GUI | `Documents/AutoHotkey/autohotkey.ahk` | 非終端機時 `Ctrl+U`/`Ctrl+K` 展開成 `Shift+Home`+`Backspace` |
+| PowerShell | `scripts/windows/powershell/profile.ps1` | 補 PSReadLine 的 `Ctrl+u`/`Ctrl+k`/`Alt+Backspace` |
+| macOS 終端機 | `dot_wezterm.lua` | `⌘⌫`→`^U`、`⌥⌫`→`ESC+DEL`、`⌥⌦`→`ESC+d` |
+| zsh | `dot_zshrc` | `bindkey '^U' backward-kill-line` |
+
+**macOS 的 GUI 側完全不需要設定**，Cocoa 文字系統原生就支援這四個。
+cmd.exe(clink) 與 Git Bash 也不用——底層是 readline。
+
+##### 為什麼不用 F13-F16 當「中性訊號」（已否決，別再提）
+把四顆都改送 F13-F16、再由各環境翻譯，看起來能讓兩把鍵盤完全一致，但三個致命問題：
+1. **Chrome 的 Commands API 允許清單裡沒有 F 鍵**（連 F1-F12 都沒有），
+   套件自己錄鍵的程式碼通常也用 `e.key.length === 1` 濾掉 —— 這些鍵就再也不能
+   拿去綁 Chrome 擴充功能了，而使用者正需要這個。
+2. **`dot_hammerspoon/init.lua` 已經佔用 F13 / F15**（切換音訊輸出裝置）。
+3. 中性鍵碼把 **macOS 上免費的原生行為一起犧牲掉**，反而要多維護一整層 Karabiner。
+
+##### ⚠️ 兩個已知限制
+- **Chrome 的 `Ctrl+U`（檢視原始碼）與 `Ctrl+K`（網址列搜尋）會被 AHK 蓋掉。**
+  要留給 Chrome 擴充功能的話，在 AHK 的 `InTerminalWin()` 加一行
+  `|| WinActive("ahk_exe chrome.exe")`，代價是 Chrome 內的輸入框失去這兩個操作。
+- **macOS 的 `⌃K` 在 Chrome / Electron 的輸入框裡不一定有效**——Chromium 自己
+  實作文字輸入，emacs-style 綁定支援不完整。這是 Chromium 的限制，不是鍵盤問題。
+
+原本用來做「刪到行首/行尾」的巨集 **M12 / M13 已無任何鍵引用**，
+但刻意保留不刪，日後若要退回純 GUI 用法可以直接綁回去。
 
 ### 其他修正
 | 位置 | 原本 | 改成 | 原因 |
@@ -77,7 +123,7 @@ M13 刪到行尾（`Shift+End`→`Delete`）、M14 `claude`。
 | L5 右手 | `Hyper+L/E/F/T` | `LCG(1~4)`、`HYPR(...)`：主機端全域熱鍵（Raycast vs AHK） |
 | L5 截圖 | `⇧⌘5` | `SGUI(KC_S)` = Win+Shift+S（對調後自動正確） |
 | L3 右拇指 | 內 `Hyper+E` / 外 `⌃⌘A` | 維持 Piantor 原樣（使用者決定不改） |
-| L16 藍牙層 | 配對 / 輸出切換 | Piantor 有線，沒這層 |
+| 藍牙層（Toucan 的 L12） | 配對 / 輸出切換 | Piantor 有線，沒這層 |
 | Piantor L6,7,9~15 | — | 不在範圍（含 L8 滑鼠層），只吃全域對調 |
 
 ## 產生方式
