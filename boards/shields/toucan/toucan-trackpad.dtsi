@@ -139,7 +139,7 @@
         status = "disabled";
         device = <&trackpad_split>;
 
-        input-processors = <&zip_xy_scaler PAD_BASE_MULT PAD_BASE_DIV &mouse_temp_layer 6 150 &zip_button_behaviors>;
+        input-processors = <&zip_xy_scaler PAD_BASE_MULT PAD_BASE_DIV &mouse_temp_layer 6 600 &zip_button_behaviors>;
 
         scroll_slow {
             layers = <10>;
