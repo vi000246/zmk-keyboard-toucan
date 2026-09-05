@@ -155,7 +155,6 @@
  *                     "tap-preferred" is the most forgiving, "hold-preferred"
  *                     the most eager. See zmk.dev/docs/keymaps/behaviors/hold-tap
  */
-
 /*
  * ── 鍵盤滾輪的加速度曲線（2026-09-04 才真正啟用）─────────────────────────
  *
@@ -187,6 +186,7 @@
  * 的 max 字面數字（見檔頭對照表）。觸控板不吃這條曲線——它走 input
  * processor，跟 &msc 無關。
  */
+
 &msc {
     // 延遲啟動時間，0 = 隨按隨動
 
@@ -802,7 +802,7 @@
         layer_10 {
             display-name = "SCR-";
             bindings = <
-&trans  &trans  &msc MOVE_Y(25)  &mmv MOVE_Y(-750)  &msc MOVE_Y(-25)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &msc MOVE_X(25)  &mmv MOVE_X(-750)  &mmv MOVE_Y(750)  &mmv MOVE_X(750)  &msc MOVE_X(-25)  &msc MOVE_X(25)  &msc MOVE_Y(25)  &msc MOVE_Y(-25)  &msc MOVE_X(-25)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &msc MOVE_Y(10)  &mmv MOVE_Y(-750)  &msc MOVE_Y(-10)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &msc MOVE_X(10)  &mmv MOVE_X(-750)  &mmv MOVE_Y(750)  &mmv MOVE_X(750)  &msc MOVE_X(-10)  &msc MOVE_X(25)  &msc MOVE_Y(25)  &msc MOVE_Y(-25)  &msc MOVE_X(-25)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
             >;
         };
 
