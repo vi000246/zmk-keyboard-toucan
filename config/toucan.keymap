@@ -555,8 +555,13 @@
 
         combo_num_word {
             timeout-ms = <27>; // 依照你其他 combo 的習慣設定為 27 毫秒
-            key-positions = <30 31>; // 對應 BASE 層的 N 和 M
+            key-positions = <29 28>; // 對應 BASE 層的 N 和 M
             bindings = <&num_word 2>;
+        };
+
+        layer {
+            bindings = <&to 7>;
+            key-positions = <30 31>;
         };
 
         /*
