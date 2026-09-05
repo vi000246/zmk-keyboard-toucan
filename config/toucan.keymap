@@ -802,7 +802,7 @@
         layer_10 {
             display-name = "SCR-";
             bindings = <
-&trans  &trans  &msc MOVE_Y(10)  &mmv MOVE_Y(-750)  &msc MOVE_Y(-10)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &msc MOVE_X(10)  &mmv MOVE_X(-750)  &mmv MOVE_Y(750)  &mmv MOVE_X(750)  &msc MOVE_X(-10)  &msc MOVE_X(25)  &msc MOVE_Y(25)  &msc MOVE_Y(-25)  &msc MOVE_X(-25)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &msc MOVE_Y(10)  &mmv MOVE_Y(-750)  &msc MOVE_Y(-10)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &msc MOVE_X(10)  &mmv MOVE_X(-750)  &mmv MOVE_Y(750)  &mmv MOVE_X(750)  &msc MOVE_X(-10)  &msc MOVE_X(10)  &msc MOVE_Y(10)  &msc MOVE_Y(-10)  &msc MOVE_X(-10)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
             >;
         };
 
