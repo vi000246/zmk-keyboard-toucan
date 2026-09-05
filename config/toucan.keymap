@@ -168,10 +168,6 @@
  *      return max_speed * powf(time_fraction, accel_exp);
  *
  *    而 ZMK 的 mouse_scroll.dtsi 預設就是 acceleration-exponent = <0>。
- *    所以這裡以前寫的 `time-to-max-speed-ms = <50>` 是死設定，滾輪一直都是
- *    「按下去立刻全速、全程等速」。
- *
- *
  *
  * ⚠️ `&msc` 是**單一節點**，這條曲線 SCRL / SCR- / SCR+ 三檔共用，沒辦法
  *    只給某一檔不同的爬升時間——只有 max（各層寫死的字面數字）能分別調。
@@ -194,11 +190,11 @@
 
     // 花多少毫秒線性加速到最高速。必須搭配下面的 exponent >= 1 才有意義
 
-    time-to-max-speed-ms = <600>;
+    time-to-max-speed-ms = <0>;
 
     // 1 = 線性加速（速度從 0 開始爬）。設 0 就退回「按下去立刻全速」
 
-    acceleration-exponent = <1>;
+    acceleration-exponent = <0>;
 };
 
 &mmv {
