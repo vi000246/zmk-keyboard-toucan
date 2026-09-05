@@ -30,16 +30,6 @@
  *   8  CUR-   9  CUR+     （PAD(6) 拇指 38/39 = 慢、37/40 = 快）
  *   10 SCR-  11 SCR+      （SCRL(7) 拇指同上）
  *
- * ── 2026-09-04 的三處改動 ────────────────────────────────────────────
- *
- *   1. 三檔收成兩檔。舊的中檔（CUR / SCR）刪掉，**留下的慢檔直接繼承中檔的
- *      數值**——舊的最慢檔 0.62x / 25% 實測鈍到不堪用。
- *   2. 游標和滾動的百分比**拆成兩組**（PAD_CUR_*_PCT / PAD_SCRL_*_PCT）。
- *      以前共用一組，現在滾動的快檔要 200%、游標只要 150%，共用會綁死。
- *   3. `PAD_SCRL_DIV` 9 -> 18，一般滾動速度減半（使用者回報按住 G/H 時
- *      觸控板滾太快）。⚠️ 這條鏈 NAV(1) / NUM(2) 也共用，那兩層一起變慢。
- *      改完之後新的預設 = 舊的中檔，新的快檔 = 舊的預設，沒有任何檔位比
- *      改版前的預設更快。
  */
 
 /* ── 手調 ── */
@@ -47,9 +37,9 @@
 #define PAD_BASE_DIV       100
 #define PAD_CUR_SLOW_PCT    50     /* 游標慢檔 = base 的 50%  -> 1.25x */
 #define PAD_CUR_FAST_PCT   150     /* 游標快檔 = base 的 150% -> 3.75x */
-#define PAD_SCRL_DIV        50     /* 一般滾動 zip_scroll_scaler 1 N，N 越大越慢 */
-#define PAD_SCRL_SLOW_PCT   50     /* 滾動慢檔 = 一般滾動的 50%  */
-#define PAD_SCRL_FAST_PCT  200     /* 滾動快檔 = 一般滾動的 200% */
+#define PAD_SCRL_DIV        25     /* 一般滾動 zip_scroll_scaler 1 N，N 越大越慢,這裡是數字 */
+#define PAD_SCRL_SLOW_PCT   50     /* 滾動慢檔 = 一般滾動的 50% ,這裡寫的是百分比 */
+#define PAD_SCRL_FAST_PCT  150     /* 滾動快檔 = 一般滾動的 150% ,這裡是百分比*/
 
 /* ── 推導，不要手改 ── */
 #define PAD_CUR_SLOW_MULT  (PAD_BASE_MULT * PAD_CUR_SLOW_PCT / 100)   /* 125 */
