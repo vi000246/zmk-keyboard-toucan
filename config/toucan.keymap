@@ -512,15 +512,6 @@
             bindings = <&studio_unlock>;
         };
 
-        combo_0 {
-            timeout-ms = <27>;
-            key-positions = <15 16>;
-            bindings = <&kp SPACE>;
-            layers = <3>;
-
-            // LSFT(KC_9) + LSFT(KC_0) → KC_SPACE
-        };
-
         combo_to_nav {
             timeout-ms = <27>;
             key-positions = <31 32>;
