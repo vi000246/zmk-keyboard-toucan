@@ -751,7 +751,7 @@
         layer_7 {
             display-name = "SCRL";
             bindings = <
-&trans  &kp LG(W)  &msc MOVE_Y(50)  &mmv MOVE_Y(-1500)  &msc MOVE_Y(-50)  &trans  &kp LG(LS(LEFT_BRACKET))  &kp LG(LS(RIGHT_BRACKET))  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &to 0  &trans  &trans  &msc MOVE_X(50)  &mmv MOVE_X(-1500)  &mmv MOVE_Y(1500)  &mmv MOVE_X(1500)  &msc MOVE_X(-50)  &msc MOVE_X(50)  &msc MOVE_Y(50)  &msc MOVE_Y(-50)  &msc MOVE_X(-50)  &kp LG(LS(T))  &trans  &trans  &kp LS(LG(T))  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &kp END  &kp PAGE_DOWN  &kp PAGE_UP  &kp HOME  &kp LG(W)  &trans  &trans  &mo 11  &mo 10  &mo 10  &mo 11  &trans
+&trans  &kp LG(W)  &msc MOVE_Y(25)  &mmv MOVE_Y(-1500)  &msc MOVE_Y(-25)  &trans  &kp LG(LS(LEFT_BRACKET))  &kp LG(LS(RIGHT_BRACKET))  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &to 0  &trans  &trans  &msc MOVE_X(25)  &mmv MOVE_X(-1500)  &mmv MOVE_Y(1500)  &mmv MOVE_X(1500)  &msc MOVE_X(-25)  &msc MOVE_X(25)  &msc MOVE_Y(25)  &msc MOVE_Y(-25)  &msc MOVE_X(-25)  &kp LG(LS(T))  &trans  &trans  &kp LS(LG(T))  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &kp END  &kp PAGE_DOWN  &kp PAGE_UP  &kp HOME  &kp LG(W)  &trans  &trans  &mo 11  &mo 10  &mo 10  &mo 11  &trans
             >;
         };
 
@@ -807,7 +807,7 @@
         layer_11 {
             display-name = "SCR+";
             bindings = <
-&trans  &trans  &msc MOVE_Y(100)  &mmv MOVE_Y(-2250)  &msc MOVE_Y(-100)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &msc MOVE_X(100)  &mmv MOVE_X(-2250)  &mmv MOVE_Y(2250)  &mmv MOVE_X(2250)  &msc MOVE_X(-100)  &msc MOVE_X(100)  &msc MOVE_Y(100)  &msc MOVE_Y(-100)  &msc MOVE_X(-100)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &msc MOVE_Y(40)  &mmv MOVE_Y(-2250)  &msc MOVE_Y(-40)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &msc MOVE_X(40)  &mmv MOVE_X(-2250)  &mmv MOVE_Y(2250)  &mmv MOVE_X(2250)  &msc MOVE_X(-40)  &msc MOVE_X(45)  &msc MOVE_Y(45)  &msc MOVE_Y(-45)  &msc MOVE_X(-45)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
             >;
         };
 
