@@ -515,7 +515,7 @@
         combo_to_nav {
             timeout-ms = <27>;
             key-positions = <31 32>;
-            bindings = <&to 1>;
+            bindings = <&to 2>;
 
             // KC_M + KC_COMMA → TO(1)
         };
@@ -582,7 +582,14 @@
         layer_0 {
             display-name = "BASE";
             bindings = <
-&none  &kp Q  &kp W  &kp E  &kp R  &kp T  &kp Y  &kp U  &kp I  &kp O  &kp P  &none  &none  &mt LALT A  &mt LCTRL S  &mt LGUI D  &mt LSHFT F  &lt 7 G  &lt 7 H  &mt LSHFT J  &mt LGUI K  &mt LCTRL L  &td5  &none  &none  &kp Z  &kp X  &kp C  &kp V  &kp B  &kp N  &kp M  &kp COMMA  &kp F18  &kp FSLH  &none  &lt 3 TAB  &lt 4 SPACE  &lt 1 ESC  &lt 2 BSPC  &lt 5 RET  &lt 3 F19
+&none  &kp Q  &kp W  &kp E  &kp R  &kp T  &kp Y  &kp U  &kp I  &kp O  &kp P  &none  &none  &mt LALT A  &mt LGUI S  &mt LCTRL D  &mt LSHFT F  &lt 7 G  &lt 7 H  &mt LSHFT J  &mt LCTRL K  &mt LGUI L  &td5  &none  &none  &kp Z  &kp X  &kp C  &kp V  &kp B  &kp N  &kp M  &kp COMMA  &kp F18  &kp FSLH  &none  &lt 3 TAB  &lt 4 SPACE  &lt 2 ESC  &lt 1 BSPC  &lt 5 RET  &lt 3 F19
+            >;
+        };
+
+        layer_2 {
+            display-name = "NUM";
+            bindings = <
+&none  &kp KP_MULTIPLY  &kp KP_N7  &kp KP_N8  &kp KP_N9  &kp KP_PLUS  &none  &none  &none  &none  &to 0  &none  &none  &kp KP_DIVIDE  &kp KP_N4  &kp KP_N5  &kp KP_N6  &kp MINUS  &none  &kp LSHFT  &kp LCTRL  &kp LGUI  &kp LALT  &none  &none  &kp X  &kp KP_N1  &kp KP_N2  &kp KP_N3  &kp KP_EQUAL  &none  &none  &none  &none  &none  &none  &kp KP_N0  &kp KP_DOT  &kp PRCNT  &kp BACKSPACE  &kp ENTER  &kp F19
             >;
         };
 
@@ -617,14 +624,7 @@
              */
 
             bindings = <
-&none  &cc_exit  &cc_clear  &none  &cc_rename  &macro4  &kp LS(LG(LEFT_BRACKET))  &kp LS(LG(RIGHT_BRACKET))  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &to 0  &none  &none  &kp LALT  &kp LCTRL  &kp LGUI  &kp LSHFT  &trans  &kp LEFT  &kp DOWN  &kp UP  &kp RIGHT  &td_ptt  &none  &none  &cc_effort  &kp LA(P)  &cc_continue  &cc_usage  &claude  &kp END  &kp PG_DN  &kp PG_UP  &kp HOME  &trans  &none  &none  &none  &kp ESC  &kp BSPC  &kp DEL  &kp F19
-            >;
-        };
-
-        layer_2 {
-            display-name = "NUM";
-            bindings = <
-&none  &kp KP_MULTIPLY  &kp KP_N7  &kp KP_N8  &kp KP_N9  &kp KP_PLUS  &none  &none  &none  &none  &to 0  &none  &none  &kp KP_DIVIDE  &kp KP_N4  &kp KP_N5  &kp KP_N6  &kp MINUS  &none  &kp LSHFT  &kp LGUI  &kp LCTRL  &kp LALT  &none  &none  &kp X  &kp KP_N1  &kp KP_N2  &kp KP_N3  &kp KP_EQUAL  &none  &none  &none  &none  &none  &none  &kp KP_N0  &kp KP_DOT  &kp PRCNT  &kp BACKSPACE  &kp ENTER  &kp F19
+&none  &cc_exit  &cc_clear  &none  &cc_rename  &macro4  &kp LS(LG(LEFT_BRACKET))  &kp LS(LG(RIGHT_BRACKET))  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &to 0  &none  &none  &kp LALT  &kp LGUI  &kp LCTRL  &kp LSHFT  &trans  &kp LEFT  &kp DOWN  &kp UP  &kp RIGHT  &td_ptt  &none  &none  &cc_effort  &kp LA(P)  &cc_continue  &cc_usage  &claude  &kp END  &kp PG_DN  &kp PG_UP  &kp HOME  &trans  &none  &none  &none  &kp ESC  &kp BSPC  &kp DEL  &kp F19
             >;
         };
 
@@ -642,87 +642,23 @@
 
             display-name = "SYM";
             bindings = <
-&none  &kp QMARK  &kp EXCL  &kp LBKT  &kp RBKT  &kp KP_PLUS  &kp AT  &kp HASH  &kp DLLR  &kp DQT  &kp GRAVE  &none  &none  &kp LT  &kp GT  &kp LPAR  &kp RPAR  &kp MINUS  &kp TILDE  &mt LSHFT SQT  &kp LGUI  &kp LCTRL  &mt LALT COLON  &none  &none  &kp PIPE  &kp AMPS  &kp LBRC  &kp RBRC  &kp KP_EQUAL  &kp CARET  &kp STAR  &kp COMMA  &kp BSLH  &kp FSLH  &none  &kp UNDER  &kp DOT  &kp PRCNT  &kp LS(LC(LA(LG(E))))  &kp LA(SPACE)  &kp LC(LG(A))
+&none  &kp QMARK  &kp EXCL  &kp LBKT  &kp RBKT  &kp KP_PLUS  &kp AT  &kp HASH  &kp DLLR  &kp DQT  &kp GRAVE  &none  &none  &kp LT  &kp GT  &kp LPAR  &kp RPAR  &kp MINUS  &kp TILDE  &mt LSHFT SQT  &kp LCTRL  &kp LGUI  &mt LALT COLON  &none  &none  &kp PIPE  &kp AMPS  &kp LBRC  &kp RBRC  &kp KP_EQUAL  &kp CARET  &kp STAR  &kp COMMA  &kp BSLH  &kp FSLH  &none  &kp UNDER  &kp DOT  &kp PRCNT  &kp LS(LC(LA(LG(E))))  &kp LA(SPACE)  &kp LC(LG(A))
             >;
         };
-
-        /*
-         * 位置 6-9 (Y/U/I/O) = 四顆刪除鍵，送 macOS 原生鍵碼：
-         *   6 (Y) &kp LG(BACKSPACE)  ⌘⌫  刪到行首
-         *   7 (U) &kp LA(BACKSPACE)  ⌥⌫  刪前一字
-         *   8 (I) &kp LA(DEL)        ⌥⌦  刪後一字
-         *   9 (O) &kp LC(K)          ⌃K  刪到行尾
-         *
-         * ⚠️ 2026-09-04 曾短暫改成中性訊號 F13-F16（想讓 macOS / Windows 兩邊
-         *    行為一致，由各環境的翻譯層各自展開），當天就退回來了。兩個理由：
-         *
-         *    1. **Chrome 擴充套件吃不到 F 鍵。** 官方 Commands API 的允許清單只有
-         *       字母 / 數字 / 方向鍵 / Home / End / Delete 那一類，F1-F12 都不在，
-         *       F13 以上更沒有；而套件自己的選項頁抓鍵通常寫成
-         *       `if (e.key.length === 1)`，"F13" 長度 3 一樣被濾掉。這一層有幾顆
-         *       同時要餵 Chrome 擴充，中性鍵碼直接把那條路堵死。
-         *    2. **中性鍵碼把免費的原生行為也犧牲掉了。** 這四個組合在 macOS 的
-         *       Cocoa 文字系統本來就對，不需要任何 Karabiner 規則；換成 F13-F16
-         *       之後反而要靠翻譯層才動得了，沒裝的機器上等於沒作用。
-         *
-         *    現行分工：鍵盤送各平台原生鍵碼，**只在終端機做轉譯**（WezTerm 把
-         *    ⌘⌫ 映成 ^U、⌥⌦ 映成 ESC+d，另外兩顆終端機原生就通）。翻譯設定在
-         *    使用者的 MyConfig repo，不在這裡。Windows 那把（Piantor Pro）送的是
-         *    Ctrl+U / Ctrl+Backspace / Ctrl+Delete / Ctrl+K，語意對齊、鍵碼各自原生。
-         */
 
         layer_4 {
             display-name = "CMD";
             bindings = <
-&none  &kp LG(Q)  &kp LG(W)  &kp LG(E)  &kp LS(LG(Z))  &kp LG(T)  &kp LG(BACKSPACE)  &kp LA(BACKSPACE)  &kp LA(DEL)  &kp LC(K)  &to 0  &none  &none  &mt LALT LG(A)  &mt LCTRL LG(S)  &mt LGUI LG(D)  &mt LSHFT LG(F)  &kp LG(L)  &lt 7 LG(LEFT)  &kp LA(LEFT)  &kp LA(RIGHT)  &kp LG(RIGHT)  &kp LG(LS(T))  &none  &none  &kp LG(Z)  &kp LG(X)  &kp LG(C)  &kp LG(V)  &kp LG(B)  &kp LS(LG(LEFT))  &kp LS(LA(LEFT))  &kp LS(LA(RIGHT))  &kp LS(LG(RIGHT))  &kp LG(W)  &none  &kp LS(LC(LA(LG(GRAVE))))  &sl 5  &none  &mo 1  &mo 12  &kp F19
+&none  &kp LG(Q)  &kp LG(W)  &kp LG(E)  &kp LS(LG(Z))  &kp LG(T)  &kp LG(BACKSPACE)  &kp LA(BACKSPACE)  &kp LA(DEL)  &kp LC(K)  &to 0  &none  &none  &mt LALT LG(A)  &mt LCTRL LG(S)  &mt LGUI LG(D)  &mt LSHFT LG(F)  &kp LG(L)  &lt 7 LG(LEFT)  &kp LA(LEFT)  &kp LA(RIGHT)  &kp LG(RIGHT)  &kp LG(LS(T))  &none  &none  &kp LG(Z)  &kp LG(X)  &kp LG(C)  &kp LG(V)  &kp LG(B)  &kp LS(LG(LEFT))  &kp LS(LA(LEFT))  &kp LS(LA(RIGHT))  &kp LS(LG(RIGHT))  &kp LG(W)  &none  &kp LS(LC(LA(LG(GRAVE))))  &sl 5  &none  &mo 2  &mo 12  &kp F19
             >;
         };
 
         layer_5 {
             display-name = "FUN";
             bindings = <
-&none  &kp F12  &kp F7  &kp F8  &kp F9  &kp C_VOL_UP  &kp LS(LC(LA(LG(L))))  &kp LS(LC(LA(LG(E))))  &kp LS(LC(LA(LG(F))))  &kp LS(LC(LA(LG(T))))  &kp LS(LG(N5))  &none  &none  &kp F11  &kp F4  &kp F5  &kp F6  &kp C_MUTE  &kp LS(LC(LA(LG(Y))))  &kp LSHFT  &kp LGUI  &kp LCTRL  &kp LALT  &none  &none  &kp F10  &kp F1  &kp F2  &kp F3  &kp C_VOL_DN  &kp LS(LC(LA(LG(M))))  &kp LS(LC(LA(LG(A))))  &kp LS(LC(LA(LG(N))))  &kp LS(LC(LA(LG(G))))  &kp LS(LC(LA(LG(O))))  &none  &kp C_PREV  &kp C_PP  &kp C_NEXT  &kp LS(LC(LA(LG(P))))  &none  &kp LS(LC(LA(LG(V))))
+&none  &kp F12  &kp F7  &kp F8  &kp F9  &kp C_VOL_UP  &kp LS(LC(LA(LG(L))))  &kp LS(LC(LA(LG(E))))  &kp LS(LC(LA(LG(F))))  &kp LS(LC(LA(LG(T))))  &kp LS(LG(N5))  &none  &none  &kp F11  &kp F4  &kp F5  &kp F6  &kp C_MUTE  &kp LS(LC(LA(LG(Y))))  &kp LSHFT  &kp LCTRL  &kp LGUI  &kp LALT  &none  &none  &kp F10  &kp F1  &kp F2  &kp F3  &kp C_VOL_DN  &kp LS(LC(LA(LG(M))))  &kp LS(LC(LA(LG(A))))  &kp LS(LC(LA(LG(N))))  &kp LS(LC(LA(LG(G))))  &kp LS(LC(LA(LG(O))))  &none  &kp C_PREV  &kp C_PP  &kp C_NEXT  &kp LS(LC(LA(LG(P))))  &none  &kp LS(LC(LA(LG(V))))
             >;
         };
-
-        /*
-         * PAD — 觸控板一動就由 toucan-trackpad.dtsi 的 &mouse_temp_layer
-         * 自動升起，停手後 timeout 才掉下來。
-         *
-         * ⚠️ 這一層刻意「幾乎全空」。它是唯一會在你沒要求時自己升起來的層，
-         * 所以 timeout 窗口內你打的每一顆字都會落在這裡。只留三類東西：
-         *
-         *   26/27/28 (Z/X/C)  左 / 右 / 中鍵——滑鼠層的存在理由
-         *   30/31 (N/M)       左 / 右鍵，右手也搆得到
-         *   6 (Y)             中鍵
-         *   37/38/39/40       兩檔調速（四顆拇指）
-         *   10 (P)            &to 0 逃生口
-         *
-         * 以上 11 格，其餘 31 格全部 &trans，落回下面的層。所以誤按的代價是
-         * 「打出原本那個字」，而不是關掉分頁或讓頁面亂跳。
-         *
-         * 進階操作（鍵盤滾動、分頁切換、Page Up/Down）搬到 SCRL (7) 了——
-         * 那層要按住 G / H 才進來，是刻意的，可以放任何東西。理由與各項的
-         * 替代位置見上面 SCRL (7) 的註解。
-         *
-         * ── 拇指（2026-09-04 大改）────────────────────────────────────
-         *
-         * 拇指實體座標（toucan-layouts.dtsi，x 越大越靠右）：
-         *   36=350  37=450  38=548 ｜ 39=752  40=850  41=950
-         * 對照同一排的欄位：C=300 V=400 B=500 ｜ N=800 M=900 逗號=1000
-         * 也就是 36 卡在 C/V 之間、41 卡在 M/逗號之間，38/39 最靠中間縫。
-         *
-         * 舊配置是三檔散在「36 快 / 37 中 / 38 慢」，中檔實測沒在用，而且
-         * 快檔在最外側的 36 很難按。新配置砍掉中檔，把快檔往內搬一格，
-         * 兩檔變成相鄰的兩顆，拇指用滾的就能切換：
-         *
-         *   37 / 40 (中間)   = 快 3.75x   &mo 9
-         *   38 / 39 (靠縫)   = 慢 1.25x   &mo 8   ← 繼承舊中檔的速度
-         *   36 / 41 (靠V/靠M) = &trans，空出來
-         *
-         * 慢檔刻意用 1.25x 而不是舊的最慢 0.62x——實測 0.62x 鈍到不堪用。
-         * 全部是「按住」，速度鎖定的 combo 已經刪掉（理由見上面 combos）。
-         */
 
         layer_6 {
             display-name = "PAD";
@@ -731,49 +667,12 @@
             >;
         };
 
-        /*
-         * SCRL — BASE 按住 G / H (&lt 7) 進入，觸控板變滾輪。
-         * scroller_default 在 toucan-trackpad.dtsi 用 layers = <1 2 7> 認這一層。
-         * 拇指位置與 PAD 相同，但指向滾動兩檔；滾動刻意不提供鎖定。
-         * 游標 ±1500 / 滾輪 ±50 = 全鍵盤速度基準，見檔頭對照表。
-         *
-         * 滾輪那八格吃 &msc 的加速度曲線（線性、450 ms 爬滿），所以 ±50 是
-         * 「按住 450 ms 之後的最高速」，不是按下去的瞬間速度。
-         *
-         * 右手底排是整頁跳轉，要一頁一頁翻用這個比硬捲滾輪快：
-         *   30 (N) = End   31 (M) = PgDn   32 (,) = PgUp   33 (.) = Home
-         */
-
         layer_7 {
             display-name = "SCRL";
             bindings = <
 &trans  &kp ESCAPE  &msc MOVE_Y(25)  &mmv MOVE_Y(-1500)  &msc MOVE_Y(-25)  &kp LG(PLUS)  &kp LG(LS(LEFT_BRACKET))  &kp LG(LS(RIGHT_BRACKET))  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &to 0  &trans  &trans  &msc MOVE_X(25)  &mmv MOVE_X(-1500)  &mmv MOVE_Y(1500)  &mmv MOVE_X(1500)  &msc MOVE_X(-25)  &msc MOVE_X(25)  &msc MOVE_Y(25)  &msc MOVE_Y(-25)  &msc MOVE_X(-25)  &kp LG(LS(T))  &trans  &trans  &kp LG(GRAVE)  &mkp LCLK  &mkp RCLK  &mkp MCLK  &kp MINUS  &kp END  &kp PAGE_DOWN  &kp PAGE_UP  &kp HOME  &kp LG(W)  &trans  &kp LG(N0)  &mo 11  &mo 10  &mo 10  &mo 11  &kp LG(R)
             >;
         };
-
-        /*
-         * 以下四層是調速用的 marker layer：讓 toucan-trackpad.dtsi 的
-         * input-listener 知道要換哪一條處理鏈。
-         *
-         * ⚠️ 2026-09-04 從六層收成四層：CUR (舊 9) 和 SCR (舊 12) 兩個中檔
-         *    刪掉，留下的慢檔直接繼承它們的速度。連帶把 8-16 全部往前移，
-         *    toucan-trackpad.dtsi 的 `layers = <>` 和 radii_layout.c 的
-         *    LAYERS[] 都跟著改過了。
-         *
-         * CUR 兩檔 (8/9) 全 &trans，純粹是給 input-listener 認的記號。位置 10
-         * 的 &to 0 也拿掉了——這兩層只能「按住」，落回 PAD(6) 就有同一顆
-         * &to 0，重複沒有意義。
-         *
-         * SCR 兩檔 (10/11) 不只是記號：同時把 SCRL 層上所有 &msc / &mmv 的
-         * 格子用「縮放過的字面數字」再蓋一次（&msc / &mmv 是 behavior、不走
-         * 觸控板的 input processor 鏈，不蓋的話調速鍵對鍵盤游標 / 滾輪完全
-         * 沒效果）。於是「按住 G/H + 拇指調速」對觸控板和鍵盤同時生效。
-         * 數字對照表在檔頭。
-         *
-         * 刻意「不」蓋 CUR 兩檔 (8/9)：那兩層是觸控板自動升起的 PAD(6) 疊上來
-         * 的，手指還在打字範圍內，格子若不是 &trans，E/D/F 那排會變成游標鍵、
-         * 字打不出來。SCR 檔只能按住，按住時左手一定壓在 G/H 上，不會同時打字。
-         */
 
         layer_8 {
             display-name = "CUR-";
@@ -789,8 +688,6 @@
             >;
         };
 
-        /* 慢檔：游標 ±750（基準 50%）、滾輪 ±25（基準 50%）*/
-
         layer_10 {
             display-name = "SCR-";
             bindings = <
@@ -798,42 +695,12 @@
             >;
         };
 
-        /* 快檔：游標 ±2250（基準 150%）、滾輪 ±100（基準 200%）*/
-
         layer_11 {
             display-name = "SCR+";
             bindings = <
 &trans  &trans  &msc MOVE_Y(40)  &mmv MOVE_Y(-2250)  &msc MOVE_Y(-40)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &msc MOVE_X(40)  &mmv MOVE_X(-2250)  &mmv MOVE_Y(2250)  &mmv MOVE_X(2250)  &msc MOVE_X(-40)  &msc MOVE_X(45)  &msc MOVE_Y(45)  &msc MOVE_Y(-45)  &msc MOVE_X(-45)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
             >;
         };
-
-        /*
-         * BT — 主機配對與輸出切換。2026-09-01 左半改當 split central 之後
-         * 才需要：以前所有主機配對都在 dongle 上，鍵盤本身一顆 &bt 都沒有。
-         *
-         * 進入方式：CMD(4) 位置 40 的 &mo 12。CMD 自己由 BASE 按住
-         * SPACE（&lt 4 SPACE，左拇指）或 combo_media 的 &to 4 進入，所以
-         * 兩種握法都按得到——左拇指 + 右拇指 + 左手指。
-         *
-         * 刻意做成「按住」而不是 &tog：這層有 &bt BT_CLR 和 &bootloader，
-         * latch 住再誤觸的代價太高。
-         *
-         *   Q W E R T  = BT profile 0-4        A S D = 輸出 USB / BLE / 切換
-         *   Z          = BT_CLR（清掉目前 profile 的配對）
-         *   B          = &bootloader（重置左半）  N = &bootloader（重置右半）
-         *   P          = &to 0 逃生口
-         *
-         * ⚠️ 2026-09-04 更正：這段原本寫「&bootloader 重置的是按下它的那一側，
-         *    也就是左半」和「右手整排 &trans 是刻意的」——**兩句都不對**。
-         *    位置 29 (B) 和位置 30 (N) 都是 &bootloader，而 30 在右半。
-         *
-         *    「重置按下它的那一側」這個機制本身是對的，所以這兩顆其實是
-         *    **一邊一顆**：B 在左半 ⇒ 重置左半，N 在右半 ⇒ 重置右半。兩半都
-         *    刷得到，不用拆殼按 RST。（FLASHING.md 那次事故正是因為當年只有
-         *    一顆、重置的是左半，使用者以為是 dongle。）
-         *
-         *    右手其餘格子確實是 &trans（保持 CMD 的行為），只有位置 30 例外。
-         */
 
         layer_12 {
             display-name = "BT";
