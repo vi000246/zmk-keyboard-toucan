@@ -7,8 +7,12 @@ keymap 一起版本控管，方便兩邊對照。
 
 | 檔案 | `settings` QSID 21 | 說明 |
 |---|---|---|
-| **`piantor-windows-20260904.vil`** | `0`（swap **關**） | ⭐ **平常要載入的就是這個**。對齊 Toucan keymap 的 Windows 版。 |
+| **`piantor-windows-20260904.vil`** | `0`（swap **關**） | ⭐ **接 Windows 載入這個**。對齊 Toucan keymap 的 Windows 版。 |
+| **`piantor-macos-20260907.vil`** | `0`（swap **關**） | **接 macOS 載入這個**。由 Windows 版轉出，語意對齊 Toucan（prospector-scanner 分支）的 macOS keymap，見下方「macOS 版」一節。 |
 | `rollback/piantor-20260903-original-swap-on.vil` | `256`（swap **開**） | 改動前的原始備份（2026-09-03 13:42）。**只有要回退時才碰**，刻意放在子資料夾避免誤選。 |
+
+> ⚠️ 頂層現在有**兩個** .vil（windows / macos），檔名已刻意用平台字樣區分。
+> 載入前看清楚檔名——之前的誤載事故就是兩個檔名相近的檔放同一層造成的。
 
 > ⚠️ 這兩個檔原本同層、檔名相近，2026-09-04 實際發生過誤載回退檔的事故：
 > keymap 退回舊版、Magic 對調被打開，於是 `LCTL` 全部變成 `Win` ——
@@ -39,6 +43,41 @@ keymap 一起版本控管，方便兩邊對照。
 
 若行為整個相反 ⇒ QSID 21 沒被套用，手動去 `QMK Settings → Magic` 關掉
 `Swap Control and GUI`。
+
+## macOS 版（`piantor-macos-20260907.vil`，2026-09-07）
+
+由 `piantor-windows-20260904.vil` 以腳本轉出（同樣**只重建 `layout` 與
+`tap_dance` 區塊文字、原地拼接**，`uid` / `macro` / `combo` / `settings`
+逐位元組不變，QSID 21 維持 `0`＝swap 關、鍵碼寫死）。語意對齊 Toucan
+**prospector-scanner 分支**（macOS 版）的 `config/toucan.keymap`。
+
+共改 54 格 layout ＋ 5 條 tap dance：
+
+| 功能 | Windows 版 | macOS 版 |
+|---|---|---|
+| base `.`＝切輸入法 | `Win+Space` | `KC_F18`（macOS 端已綁輸入法切換） |
+| L1/L8 分頁切換 | `Ctrl+PgUp/PgDn` | `⇧⌘[` / `⇧⌘]` |
+| L1/L8 瀏覽歷史 | `Alt+←→` | `⌘[` / `⌘]` |
+| L2 數字 | 數字列 `KC_0~9` | `KC_KP_0~9`（macOS 不理 NumLock，維持 Toucan 的 keypad 碼；`.`/`=` 同理） |
+| L4 `Q` 關程式 | `Alt+F4` | `⌘Q` |
+| L4 `R` 重做 | `Ctrl+Y` | `⇧⌘Z` |
+| L4 剪貼／關開分頁／網址列 | `Ctrl+字母` | `⌘字母` |
+| L4 刪除四顆 (YUIO) | `Ctrl+U/⌫/Del/K` | `⌘⌫` / `⌥⌫` / `⌥⌦` / `⌃K` |
+| L4 行首行尾 | `Home`/`End`（含 Shift 選取） | `⌘←`/`⌘→`（選取＝`⇧⌘←→`） |
+| L4 跳字 | `Ctrl+←→`（選取 `C_S`） | `⌥←→`（選取 `LSA` = ⇧⌥） |
+| L4 `H` | `LT8(KC_HOME)` | **`TD(6)`**＝tap `⌘←`、hold 滑鼠層——QMK 的 `LT()` 塞不了帶修飾的 tap，只能用 tap dance 實作 Toucan 的 `&lt 7 LG(LEFT)` |
+| L4 home row hold | S=`Win`、D=`Ctrl`（TD1/TD2） | S=`Ctrl`、D=`⌘`（對齊 Toucan 的 `&mt LCTRL LG(S)` / `&mt LGUI LG(D)`） |
+| L5 截圖 | `Win+Shift+S` | `⇧⌘5` |
+| L5 app 切換 (YUIO) | `Ctrl+Win+1~4`（工作列釘選） | `Hyper+L/E/F/T`（Hammerspoon） |
+
+沒動的：所有 macro（M0 本來就是 mac 語意；M12/M13 是 Windows 用的
+GUI 刪行 fallback，未綁鍵、留著）、combo、L3（符號＋Hyper 拇指，HID
+兩平台相同）、L6/7/9~15（全 TRNS）。
+
+⚠️ 兩個小心處：
+- `LSA(`（⇧⌥）這個 alias 是這份檔第一次用，Vial 載入時若顯示 unknown
+  keycode 就是它——回報即可，可退回巢狀或 macro 做法。
+- `TD(6)` 是新占用的 tap dance 槽（原本 6 以後全空）。
 
 ## 2026-09-04 這一版改了什麼
 
