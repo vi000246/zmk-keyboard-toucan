@@ -7,7 +7,8 @@ keymap 一起版本控管，方便兩邊對照。
 
 | 檔案 | `settings` QSID 21 | 說明 |
 |---|---|---|
-| **`piantor-windows-20260904.vil`** | `0`（swap **關**） | ⭐ **本分支（Windows）要載入的就是這個**。對齊本分支 Toucan keymap 的 Windows 版。 |
+| **`piantor-windows-20260907.vil`** | `0`（swap **關**） | ⭐ **本分支（Windows）要載入的就是這個**。對齊本分支 Toucan keymap 的 Windows 版；2026-09-07 由 Vial 匯出，只動了 L8（見下）。 |
+| `rollback/piantor-windows-20260904.vil` | `0`（swap **關**） | 上一版（L8 改動前）。**只有要回退時才碰**。 |
 | `rollback/piantor-20260903-original-swap-on.vil` | `256`（swap **開**） | 改動前的原始備份（2026-09-03 13:42）。**只有要回退時才碰**，刻意放在子資料夾避免誤選。 |
 
 > 📌 **2026-09-07 起，`.vil` 依分支區分平台**：`prospector-scanner-windows`
@@ -20,8 +21,9 @@ keymap 一起版本控管，方便兩邊對照。
 > 按下去跑出「協助工具設定」(`Win+U`) 和「小工具面板」(`Win+W`)。
 > 回退檔因此移進 `rollback/`，讓載入時同一層只看得到一個 `.vil`。
 
-⚠️ `piantor-windows-20260904.vil` 曾刷進實機並由 Vial 重新匯出驗證過，
-**但之後又改了 L4 上排四顆的刪除鍵（見下），這部分尚未刷入**。要用請重新 Load 一次。
+⚠️ `piantor-windows-20260907.vil` 是**實機當下狀態由 Vial 匯出**的，所以 L8 那批
+改動已經在鍵盤裡了。L4 上排四顆的刪除鍵（見下）則是 09-04 那版就改好、**一直沒刷入**，
+這份匯出檔也還是舊值——要一次補齊請重新 Load 一次。
 
 ## `Magic → Swap Control and GUI` 的旗標就存在 .vil 裡
 
@@ -35,7 +37,7 @@ keymap 一起版本控管，方便兩邊對照。
 
 ## 載入步驟（Windows）
 
-1. Vial → `File` → `Load saved layout` → `piantor-windows-20260904.vil`
+1. Vial → `File` → `Load saved layout` → `piantor-windows-20260907.vil`
 2. 實測三顆：
    - 按住 `D` 應該是 **Ctrl**（不是 Win）
    - L4 的 `/` 鍵應該**關分頁**
@@ -44,6 +46,27 @@ keymap 一起版本控管，方便兩邊對照。
 
 若行為整個相反 ⇒ QSID 21 沒被套用，手動去 `QMK Settings → Magic` 關掉
 `Swap Control and GUI`。
+
+## 2026-09-07 這一版改了什麼（只有 L8）
+
+跟 `rollback/piantor-windows-20260904.vil` 相比，**只有 `layout` 的第 8 層變了，
+共 9 格**；`uid` / `macro` / `tap_dance` / `combo` / `settings` 全部逐位元組相同
+（QSID 21 仍是 `0`＝swap 關）。
+
+| 位置 | 09-04 | 09-07 | 意思 |
+|---|---|---|---|
+| 左 r0c1 | `LCTL(KC_W)` | `KC_ESCAPE` | 關分頁移走，改放 Esc |
+| 左 r0c5 | — | `LCTL(KC_KP_PLUS)` | 放大 |
+| 左 r2c1 | `C_S(KC_T)` | `LALT(KC_TAB)` | 重開分頁移走，改放 Alt+Tab 切程式 |
+| 左 r2c5 | — | `LCTL(KC_KP_MINUS)` | 縮小 |
+| 左拇指 r3c3 | `LALT(KC_LEFT)` | — | 上一頁移走（右手 r4 那組還在） |
+| 左拇指 r3c4 | `LALT(KC_RIGHT)` | `KC_ACL1` | 下一頁移走，改成滑鼠中速 |
+| 右 r5c1 | — | `C_S(KC_T)` | 重開分頁（從左手搬過來） |
+| 右 r6c1 | — | `LCTL(KC_W)` | 關分頁（從左手搬過來） |
+| 右拇指 r7c3 | `KC_F19` | `LCTL(KC_R)` | 重新整理 |
+
+對應 Toucan 這邊是 `config/toucan.keymap` 的 `layer_7`（SCRL）——
+**Toucan L7 = Piantor L8，兩邊要一起改**。macOS 版見 `prospector-scanner` 分支。
 
 ## 2026-09-04 這一版改了什麼
 
