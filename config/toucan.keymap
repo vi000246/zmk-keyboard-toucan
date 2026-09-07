@@ -8,6 +8,40 @@
  * cleanly from QMK to ZMK.
  */
 /*
+ * ── 本分支（prospector-scanner-windows）＝ Windows 版 ───────────────────
+ *
+ * 2026-09-07 從 prospector-scanner 分出來。原則：**操作語意一致，鍵碼各自
+ * 原生**——不是傻傻地把 Cmd 換成 Ctrl，每一顆都對到 Windows 真正的做法。
+ * 對照的權威來源是 piantor/README.md（Piantor Pro 就是這套 layout 的
+ * Windows 版，2026-09-04 已實機驗證），本檔完全沿用那份定案：
+ *
+ *   分頁切換        ⇧⌘[ / ⇧⌘]      → Ctrl+PgUp / Ctrl+PgDn
+ *   瀏覽歷史        ⌘[ / ⌘]        → Alt+← / Alt+→
+ *   關程式          ⌘Q             → Alt+F4
+ *   重做            ⇧⌘Z            → Ctrl+Y
+ *   關/開分頁       ⌘W / ⌘T        → Ctrl+W / Ctrl+T
+ *   剪貼/復原等     ⌘Z X C V B...  → Ctrl+同字母
+ *   行首/行尾       ⌘← / ⌘→        → Home / End
+ *   跳字            ⌥← / ⌥→        → Ctrl+← / Ctrl+→（選取加 Shift 同理）
+ *   四顆刪除鍵(YUIO) ⌘⌫ ⌥⌫ ⌥⌦ ⌃K   → Ctrl+U / Ctrl+⌫ / Ctrl+Del / Ctrl+K
+ *   截圖            ⇧⌘5            → Win+Shift+S
+ *   切輸入法        F18            → Win+Space
+ *   縮放            ⌘+ / ⌘0        → Ctrl+= / Ctrl+0
+ *   重新整理        ⌘R             → Ctrl+R
+ *   同程式切視窗    ⌘`             → Alt+Esc（Windows 沒有原生同程式循環，
+ *                                     Alt+Esc 是最接近的免選單循環切換）
+ *   app 焦點熱鍵    Hyper+L/E/F/T  → Ctrl+Win+1~4（工作列釘選 1~4 號）
+ *   NUM 層數字      KP_N0~9/KP_DOT → 數字列 N0~9 / DOT（NumLock 關閉時
+ *                                     KP_7 在 Windows 會變 Home，全部避開）
+ *
+ * 不變的：Hyper 巨集（⌃⌥⇧⌘+字母，HID 兩邊相同，主機端 AHK 接手）、
+ * Alt+P / Alt+Space / Ctrl+Space(tmux) / Ctrl+K / F19、所有打字巨集、
+ * home row 裸修飾鍵（fb3fc56 起兩把鍵盤就是「位置一致」：S=GUI、D=Ctrl）。
+ *
+ * ⚠️ 下方歷史註解裡提到的 mac 鍵碼（LG(W) 之類）維持原文不改，讀的時候
+ *    對照本表換算即可。
+ */
+/*
  * ── 層名：全部 ≤ 4 字元，這是硬約束 ─────────────────────────────────────
  *
  * 2026-09-03 改名。三個獨立的理由指向同一個上限：
@@ -337,7 +371,7 @@
             #binding-cells = <0>;
             wait-ms = <10>;
             tap-ms = <10>;
-            bindings = <&macro_tap>, <&kp LC(A) &kp LS(LG(RIGHT))>;
+            bindings = <&macro_tap>, <&kp HOME &kp LS(END)>;
         };
 
         claude: macro_1 {
@@ -597,14 +631,14 @@
         layer_0 {
             display-name = "BASE";
             bindings = <
-&none  &kp Q  &kp W  &kp E  &kp R  &kp T  &kp Y  &kp U  &kp I  &kp O  &kp P  &none  &none  &mt LALT A  &mt LGUI S  &mt LCTRL D  &mt LSHFT F  &lt 7 G  &lt 7 H  &mt LSHFT J  &mt LCTRL K  &mt LGUI L  &td5  &none  &none  &kp Z  &kp X  &kp C  &kp V  &kp B  &kp N  &kp M  &kp COMMA  &kp F18  &kp FSLH  &none  &lt 3 TAB  &lt 4 SPACE  &lt 2 ESC  &lt 1 BSPC  &lt 5 RET  &lt 3 F19
+&none  &kp Q  &kp W  &kp E  &kp R  &kp T  &kp Y  &kp U  &kp I  &kp O  &kp P  &none  &none  &mt LALT A  &mt LGUI S  &mt LCTRL D  &mt LSHFT F  &lt 7 G  &lt 7 H  &mt LSHFT J  &mt LCTRL K  &mt LGUI L  &td5  &none  &none  &kp Z  &kp X  &kp C  &kp V  &kp B  &kp N  &kp M  &kp COMMA  &kp LG(SPACE)  &kp FSLH  &none  &lt 3 TAB  &lt 4 SPACE  &lt 2 ESC  &lt 1 BSPC  &lt 5 RET  &lt 3 F19
             >;
         };
 
         layer_2 {
             display-name = "NUM";
             bindings = <
-&none  &kp KP_MULTIPLY  &kp KP_N7  &kp KP_N8  &kp KP_N9  &kp KP_PLUS  &none  &none  &none  &none  &to 0  &none  &none  &kp KP_DIVIDE  &kp KP_N4  &kp KP_N5  &kp KP_N6  &kp MINUS  &none  &kp LSHFT  &kp LCTRL  &kp LGUI  &kp LALT  &none  &none  &kp X  &kp KP_N1  &kp KP_N2  &kp KP_N3  &kp KP_EQUAL  &none  &none  &none  &none  &none  &none  &kp KP_N0  &kp KP_DOT  &kp PRCNT  &kp BACKSPACE  &kp ENTER  &kp F19
+&none  &kp KP_MULTIPLY  &kp N7  &kp N8  &kp N9  &kp KP_PLUS  &none  &none  &none  &none  &to 0  &none  &none  &kp KP_DIVIDE  &kp N4  &kp N5  &kp N6  &kp MINUS  &none  &kp LSHFT  &kp LCTRL  &kp LGUI  &kp LALT  &none  &none  &kp X  &kp N1  &kp N2  &kp N3  &kp EQUAL  &none  &none  &none  &none  &none  &none  &kp N0  &kp DOT  &kp PRCNT  &kp BACKSPACE  &kp ENTER  &kp F19
             >;
         };
 
@@ -639,7 +673,7 @@
              */
 
             bindings = <
-&none  &cc_exit  &cc_clear  &none  &cc_rename  &macro4  &kp LS(LG(LEFT_BRACKET))  &kp LS(LG(RIGHT_BRACKET))  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &to 0  &none  &none  &kp LALT  &kp LGUI  &kp LCTRL  &kp LSHFT  &trans  &kp LEFT  &kp DOWN  &kp UP  &kp RIGHT  &td_ptt  &none  &none  &cc_effort  &kp LA(P)  &cc_continue  &cc_usage  &claude  &kp END  &kp PG_DN  &kp PG_UP  &kp HOME  &trans  &none  &none  &none  &kp ESC  &kp BSPC  &kp DEL  &kp F19
+&none  &cc_exit  &cc_clear  &none  &cc_rename  &macro4  &kp LC(PG_UP)  &kp LC(PG_DN)  &kp LA(LEFT)  &kp LA(RIGHT)  &to 0  &none  &none  &kp LALT  &kp LGUI  &kp LCTRL  &kp LSHFT  &trans  &kp LEFT  &kp DOWN  &kp UP  &kp RIGHT  &td_ptt  &none  &none  &cc_effort  &kp LA(P)  &cc_continue  &cc_usage  &claude  &kp END  &kp PG_DN  &kp PG_UP  &kp HOME  &trans  &none  &none  &none  &kp ESC  &kp BSPC  &kp DEL  &kp F19
             >;
         };
 
@@ -664,14 +698,14 @@
         layer_4 {
             display-name = "CMD";
             bindings = <
-&none  &kp LG(Q)  &kp LG(W)  &kp LG(E)  &kp LS(LG(Z))  &kp LG(T)  &kp LG(BACKSPACE)  &kp LA(BACKSPACE)  &kp LA(DEL)  &kp LC(K)  &to 0  &none  &none  &mt LALT LG(A)  &mt LCTRL LG(S)  &mt LGUI LG(D)  &mt LSHFT LG(F)  &kp LG(L)  &lt 7 LG(LEFT)  &kp LA(LEFT)  &kp LA(RIGHT)  &kp LG(RIGHT)  &kp LG(LS(T))  &none  &none  &kp LG(Z)  &kp LG(X)  &kp LG(C)  &kp LG(V)  &kp LG(B)  &kp LS(LG(LEFT))  &kp LS(LA(LEFT))  &kp LS(LA(RIGHT))  &kp LS(LG(RIGHT))  &kp LG(W)  &none  &kp LS(LC(LA(LG(GRAVE))))  &sl 5  &none  &mo 2  &mo 12  &kp F19
+&none  &kp LA(F4)  &kp LC(W)  &kp LC(E)  &kp LC(Y)  &kp LC(T)  &kp LC(U)  &kp LC(BSPC)  &kp LC(DEL)  &kp LC(K)  &to 0  &none  &none  &mt LALT LC(A)  &mt LGUI LC(S)  &mt LCTRL LC(D)  &mt LSHFT LC(F)  &kp LC(L)  &lt 7 HOME  &kp LC(LEFT)  &kp LC(RIGHT)  &kp END  &kp LC(LS(T))  &none  &none  &kp LC(Z)  &kp LC(X)  &kp LC(C)  &kp LC(V)  &kp LC(B)  &kp LS(HOME)  &kp LC(LS(LEFT))  &kp LC(LS(RIGHT))  &kp LS(END)  &kp LC(W)  &none  &kp LS(LC(LA(LG(GRAVE))))  &sl 5  &none  &mo 2  &mo 12  &kp F19
             >;
         };
 
         layer_5 {
             display-name = "FUN";
             bindings = <
-&none  &kp F12  &kp F7  &kp F8  &kp F9  &kp C_VOL_UP  &kp LS(LC(LA(LG(L))))  &kp LS(LC(LA(LG(E))))  &kp LS(LC(LA(LG(F))))  &kp LS(LC(LA(LG(T))))  &kp LS(LG(N5))  &none  &none  &kp F11  &kp F4  &kp F5  &kp F6  &kp C_MUTE  &kp LS(LC(LA(LG(Y))))  &kp LSHFT  &kp LCTRL  &kp LGUI  &kp LALT  &none  &none  &kp F10  &kp F1  &kp F2  &kp F3  &kp C_VOL_DN  &kp LS(LC(LA(LG(M))))  &kp LS(LC(LA(LG(A))))  &kp LS(LC(LA(LG(N))))  &kp LS(LC(LA(LG(G))))  &kp LS(LC(LA(LG(O))))  &none  &kp C_PREV  &kp C_PP  &kp C_NEXT  &kp LS(LC(LA(LG(P))))  &none  &kp LS(LC(LA(LG(V))))
+&none  &kp F12  &kp F7  &kp F8  &kp F9  &kp C_VOL_UP  &kp LC(LG(N1))  &kp LC(LG(N2))  &kp LC(LG(N3))  &kp LC(LG(N4))  &kp LG(LS(S))  &none  &none  &kp F11  &kp F4  &kp F5  &kp F6  &kp C_MUTE  &kp LS(LC(LA(LG(Y))))  &kp LSHFT  &kp LCTRL  &kp LGUI  &kp LALT  &none  &none  &kp F10  &kp F1  &kp F2  &kp F3  &kp C_VOL_DN  &kp LS(LC(LA(LG(M))))  &kp LS(LC(LA(LG(A))))  &kp LS(LC(LA(LG(N))))  &kp LS(LC(LA(LG(G))))  &kp LS(LC(LA(LG(O))))  &none  &kp C_PREV  &kp C_PP  &kp C_NEXT  &kp LS(LC(LA(LG(P))))  &none  &kp LS(LC(LA(LG(V))))
             >;
         };
 
@@ -685,7 +719,7 @@
         layer_7 {
             display-name = "SCRL";
             bindings = <
-&trans  &kp ESCAPE  &msc MOVE_Y(25)  &mmv MOVE_Y(-1500)  &msc MOVE_Y(-25)  &kp LG(PLUS)  &kp LG(LS(LEFT_BRACKET))  &kp LG(LS(RIGHT_BRACKET))  &kp LG(LEFT_BRACKET)  &kp LG(RIGHT_BRACKET)  &to 0  &trans  &trans  &msc MOVE_X(25)  &mmv MOVE_X(-1500)  &mmv MOVE_Y(1500)  &mmv MOVE_X(1500)  &msc MOVE_X(-25)  &msc MOVE_X(25)  &msc MOVE_Y(25)  &msc MOVE_Y(-25)  &msc MOVE_X(-25)  &kp LG(LS(T))  &trans  &trans  &kp LG(GRAVE)  &mkp LCLK  &mkp RCLK  &mkp MCLK  &kp MINUS  &kp END  &kp PAGE_DOWN  &kp PAGE_UP  &kp HOME  &kp LG(W)  &trans  &kp LG(N0)  &mo 11  &mo 10  &mo 10  &mo 11  &kp LG(R)
+&trans  &kp ESCAPE  &msc MOVE_Y(25)  &mmv MOVE_Y(-1500)  &msc MOVE_Y(-25)  &kp LC(PLUS)  &kp LC(PG_UP)  &kp LC(PG_DN)  &kp LA(LEFT)  &kp LA(RIGHT)  &to 0  &trans  &trans  &msc MOVE_X(25)  &mmv MOVE_X(-1500)  &mmv MOVE_Y(1500)  &mmv MOVE_X(1500)  &msc MOVE_X(-25)  &msc MOVE_X(25)  &msc MOVE_Y(25)  &msc MOVE_Y(-25)  &msc MOVE_X(-25)  &kp LC(LS(T))  &trans  &trans  &kp LA(ESC)  &mkp LCLK  &mkp RCLK  &mkp MCLK  &kp MINUS  &kp END  &kp PAGE_DOWN  &kp PAGE_UP  &kp HOME  &kp LC(W)  &trans  &kp LC(N0)  &mo 11  &mo 10  &mo 10  &mo 11  &kp LC(R)
             >;
         };
 
