@@ -7,7 +7,7 @@ keymap 一起版本控管，方便兩邊對照。
 
 | 檔案 | `settings` QSID 21 | 說明 |
 |---|---|---|
-| **`piantor-macos-20260907.vil`** | `0`（swap **關**） | ⭐ **本分支（macOS）要載入的就是這個**。由 Windows 版轉出，語意對齊本分支的 Toucan macOS keymap，見下方「macOS 版」一節。 |
+| **`piantor-macos-20260907.vil`** | `0`（swap **關**） | ⭐ **本分支（macOS）要載入的就是這個**。由 Windows 版轉出，語意對齊本分支的 Toucan macOS keymap，見下方「macOS 版」一節。**2026-09-07 傍晚重新產生過**（跟上 Windows 版的 L8 改動，見下一節）——檔名沒變、內容變了。 |
 | `rollback/piantor-20260903-original-swap-on.vil` | `256`（swap **開**） | 改動前的原始備份（2026-09-03 13:42）。**只有要回退時才碰**，刻意放在子資料夾避免誤選。 |
 
 > 📌 **2026-09-07 起，`.vil` 依分支區分平台**：`prospector-scanner`（本分支）
@@ -20,8 +20,9 @@ keymap 一起版本控管，方便兩邊對照。
 > 按下去跑出「協助工具設定」(`Win+U`) 和「小工具面板」(`Win+W`)。
 > 回退檔因此移進 `rollback/`，讓載入時同一層只看得到一個 `.vil`。
 
-⚠️ `piantor-macos-20260907.vil` **尚未刷入實機驗證**——兩個待驗證點
-（`LSA(` alias、新占用的 `TD(6)`）見下方「macOS 版」一節。
+⚠️ `piantor-macos-20260907.vil` **尚未刷入實機驗證**——四個待驗證點：
+`LSA(` alias、新占用的 `TD(6)`（見「macOS 版」一節），以及 L8 新加的
+`LGUI(KC_KP_PLUS)` / `LGUI(KC_KP_MINUS)` 縮放（見下一節）。
 
 ## `Magic → Swap Control and GUI` 的旗標就存在 .vil 裡
 
@@ -44,6 +45,35 @@ keymap 一起版本控管，方便兩邊對照。
 
 若行為整個相反 ⇒ QSID 21 沒被套用，手動去 `QMK Settings → Magic` 關掉
 `Swap Control and GUI`。
+
+## L8（滑鼠／捲動層）跟上 Windows 版（2026-09-07 傍晚）
+
+Windows 那邊 `piantor-windows-20260907.vil` 由實機匯出，**只有 layout 第 8 層
+改了 9 格**，其餘區塊逐位元組不變。這份 macOS 檔就是在原本的 macOS 版上
+把那 9 格依平台語意翻過來（同樣只換 L8 的文字、其餘位元組不動）。
+
+| 位置 | Windows 版 | macOS 版 | 意思 |
+|---|---|---|---|
+| 左 r0c1 | `KC_ESCAPE` | `KC_ESCAPE` | Esc（平台無關；原本這格是關分頁） |
+| 左 r0c5 | `LCTL(KC_KP_PLUS)` | `LGUI(KC_KP_PLUS)` | 放大 |
+| 左 r2c1 | `LALT(KC_TAB)` | `LGUI(KC_TAB)` | 切程式（Alt+Tab ⇢ ⌘Tab） |
+| 左 r2c5 | `LCTL(KC_KP_MINUS)` | `LGUI(KC_KP_MINUS)` | 縮小 |
+| 左拇指 r3c3 | `KC_NO` | `KC_NO` | 上一頁移走（右手 r4 那組還在） |
+| 左拇指 r3c4 | `KC_ACL1` | `KC_ACL1` | 滑鼠中速（平台無關） |
+| 右 r5c1 | `C_S(KC_T)` | `SGUI(KC_T)` | 重開分頁 |
+| 右 r6c1 | `LCTL(KC_W)` | `LGUI(KC_W)` | 關分頁 |
+| 右拇指 r7c3 | `LCTL(KC_R)` | `LGUI(KC_R)` | 重新整理（原本這格是 `KC_F19`） |
+
+其餘 L8 的格子（滑鼠移動／滾輪／`KC_BTN*`／`KC_HOME``KC_END``KC_PGUP``KC_PGDOWN`／
+`TO(0)`／`KC_ACL0`）兩平台**完全相同**，不需要翻譯。
+
+⚠️ **待驗證：`⌘` + 數字鍵盤 `+` / `-` 的縮放**。Windows 版用的是
+`KC_KP_PLUS` / `KC_KP_MINUS`，這裡照 Ctrl ↔ ⌘ 的全域規則直接對調。
+macOS 的瀏覽器多半吃這組，但若實測沒反應，改成 `LGUI(KC_EQUAL)` /
+`LGUI(KC_MINUS)`（＝ ⌘= / ⌘-）即可。
+
+> 對應的 Toucan 是 `config/toucan.keymap` 的 `layer_7`（SCRL）。
+> **Toucan L7 = Piantor L8**，兩把鍵盤、兩個平台分支要一起改。
 
 ## macOS 版（`piantor-macos-20260907.vil`，2026-09-07）
 
