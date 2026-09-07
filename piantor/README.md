@@ -7,8 +7,13 @@ keymap 一起版本控管，方便兩邊對照。
 
 | 檔案 | `settings` QSID 21 | 說明 |
 |---|---|---|
-| **`piantor-windows-20260904.vil`** | `0`（swap **關**） | ⭐ **平常要載入的就是這個**。對齊 Toucan keymap 的 Windows 版。 |
+| **`piantor-windows-20260904.vil`** | `0`（swap **關**） | ⭐ **本分支（Windows）要載入的就是這個**。對齊本分支 Toucan keymap 的 Windows 版。 |
 | `rollback/piantor-20260903-original-swap-on.vil` | `256`（swap **開**） | 改動前的原始備份（2026-09-03 13:42）。**只有要回退時才碰**，刻意放在子資料夾避免誤選。 |
+
+> 📌 **2026-09-07 起，`.vil` 依分支區分平台**：`prospector-scanner-windows`
+> （本分支）只放 **Windows** 版；`prospector-scanner` 只放 **macOS** 版
+> （`piantor-macos-20260907.vil` 在那邊）。檔名同時帶平台字樣，跟分支
+> 雙重保險——之前發生過誤載事故，載入前檔名再看一眼。
 
 > ⚠️ 這兩個檔原本同層、檔名相近，2026-09-04 實際發生過誤載回退檔的事故：
 > keymap 退回舊版、Magic 對調被打開，於是 `LCTL` 全部變成 `Win` ——
@@ -28,7 +33,7 @@ keymap 一起版本控管，方便兩邊對照。
 2. 誤載回退檔（QSID 21 = `256`）之後，`LCTL` 立刻全部變成 `Win`
    —— 證明 **Vial 載入 `.vil` 時確實會套用這個旗標**，不只是存著而已。
 
-## 載入步驟
+## 載入步驟（Windows）
 
 1. Vial → `File` → `Load saved layout` → `piantor-windows-20260904.vil`
 2. 實測三顆：
