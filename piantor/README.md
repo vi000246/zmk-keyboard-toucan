@@ -7,20 +7,21 @@ keymap 一起版本控管，方便兩邊對照。
 
 | 檔案 | `settings` QSID 21 | 說明 |
 |---|---|---|
-| **`piantor-windows-20260904.vil`** | `0`（swap **關**） | ⭐ **接 Windows 載入這個**。對齊 Toucan keymap 的 Windows 版。 |
-| **`piantor-macos-20260907.vil`** | `0`（swap **關**） | **接 macOS 載入這個**。由 Windows 版轉出，語意對齊 Toucan（prospector-scanner 分支）的 macOS keymap，見下方「macOS 版」一節。 |
+| **`piantor-macos-20260907.vil`** | `0`（swap **關**） | ⭐ **本分支（macOS）要載入的就是這個**。由 Windows 版轉出，語意對齊本分支的 Toucan macOS keymap，見下方「macOS 版」一節。 |
 | `rollback/piantor-20260903-original-swap-on.vil` | `256`（swap **開**） | 改動前的原始備份（2026-09-03 13:42）。**只有要回退時才碰**，刻意放在子資料夾避免誤選。 |
 
-> ⚠️ 頂層現在有**兩個** .vil（windows / macos），檔名已刻意用平台字樣區分。
-> 載入前看清楚檔名——之前的誤載事故就是兩個檔名相近的檔放同一層造成的。
+> 📌 **2026-09-07 起，`.vil` 依分支區分平台**：`prospector-scanner`（本分支）
+> 只放 **macOS** 版；`prospector-scanner-windows` 只放 **Windows** 版
+> （`piantor-windows-20260904.vil` 已搬過去）。檔名同時帶平台字樣，
+> 跟分支雙重保險——之前發生過誤載事故，載入前檔名再看一眼。
 
 > ⚠️ 這兩個檔原本同層、檔名相近，2026-09-04 實際發生過誤載回退檔的事故：
 > keymap 退回舊版、Magic 對調被打開，於是 `LCTL` 全部變成 `Win` ——
 > 按下去跑出「協助工具設定」(`Win+U`) 和「小工具面板」(`Win+W`)。
 > 回退檔因此移進 `rollback/`，讓載入時同一層只看得到一個 `.vil`。
 
-⚠️ `piantor-windows-20260904.vil` 曾刷進實機並由 Vial 重新匯出驗證過，
-**但之後又改了 L4 上排四顆的刪除鍵（見下），這部分尚未刷入**。要用請重新 Load 一次。
+⚠️ `piantor-macos-20260907.vil` **尚未刷入實機驗證**——兩個待驗證點
+（`LSA(` alias、新占用的 `TD(6)`）見下方「macOS 版」一節。
 
 ## `Magic → Swap Control and GUI` 的旗標就存在 .vil 裡
 
@@ -32,13 +33,13 @@ keymap 一起版本控管，方便兩邊對照。
 2. 誤載回退檔（QSID 21 = `256`）之後，`LCTL` 立刻全部變成 `Win`
    —— 證明 **Vial 載入 `.vil` 時確實會套用這個旗標**，不只是存著而已。
 
-## 載入步驟
+## 載入步驟（macOS）
 
-1. Vial → `File` → `Load saved layout` → `piantor-windows-20260904.vil`
+1. Vial → `File` → `Load saved layout` → `piantor-macos-20260907.vil`
 2. 實測三顆：
-   - 按住 `D` 應該是 **Ctrl**（不是 Win）
-   - L4 的 `/` 鍵應該**關分頁**
-   - base 的 `.` 鍵應該還能**切輸入法**（送出 Win+Space）
+   - 按住 `S` 應該是 **⌘**、按住 `D` 應該是 **⌃**
+   - L4 的 `/` 鍵應該**關分頁**（⌘W）
+   - base 的 `.` 鍵應該送 **F18**（macOS 端已綁輸入法切換）
 3. 確認無誤後**立刻另外匯出一份新備份**（EEPROM 隨時可能被清空）
 
 若行為整個相反 ⇒ QSID 21 沒被套用，手動去 `QMK Settings → Magic` 關掉
@@ -46,7 +47,8 @@ keymap 一起版本控管，方便兩邊對照。
 
 ## macOS 版（`piantor-macos-20260907.vil`，2026-09-07）
 
-由 `piantor-windows-20260904.vil` 以腳本轉出（同樣**只重建 `layout` 與
+由 `piantor-windows-20260904.vil`（現放在 `prospector-scanner-windows`
+分支）以腳本轉出（同樣**只重建 `layout` 與
 `tap_dance` 區塊文字、原地拼接**，`uid` / `macro` / `combo` / `settings`
 逐位元組不變，QSID 21 維持 `0`＝swap 關、鍵碼寫死）。語意對齊 Toucan
 **prospector-scanner 分支**（macOS 版）的 `config/toucan.keymap`。
