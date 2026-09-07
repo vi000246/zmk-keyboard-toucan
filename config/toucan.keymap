@@ -24,8 +24,8 @@
  *   #  名稱   說明
  *   ─────────────────────────────────────────────────────────────────
  *   0  BASE   打字
- *   1  NAV    方向鍵 / 視窗 / Claude Code 巨集
- *   2  NUM    數字鍵盤
+ *   1  NUM    數字鍵盤（2026-09-06 fb3fc56 起跟 NAV 對調，見下方 combo_num_word）
+ *   2  NAV    方向鍵 / 視窗 / Claude Code 巨集
  *   3  SYM    符號（小抄靠這名字查表，見下方 layer_3）
  *   4  CMD    Cmd 快捷 / 視窗 / 剪貼
  *   5  FUN    F1-F12 / 音量 / Hyper 巨集
@@ -517,7 +517,7 @@
             key-positions = <31 32>;
             bindings = <&to 2>;
 
-            // KC_M + KC_COMMA → TO(1)
+            // KC_M + KC_COMMA → TO(2)：目標仍是 NAV，只是 NAV 的 index 從 1 變 2
         };
 
         combo_tmux {
@@ -544,10 +544,25 @@
             // KC_U + KC_I → TO(4)
         };
 
+        /*
+         * V + B ➔ num_word：自動升起 NUM 層連打數字，打到不在 continue-list
+         * 的鍵就自己掉下來（continue-list 在上面的 &num_word 覆寫）。
+         *
+         * ⚠️ 下面 bindings 的 `1` 是寫死的層 index，keymap-editor **不會**幫它
+         *    重編號。2026-09-06 的 fb3fc56（editor bot，訊息寫 "swap ctrl cmd"）
+         *    把 NUM 的節點搬到 NAV 前面——層 index 是照 devicetree 的節點順序算
+         *    的，不是照 layer_N 的名字——所以 NUM 從 2 變成 1。editor 把它認得的
+         *    &lt / &mo / &to 全部跟著改了，卻不知道 &num_word 的參數也是層
+         *    index，於是這組 combo 變成升 NAV，症狀就是「num_word 不見了」。
+         *    以後只要層的順序動過，這一行都要手動核對。
+         *    （不能改寫成 #define：editor 的 parser 不吃 bindings 裡的自訂巨集，
+         *      見檔頭。）
+         */
+
         combo_num_word {
             timeout-ms = <27>; // 依照你其他 combo 的習慣設定為 27 毫秒
-            key-positions = <29 28>; // 對應 BASE 層的 N 和 M
-            bindings = <&num_word 2>;
+            key-positions = <29 28>; // 對應 BASE 層的 V (28) 和 B (29)
+            bindings = <&num_word 1>; // 1 = NUM（fb3fc56 之前是 2）
         };
 
         layer {
