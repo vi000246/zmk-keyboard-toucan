@@ -61,6 +61,59 @@ ioreg -p IOUSB -w0 -l | grep -A 25 '"USB Product Name" = "Toucan"' | grep '"USB 
 gh run download <run-id> -R vi000246/zmk-keyboard-toucan -D "$PWD-build/ci"
 ```
 
+## Windows：UF2 磁碟被公司 GPO 擋掉，改走序列 DFU（2026-09-08）
+
+公司的網域原則（mayohr.com）在 Windows 機器上設了：
+
+```
+HKCUSOFTWAREPoliciesMicrosoftWindowsRemovableStorageDevices
+    Deny_All = 1        # 「所有卸除式存放裝置類別：拒絕所有存取」
+```
+
+症狀很容易誤判成鍵盤壞了：**bootloader 磁碟掛得起來**（會拿到 D: 之類的代號、
+在檔案總管看得到），但讀寫一律 `Access is denied`，`.uf2` 拖不進去。
+其他常見嫌疑都已排除：USBSTOR 服務正常（Start=3）、沒有 `WriteProtect`、
+沒有 BitLocker To Go 的 `RDVDenyWriteAccess`、也沒裝 DLP 代理程式。
+
+XIAO nRF52840 的 Adafruit bootloader 除了 UF2 磁碟，**同時也開一個 CDC 序列埠
+並支援序列 DFU**。那是序列埠、不是卸除式儲存，完全不經過上面那條政策：
+
+```powershell
+.lash-dfu.ps1 probe     # 列出目前在 bootloader 的板子與序號
+.lash-dfu.ps1 left      # 自動抓 ~/Downloads 最新的 toucan_left*.uf2 並刷入
+.lash-dfu.ps1 right
+.lash-dfu.ps1 reset
+```
+
+流程是 `.uf2` →（`tools/uf2-to-hex.mjs`）→ `.hex` →（`genpkg`）→ `.zip`
+→（`dfu serial`）→ 板子。實測 357 KB 的左半韌體 22 秒刷完。
+
+需要 `adafruit-nrfutil.exe`（不需要 Python，官方有 Windows 執行檔）：
+
+```sh
+curl -sL -o nrfutil-win.zip https://github.com/adafruit/Adafruit_nRF52_nrfutil/releases/download/0.5.3.post17/adafruit-nrfutil--0.5.3.post17-win.zip
+# 解壓到 ~/Tools/adafruit-nrfutil/
+```
+
+### 安全鎖改用 USB 序號，比 flash.sh 更強
+
+`flash.sh` 靠讀 bootloader 磁碟裡的 `INFO_UF2.TXT` 的 Board-ID 認板子——那個檔案
+現在讀不到，而且 Board-ID **分不出左右半**（兩半都是 `nRF52840-SeeedXiao-v1`）。
+
+改用 bootloader 的 USB 序號。2026-09-08 實測：**序號在 app 模式與 bootloader 模式
+完全相同**（都是 nRF52840 的晶片 ID），只有 VID/PID 會變：
+
+| 模式 | VID/PID | 左半的完整 ID |
+|---|---|---|
+| ZMK app | `VID_1D50&PID_615E` | `USBVID_1D50&PID_615EB2AF9AAE792235E5` |
+| bootloader | `VID_2886&PID_0064` | `USBVID_2886&PID_0064B2AF9AAE792235E5` |
+
+所以序號能分辨左右半，比原本的 Board-ID 判準更強。腳本裡的 `$KNOWN` 表目前有
+左半與 dongle；**右半的序號還沒登記**，第一次刷右半時腳本會停下來把偵測到的序號
+印出來，確認後補進表裡。
+
+⚠️ 序號比對只在自動偵測時生效。`-Port COM6` 手動指定會跳過比對，別用。
+
 ## dongle 已經退出 split（2026-09-01）
 
 左半改當 split central 之後，dongle 不再是訊號路徑的一環：
