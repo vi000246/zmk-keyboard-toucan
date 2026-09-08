@@ -39,13 +39,21 @@ sync keymap／改動對齊的時候要**主動跳過**，不要因為「diff 有
 | 項目 | 檔案 | Windows 分支 | macOS 分支 |
 |---|---|---|---|
 | 觸控板游標／滾動速度（`PAD_*` 手調 define） | `boards/shields/toucan/toucan-trackpad.dtsi` | `PAD_BASE_MULT 150`（1.50x） | `250`（2.50x） |
-| SCRL(7)／SCR-(10)／SCR+(11) 的**滾輪按鍵**上下方向（位置 2/4、19/20 的 `&msc MOVE_Y`） | `config/toucan.keymap` | 已對調 | 原始方向 |
 
-⚠️ **觸控板本身的滾動方向不在此列**——那是各滾動鏈的
-`INPUT_TRANSFORM_Y_INVERT`（`toucan-trackpad.dtsi`），兩個分支要維持一致。
-使用者刻意只翻「按鍵滾輪」，不翻觸控板。
+⚠️ **滾動方向已經不在這張表裡了。** 2026-09-08 起兩個平台**統一採 macOS 的
+natural（內容跟著手指走）語意**，`config/toucan.keymap` 裡 SCRL(7)／SCR-(10)／
+SCR+(11) 的滾輪按鍵（位置 2/4、19/20 的 `&msc MOVE_Y`）**兩個分支相同**，
+Windows 分支原本的上下對調已取消。觸控板方向本來就一致（各滾動鏈的
+`INPUT_TRANSFORM_Y_INVERT`，在 `toucan-trackpad.dtsi`）。
+⇒ 現在滾動方向的改動**要兩個分支一起做**，看到 diff 有差就是有一邊漏改了。
 
-兩個檔案裡都有 `⚠️ 平台個人化，不要跨分支 sync` 的就地註解，改之前先看一眼。
+⚠️ 這個統一有個**前提在 OS 那一側**：natural 語意要在 macOS 和 Windows 都成立，
+Windows 得把指向裝置的滾輪方向也翻成 natural（精確式觸控板有內建設定；一般滑鼠
+／軌跡球得逐一改該 HID 裝置註冊表的 `FlipFlopWheel`）。keymap 只管送出什麼封包，
+送出去之後怎麼解讀是 OS 的事。
+
+`toucan-trackpad.dtsi` 裡還有 `⚠️ 平台個人化，不要跨分支 sync` 的就地註解，
+改速度相關的東西之前先看一眼。
 
 ### 層對照
 
