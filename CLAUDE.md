@@ -31,6 +31,22 @@
 - 舊版 `.vil` 一律放 `piantor/rollback/`，讓 `piantor/` 同層永遠只看得到一個 `.vil`
   —— 2026-09-04 發生過誤載回退檔的事故。
 
+### ⛔ 不要跨分支 sync 的個人化設定
+
+下面這些是**針對各自作業系統手調的**，兩個分支本來就該不一樣。
+sync keymap／改動對齊的時候要**主動跳過**，不要因為「diff 有差」就抹平：
+
+| 項目 | 檔案 | Windows 分支 | macOS 分支 |
+|---|---|---|---|
+| 觸控板游標／滾動速度（`PAD_*` 手調 define） | `boards/shields/toucan/toucan-trackpad.dtsi` | `PAD_BASE_MULT 150`（1.50x） | `250`（2.50x） |
+| SCRL(7)／SCR-(10)／SCR+(11) 的**滾輪按鍵**上下方向（位置 2/4、19/20 的 `&msc MOVE_Y`） | `config/toucan.keymap` | 已對調 | 原始方向 |
+
+⚠️ **觸控板本身的滾動方向不在此列**——那是各滾動鏈的
+`INPUT_TRANSFORM_Y_INVERT`（`toucan-trackpad.dtsi`），兩個分支要維持一致。
+使用者刻意只翻「按鍵滾輪」，不翻觸控板。
+
+兩個檔案裡都有 `⚠️ 平台個人化，不要跨分支 sync` 的就地註解，改之前先看一眼。
+
 ### 層對照
 
 Toucan（ZMK，13 層）的 `layer_7`（SCRL）＝ Piantor（Vial，16 層）的 **L8**。

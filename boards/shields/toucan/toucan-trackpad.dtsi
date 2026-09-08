@@ -32,20 +32,24 @@
  *
  */
 
+/*
+ * ⚠️ **平台個人化，不要跨分支 sync**：這組數字是針對各自作業系統手調的，
+ *    Windows 分支與 macOS 分支本來就該不一樣。詳見根目錄 CLAUDE.md。
+ */
 /* ── 手調 ── */
-#define PAD_BASE_MULT      250     /* 一般游標 = 250/100 = 2.50x */
+#define PAD_BASE_MULT      150     /* 一般游標 = 150/100 = 1.50x */
 #define PAD_BASE_DIV       100
-#define PAD_CUR_SLOW_PCT    50     /* 游標慢檔 = base 的 50%  -> 1.25x */
-#define PAD_CUR_FAST_PCT   150     /* 游標快檔 = base 的 150% -> 3.75x */
+#define PAD_CUR_SLOW_PCT    50     /* 游標慢檔 = base 的 50%  -> 0.75x */
+#define PAD_CUR_FAST_PCT   150     /* 游標快檔 = base 的 150% -> 2.25x */
 #define PAD_SCRL_DIV        25     /* 一般滾動 zip_scroll_scaler 1 N，N 越大越慢,這裡是數字 */
 #define PAD_SCRL_SLOW_PCT   50     /* 滾動慢檔 = 一般滾動的 50% ,這裡寫的是百分比 */
 #define PAD_SCRL_FAST_PCT  150     /* 滾動快檔 = 一般滾動的 150% ,這裡是百分比*/
 
 /* ── 推導，不要手改 ── */
-#define PAD_CUR_SLOW_MULT  (PAD_BASE_MULT * PAD_CUR_SLOW_PCT / 100)   /* 125 */
-#define PAD_CUR_FAST_MULT  (PAD_BASE_MULT * PAD_CUR_FAST_PCT / 100)   /* 375 */
-#define PAD_SCRL_SLOW_DIV  (PAD_SCRL_DIV * 100 / PAD_SCRL_SLOW_PCT)   /*  36 */
-#define PAD_SCRL_FAST_DIV  (PAD_SCRL_DIV * 100 / PAD_SCRL_FAST_PCT)   /*   9 */
+#define PAD_CUR_SLOW_MULT  (PAD_BASE_MULT * PAD_CUR_SLOW_PCT / 100)   /*  75 */
+#define PAD_CUR_FAST_MULT  (PAD_BASE_MULT * PAD_CUR_FAST_PCT / 100)   /* 225 */
+#define PAD_SCRL_SLOW_DIV  (PAD_SCRL_DIV * 100 / PAD_SCRL_SLOW_PCT)   /*  50 */
+#define PAD_SCRL_FAST_DIV  (PAD_SCRL_DIV * 100 / PAD_SCRL_FAST_PCT)   /*  16 */
 
 / {
     split_inputs {
