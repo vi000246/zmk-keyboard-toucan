@@ -45,6 +45,25 @@
 #define PAD_SCRL_SLOW_PCT   50     /* 滾動慢檔 = 一般滾動的 50% ,這裡寫的是百分比 */
 #define PAD_SCRL_FAST_PCT  150     /* 滾動快檔 = 一般滾動的 150% ,這裡是百分比*/
 
+/*
+ * 硬體雙指滾動的減速。**這一顆兩個分支同值**（不在上面那組平台個人化裡）。
+ *
+ * 為什麼需要單獨一顆：TPS43 的雙指滾動是感測器內建手勢（toucan_right.overlay
+ * 的 `scroll;`），它自己就送 scroll 事件，**不經過 zip_xy_to_scroll_mapper**，
+ * 所以 PAD_SCRL_DIV 那條路完全管不到它。而 base 鏈原本只有 zip_xy_scaler
+ * （只縮放 X/Y、不管 wheel）⇒ 雙指滾動等於零減速，快得沒辦法用。
+ *
+ * ⚠️ 子節點鏈是「第一個命中的取代整條 base 鏈」，所以要在 base 鏈與兩條
+ *    cursor_* 鏈都各掛一個，否則在 CUR- / CUR+ 層做雙指滾動又會變回全速。
+ *    SCRL / SCR- / SCR+ 三條不用加——那三層本來就有自己的 scroll scaler。
+ *
+ * 起始值取 25 = PAD_SCRL_DIV，也就是「跟按住 layer 7 用觸控板拖曳同一個除數」。
+ * ⚠️ 但感測器送出的 scroll 單位跟 zip_xy_to_scroll_mapper 轉出來的不保證同量級，
+ *    所以這只是有依據的起點、不是保證等速。不夠慢就往大調（50、100…），
+ *    太慢就往小調。N 越大越慢，N=1 等於沒減速。
+ */
+#define PAD_HW_SCRL_DIV     25
+
 /* ── 推導，不要手改 ── */
 #define PAD_CUR_SLOW_MULT  (PAD_BASE_MULT * PAD_CUR_SLOW_PCT / 100)   /*  75 */
 #define PAD_CUR_FAST_MULT  (PAD_BASE_MULT * PAD_CUR_FAST_PCT / 100)   /* 225 */
@@ -133,7 +152,7 @@
         status = "disabled";
         device = <&trackpad_split>;
 
-        input-processors = <&zip_xy_scaler PAD_BASE_MULT PAD_BASE_DIV &mouse_temp_layer 6 600 &zip_button_behaviors>;
+        input-processors = <&zip_xy_scaler PAD_BASE_MULT PAD_BASE_DIV &zip_scroll_scaler 1 PAD_HW_SCRL_DIV &mouse_temp_layer 6 600 &zip_button_behaviors>;
 
         scroll_slow {
             layers = <10>;
@@ -171,12 +190,12 @@
 
         cursor_slow {
             layers = <8>;
-            input-processors = <&zip_xy_scaler PAD_CUR_SLOW_MULT PAD_BASE_DIV &mouse_temp_layer 6 150 &zip_button_behaviors>;
+            input-processors = <&zip_xy_scaler PAD_CUR_SLOW_MULT PAD_BASE_DIV &zip_scroll_scaler 1 PAD_HW_SCRL_DIV &mouse_temp_layer 6 150 &zip_button_behaviors>;
         };
 
         cursor_fast {
             layers = <9>;
-            input-processors = <&zip_xy_scaler PAD_CUR_FAST_MULT PAD_BASE_DIV &mouse_temp_layer 6 150 &zip_button_behaviors>;
+            input-processors = <&zip_xy_scaler PAD_CUR_FAST_MULT PAD_BASE_DIV &zip_scroll_scaler 1 PAD_HW_SCRL_DIV &mouse_temp_layer 6 150 &zip_button_behaviors>;
         };
     };
 };
