@@ -62,9 +62,11 @@ $CONVERTER   = Join-Path $PSScriptRoot 'tools/uf2-to-hex.mjs'
 # （VID_2886&PID_0064）相同，所以兩邊都認得出來。
 $KNOWN = @{
     'B2AF9AAE792235E5' = 'left'
+    '784AA79E10321892' = 'right'
     '6D1223706D497DBF' = 'dongle'
 }
-# ⚠️ 右半的序號還沒登記。第一次刷右半時腳本會停下來，把它印出來讓你確認後補進這張表。
+# 三顆都登記完了（右半在 2026-09-08 第一次走序列 DFU 時登記）。換板子時腳本會印
+# 出未登記的序號並停下來，確認之後補進上面那張表即可。
 
 $UF2_PATTERN = @{
     'left'  = 'toucan_left*.uf2'
