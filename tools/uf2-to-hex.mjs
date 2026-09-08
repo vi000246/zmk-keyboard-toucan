@@ -16,8 +16,16 @@ import fs from 'fs';
 const MAGIC0 = 0x0a324655, MAGIC1 = 0x9e5d5157, MAGIC_END = 0x0ab16f30;
 const F_NOT_MAIN_FLASH = 0x00000001, F_FILE_CONTAINER = 0x00001000, F_FAMILY_ID = 0x00002000;
 
-const [, , inPath, outPath] = process.argv;
-if (!inPath || !outPath) { console.error('用法: node tools/uf2-to-hex.mjs <in.uf2> <out.hex>'); process.exit(2); }
+// nRF52840。刷錯晶片的韌體是最貴的一種錯，所以預設擋下來。
+const EXPECT_FAMILY = 0xada52840;
+
+const args = process.argv.slice(2);
+const anyFamily = args.includes('--any-family');
+const [inPath, outPath] = args.filter(a => !a.startsWith('--'));
+if (!inPath || !outPath) {
+    console.error('用法: node tools/uf2-to-hex.mjs <in.uf2> <out.hex> [--any-family]');
+    process.exit(2);
+}
 
 const buf = fs.readFileSync(inPath);
 if (buf.length % 512 !== 0) { console.error(`不是合法的 UF2：長度 ${buf.length} 不是 512 的倍數`); process.exit(1); }
@@ -41,6 +49,20 @@ for (let off = 0; off < buf.length; off += 512) {
     chunks.push({ addr, data: buf.subarray(off + 32, off + 32 + size) });
 }
 if (!chunks.length) { console.error('沒有可燒錄的資料'); process.exit(1); }
+
+if (!anyFamily) {
+    if (families.size === 0) {
+        console.error('這個 UF2 沒有標示 family ID，無法確認是不是給 nRF52840 的。');
+        console.error('確定沒錯的話加 --any-family。');
+        process.exit(1);
+    }
+    const wrong = [...families].filter(f => f !== '0x' + EXPECT_FAMILY.toString(16));
+    if (wrong.length) {
+        console.error(`family 不符：這個 UF2 是 ${[...families].join(',')}，預期 0x${EXPECT_FAMILY.toString(16)}（nRF52840）。`);
+        console.error('刷錯晶片的韌體會讓板子失效。確定要刷就加 --any-family。');
+        process.exit(1);
+    }
+}
 
 chunks.sort((a, b) => a.addr - b.addr);
 for (let i = 1; i < chunks.length; i++) {

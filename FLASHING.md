@@ -79,21 +79,59 @@ XIAO nRF52840 的 Adafruit bootloader 除了 UF2 磁碟，**同時也開一個 C
 並支援序列 DFU**。那是序列埠、不是卸除式儲存，完全不經過上面那條政策：
 
 ```powershell
-.lash-dfu.ps1 probe     # 列出目前在 bootloader 的板子與序號
-.lash-dfu.ps1 left      # 自動抓 ~/Downloads 最新的 toucan_left*.uf2 並刷入
-.lash-dfu.ps1 right
-.lash-dfu.ps1 reset
+.\flash-dfu.ps1 setup     # 換一台電腦第一次跑：檢查並自動安裝工具
+.\flash-dfu.ps1 probe     # 列出目前在 bootloader 的板子與序號
+.\flash-dfu.ps1 left      # 自動找 .uf2 並刷入（搜尋順序見下）
+.\flash-dfu.ps1 right
+.\flash-dfu.ps1 reset
 ```
 
 流程是 `.uf2` →（`tools/uf2-to-hex.mjs`）→ `.hex` →（`genpkg`）→ `.zip`
 →（`dfu serial`）→ 板子。實測 357 KB 的左半韌體 22 秒刷完。
 
-需要 `adafruit-nrfutil.exe`（不需要 Python，官方有 Windows 執行檔）：
+### 換一台電腦：先跑 `setup`
 
-```sh
-curl -sL -o nrfutil-win.zip https://github.com/adafruit/Adafruit_nRF52_nrfutil/releases/download/0.5.3.post17/adafruit-nrfutil--0.5.3.post17-win.zip
-# 解壓到 ~/Tools/adafruit-nrfutil/
+不用自己找連結，`.\flash-dfu.ps1 setup` 會把環境檢查一遍：
+
+| 檢查項 | 沒有的話 |
+|---|---|
+| Node.js | 印出 `winget install OpenJS.NodeJS.LTS`（裝完要**重開終端機** PATH 才生效） |
+| `adafruit-nrfutil.exe` | **自動下載解壓**到 `~/Tools/adafruit-nrfutil/`（官方 Windows 執行檔，不需要 Python）。下載失敗會給手動連結，公司網路擋 GitHub release 的話換網路抓 |
+| `tools/uf2-to-hex.mjs` | 提示它應該跟腳本一起在 repo 裡 |
+| `Deny_All` 政策 | 順便告訴你這台**到底需不需要**走 DFU —— 沒被擋的話用 `flash.sh` 更省事 |
+
+### `.uf2` 放哪裡都行
+
+不給 `-Uf2` 時的搜尋順序（每個往下找 2 層，取最新的）：
+
+1. `$env:TOUCAN_UF2_DIR`（設了就優先）
+2. 目前目錄
+3. repo 目錄、`<repo>-build`（`flash.sh` 的 BUILD 目錄）
+4. `~/Downloads`
+5. `~/Desktop`
+
+`-Uf2` 吃三種東西：**檔案**、**資料夾**（找裡面最新的，含 3 層子資料夾）、
+**GitHub Actions 下載的 `.zip`**（自動解開找裡面的 `.uf2`）。全都找不到時會把
+搜尋過的每個位置列出來（標示哪些不存在）並給解法，不會只丟一句「找不到」。
+
+固定放在別處的話設一次環境變數就好：
+
+```powershell
+[Environment]::SetEnvironmentVariable('TOUCAN_UF2_DIR','D:\my\firmware','User')
 ```
+
+### 會被擋下來的情況
+
+| 狀況 | 行為 |
+|---|---|
+| 檔名跟板子對不上（拿 `toucan_right*` 刷 left） | 拒絕，要 `-Force` |
+| UF2 是空檔或大小不是 512 的倍數 | 拒絕（下載不完整） |
+| family 不是 `0xada52840`（nRF52840） | 轉換器拒絕，要 `--any-family` |
+| 沒偵測到 bootloader | 預設等 60 秒（`-Wait 0` 不等），逾時給四點排查 |
+| 同時多顆板子在 bootloader | 拒絕，列出全部 |
+| 序號沒登記（右半第一次就會遇到） | 停下來，印出序號叫你補進 `$KNOWN` |
+| 準備過程中板子離開 bootloader | 送出 DFU 前再驗一次，發現就停 |
+| 缺 node / nrfutil | 分別給安裝指令，nrfutil 直接叫你跑 `setup` |
 
 ### 安全鎖改用 USB 序號，比 flash.sh 更強
 
