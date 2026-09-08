@@ -192,10 +192,24 @@
          *                     不可能」（見 toucan.keymap 檔頭的
          *                     zip_button_behaviors 說明），要拖曳是按住
          *                     PAD 層的 LCLK 再移動。開了會打架。
-         *   scroll          = 硬體雙指滾動。這個 repo 的滾動是「層 + 單指
-         *                     拖曳 + 三檔調速」（SCRL / SCR- / SCR / SCR+），
-         *                     硬體滾動會繞過整套調速設計。想試就打開，
-         *                     scroll-angle 一併解註解。
+         *   scroll          = 硬體雙指滾動。**2026-09-08 打開來實測中。**
+         *                     ⚠️ 跟這個 repo 既有的滾動設計並存：本來的滾動是
+         *                     「層 + 單指拖曳 + 三檔調速」（SCRL / SCR- / SCR /
+         *                     SCR+，用 zip_xy_to_scroll_mapper）。在那三層上做
+         *                     雙指滾動會被處理兩次（硬體自己送 scroll，
+         *                     mapper 又把同一段 XY 轉成 scroll），會過快。
+         *                     ⚠️ 已知症狀：捲到一半卡住、游標跳位。那是手勢中
+         *                     途被中斷 —— 第二根手指的觸壓掉到門檻以下、或兩指
+         *                     移動方向超出 scroll-angle 的容許錐角，手勢就會
+         *                     abort，剩下那根手指改被當成「移動游標」上報。
+         *                     要救先動這兩個（都不是省電延遲那組）：
+         *                       scroll-angle  往大調（30 -> 45），角度容許放寬
+         *                       sensitivity   往上調，手指輕一點也不會掉偵測
+         *                     其次是 timeout-active 拉長 / report-rate-idle-touch
+         *                     調快——慢速穩定捲動時掉進 IDLE-TOUCH 會讓回報變慢，
+         *                     再回到 ACTIVE 時一次補上累積位移，也會看到跳動。
+         *                     ⚠️ 另外 two-finger-tap（右鍵）也是兩指，短促的雙指
+         *                     滑動有機會被判成 tap 而誤觸右鍵，測的時候留意。
          *   zoom            = 雙指縮放，需要 zmk-input-zoom 的 zip_zoom_mapper
          *                     接在 listener 上（模組已在 west.yml 拉進來）。
          *   three-finger-swipe = 三指滑動切桌面，需要 swipe_button_mapper。
@@ -205,8 +219,8 @@
         single-tap;
         two-finger-tap;
         // press-and-hold;
-        // scroll;
-        // scroll-angle = <30>;
+        scroll;
+        scroll-angle = <30>;
         // zoom;
         // three-finger-swipe;
         // three-finger-swipe-throttle-ms = <1200>;
