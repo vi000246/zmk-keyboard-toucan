@@ -718,15 +718,15 @@
 
         layer_7 {
             /*
-             * ⚠️ **平台個人化，不要跨分支 sync**：滾輪按鍵（位置 2/4 與
-             * 19/20 的 `&msc MOVE_Y`）上下**已對調**成 Windows 慣用方向。
-             * 觸控板的滾動方向不受影響——那個在 toucan-trackpad.dtsi 的
-             * INPUT_TRANSFORM_Y_INVERT，兩個分支維持一致。
-             * 詳見根目錄 CLAUDE.md。
+             * 滾輪按鍵（位置 2/4 與 19/20 的 `&msc MOVE_Y`）方向與觸控板一致，
+             * 採 macOS 的 natural（內容跟著手指走）語意，**兩個平台分支相同**。
+             * 2026-09-08 之前 Windows 分支這四顆是上下對調的，已統一取消 ——
+             * 平台一致優先，改動要兩邊一起做。
+             * 觸控板方向在 toucan-trackpad.dtsi 的 INPUT_TRANSFORM_Y_INVERT。
              */
             display-name = "SCRL";
             bindings = <
-&trans  &kp ESCAPE  &msc MOVE_Y(-25)  &mmv MOVE_Y(-1500)  &msc MOVE_Y(25)  &kp LC(PLUS)  &kp LC(PG_UP)  &kp LC(PG_DN)  &kp LA(LEFT)  &kp LA(RIGHT)  &to 0  &trans  &trans  &msc MOVE_X(25)  &mmv MOVE_X(-1500)  &mmv MOVE_Y(1500)  &mmv MOVE_X(1500)  &msc MOVE_X(-25)  &msc MOVE_X(25)  &msc MOVE_Y(-25)  &msc MOVE_Y(25)  &msc MOVE_X(-25)  &kp LC(LS(T))  &trans  &trans  &kp LA(ESC)  &mkp LCLK  &mkp RCLK  &mkp MCLK  &kp MINUS  &kp END  &kp PAGE_DOWN  &kp PAGE_UP  &kp HOME  &kp LC(W)  &trans  &kp LC(N0)  &mo 11  &mo 10  &mo 10  &mo 11  &kp LC(R)
+&trans  &kp LC(PLUS)  &msc MOVE_Y(25)  &mmv MOVE_Y(-1500)  &msc MOVE_Y(-25)  &kp LC(R)  &kp LC(PG_UP)  &kp LC(PG_DN)  &kp LA(LEFT)  &kp LA(RIGHT)  &to 0  &trans  &trans  &msc MOVE_X(25)  &mmv MOVE_X(-1500)  &mmv MOVE_Y(1500)  &mmv MOVE_X(1500)  &msc MOVE_X(-25)  &msc MOVE_X(25)  &msc MOVE_Y(25)  &msc MOVE_Y(-25)  &msc MOVE_X(-25)  &kp LC(LS(T))  &trans  &trans  &kp LC(MINUS)  &mkp LCLK  &mkp RCLK  &mkp MCLK  &kp ESC  &kp END  &kp PAGE_DOWN  &kp PAGE_UP  &kp HOME  &kp LC(W)  &trans  &kp LC(N0)  &mo 11  &mo 10  &mo 10  &mo 11  &kp F19
             >;
         };
 
@@ -745,18 +745,18 @@
         };
 
         layer_10 {
-            /* ⚠️ 滾輪按鍵上下已對調（同 layer_7，平台個人化，不要 sync）。 */
+            /* 滾輪按鍵方向同 layer_7（natural），兩個平台分支相同。 */
             display-name = "SCR-";
             bindings = <
-&trans  &trans  &msc MOVE_Y(-10)  &mmv MOVE_Y(-750)  &msc MOVE_Y(10)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &msc MOVE_X(10)  &mmv MOVE_X(-750)  &mmv MOVE_Y(750)  &mmv MOVE_X(750)  &msc MOVE_X(-10)  &msc MOVE_X(10)  &msc MOVE_Y(-10)  &msc MOVE_Y(10)  &msc MOVE_X(-10)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &msc MOVE_Y(10)  &mmv MOVE_Y(-750)  &msc MOVE_Y(-10)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &msc MOVE_X(10)  &mmv MOVE_X(-750)  &mmv MOVE_Y(750)  &mmv MOVE_X(750)  &msc MOVE_X(-10)  &msc MOVE_X(10)  &msc MOVE_Y(10)  &msc MOVE_Y(-10)  &msc MOVE_X(-10)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
             >;
         };
 
         layer_11 {
-            /* ⚠️ 滾輪按鍵上下已對調（同 layer_7，平台個人化，不要 sync）。 */
+            /* 滾輪按鍵方向同 layer_7（natural），兩個平台分支相同。 */
             display-name = "SCR+";
             bindings = <
-&trans  &trans  &msc MOVE_Y(-40)  &mmv MOVE_Y(-2250)  &msc MOVE_Y(40)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &msc MOVE_X(40)  &mmv MOVE_X(-2250)  &mmv MOVE_Y(2250)  &mmv MOVE_X(2250)  &msc MOVE_X(-40)  &msc MOVE_X(45)  &msc MOVE_Y(-45)  &msc MOVE_Y(45)  &msc MOVE_X(-45)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &msc MOVE_Y(40)  &mmv MOVE_Y(-2250)  &msc MOVE_Y(-40)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &msc MOVE_X(40)  &mmv MOVE_X(-2250)  &mmv MOVE_Y(2250)  &mmv MOVE_X(2250)  &msc MOVE_X(-40)  &msc MOVE_X(45)  &msc MOVE_Y(45)  &msc MOVE_Y(-45)  &msc MOVE_X(-45)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
             >;
         };
 
