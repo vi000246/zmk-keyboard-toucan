@@ -56,7 +56,23 @@ $TOOLDIR     = Join-Path $env:USERPROFILE 'Tools/adafruit-nrfutil'
 $NRFUTIL     = Join-Path $TOOLDIR 'adafruit-nrfutil.exe'
 $NRFUTIL_VER = '0.5.3.post17'
 $NRFUTIL_URL = "https://github.com/adafruit/Adafruit_nRF52_nrfutil/releases/download/$NRFUTIL_VER/adafruit-nrfutil--$NRFUTIL_VER-win.zip"
-$BOOT_VIDPID = 'VID_2886&PID_0064'      # XIAO nRF52840 的 Adafruit bootloader
+# XIAO 的 Adafruit bootloader。⚠️ **兩種板子的 PID 不一樣**，2026-09-09 第一次刷
+# dongle 才發現：
+#   PID_0064 = XIAO nRF52840 **Plus**（左半、右半）
+#   PID_0045 = XIAO nRF52840 **Sense**（dongle）
+# 原本只填 0064，所以 dongle 明明在 bootloader、腳本卻一直說「沒偵測到」。
+# 這跟 FLASHING.md 早就記錄的差異是同一件事的兩面：dongle 的磁碟名是
+# XIAO-SENSE / Board-ID Seeed_XIAO_nRF52840_Sense，半邊是 XIAO-BOOT /
+# nRF52840-SeeedXiao-v1 —— 不同 bootloader 就會有不同 USB PID。
+#
+# 判斷「真的在 bootloader」不靠 PID，靠序號比對（下面 $KNOWN）＋一個旁證：
+# Adafruit bootloader 一定同時掛出 **USB Mass Storage + CDC 序列** 的複合裝置，
+# ZMK app 韌體不會掛 Mass Storage。要人工確認就跑：
+#   Get-PnpDevice -PresentOnly | ? InstanceId -like '*VID_2886*'
+# 看得到 "USB Mass Storage Device" 就是在 bootloader。
+$BOOT_VIDPID    = 'VID_2886&PID_0064'
+$BOOT_VIDPID_RE = 'VID_2886&PID_(0064|0045)'
+$BOOT_VIDPID_TXT = 'VID_2886&PID_0064 (Plus) 或 PID_0045 (Sense)'
 $CONVERTER   = Join-Path $PSScriptRoot 'tools/uf2-to-hex.mjs'
 
 # 序號 = nRF52840 晶片 ID。app 模式（VID_1D50&PID_615E）與 bootloader 模式
@@ -193,7 +209,7 @@ function Get-BootloaderDevices {
     $ports = @()
     try {
         $ports = Get-CimInstance Win32_PnPEntity -ErrorAction Stop | Where-Object {
-            $_.Name -match 'COM\d+' -and $_.PNPDeviceID -like "*$BOOT_VIDPID*"
+            $_.Name -match 'COM\d+' -and $_.PNPDeviceID -match $BOOT_VIDPID_RE
         }
     } catch {
         Fail "查詢 USB 裝置失敗：$($_.Exception.Message)" @("通常是 WMI 出問題，重開機或跑 'winmgmt /verifyrepository' 看看。")
@@ -319,7 +335,7 @@ function Resolve-Uf2File {
 $devices = @(Get-BootloaderDevices)
 
 if ($Board -eq 'probe') {
-    Write-Output "=== bootloader 模式的裝置 ($BOOT_VIDPID) ==="
+    Write-Output "=== bootloader 模式的裝置 ($BOOT_VIDPID_TXT) ==="
     if ($devices.Count -eq 0) {
         Write-Output "  (無) —— 雙擊板子的 reset 鍵進 bootloader"
     } else {
@@ -391,7 +407,7 @@ if ($Port) {
         }
     }
     if ($devices.Count -eq 0) {
-        Fail "沒有偵測到 bootloader 裝置（找的是 $BOOT_VIDPID）" @(
+        Fail "沒有偵測到 bootloader 裝置（找的是 $BOOT_VIDPID_TXT）" @(
             "1. 雙擊板子上的 reset 鍵，或按 BT 層的 B（只會重置左半）。",
             "2. 確認 USB 線是資料線不是純充電線。",
             "3. .\flash-dfu.ps1 probe 可以看目前所有 COM 裝置。",
