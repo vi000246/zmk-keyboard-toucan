@@ -34,13 +34,14 @@
     .\flash-dfu.ps1 setup               # 換新電腦第一次跑：檢查並安裝工具
     .\flash-dfu.ps1 probe               # 看現在哪顆板子在 bootloader
     .\flash-dfu.ps1 left
+    .\flash-dfu.ps1 dongle              # Prospector（scanner artifact，不是 firmware）
     .\flash-dfu.ps1 left -Uf2 D:\somewhere\firmware
     .\flash-dfu.ps1 left -Uf2 C:\Users\me\Downloads\artifact.zip
     .\flash-dfu.ps1 left -Wait 0        # 不等，沒偵測到就直接失敗
 #>
 param(
     [Parameter(Position = 0)]
-    [ValidateSet('left', 'right', 'reset', 'probe', 'setup')]
+    [ValidateSet('left', 'right', 'reset', 'dongle', 'probe', 'setup')]
     [string]$Board = 'probe',
     [string]$Uf2,
     [string]$Port,
@@ -69,10 +70,22 @@ $KNOWN = @{
 # 出未登記的序號並停下來，確認之後補進上面那張表即可。
 
 $UF2_PATTERN = @{
-    'left'  = 'toucan_left*.uf2'
-    'right' = 'toucan_right*.uf2'
-    'reset' = 'settings_reset*.uf2'
+    'left'   = 'toucan_left*.uf2'
+    'right'  = 'toucan_right*.uf2'
+    'reset'  = 'settings_reset*.uf2'
+    'dongle' = 'prospector_scanner*.uf2'
 }
+# 2026-09-09 補上 dongle。原本 FLASHING.md 寫的是「dongle 連按兩下 RST、把 .uf2
+# 拖進磁碟」——但那正是這台機器被 GPO 擋掉的路徑，所以 dongle 也得走序列 DFU。
+# 不需要任何特殊處理：dongle 也是 XIAO nRF52840（Sense），同一顆 Adafruit
+# bootloader（VID_2886&PID_0064）、同一個 --dev-type 0x0052、同一個 UF2 family，
+# 而且它的序號 6D1223706D497DBF 早就在上面的 $KNOWN 表裡 ⇒ 防呆比對照樣生效。
+# 韌體來自 scanner job 的 prospector_scanner_custom artifact（跟鍵盤的 firmware
+# 是兩個分開的 zip），檔名是 prospector_scanner_custom.uf2。
+#
+# ⚠️ flash.sh（UF2 拖檔版）刻意**拒絕**刷 dongle，那是 2026-08-08「dongle 韌體
+#    被刷進左半」事故的防線。這裡不是放寬那道防線——序號比對比 flash.sh 當年
+#    依賴的 INFO_UF2.TXT Board-ID 更強，它連左右半都分得出來。
 
 function Fail {
     param([string]$Msg, [string[]]$Hints)

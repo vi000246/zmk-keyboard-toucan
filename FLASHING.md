@@ -84,6 +84,7 @@ XIAO nRF52840 的 Adafruit bootloader 除了 UF2 磁碟，**同時也開一個 C
 .\flash-dfu.ps1 left      # 自動找 .uf2 並刷入（搜尋順序見下）
 .\flash-dfu.ps1 right
 .\flash-dfu.ps1 reset
+.\flash-dfu.ps1 dongle    # 2026-09-09 補上；韌體來自 scanner 的那個 zip
 ```
 
 流程是 `.uf2` →（`tools/uf2-to-hex.mjs`）→ `.hex` →（`genpkg`）→ `.zip`
@@ -166,8 +167,33 @@ dongle 改刷 Prospector scanner 韌體。**2026-09-02 起改在這個 repo 自�
 
 1. GitHub Actions 每次 push 會產出 `prospector_scanner_custom` artifact
    （scanner job，跟鍵盤的 `firmware` 是分開的兩個 zip）。
-2. 解壓拿 `prospector_scanner-xiao_ble_nrf52840_zmk-zmk.uf2`，dongle 連按
-   兩下 RST 進 bootloader、拖進去。
+2. 解壓拿 `prospector_scanner_custom.uf2`，dongle 連按兩下 RST 進 bootloader、
+   拖進去。
+
+   ⚠️ **在 UF2 磁碟被 GPO 擋掉的機器上（見下一節）拖不進去**，改走序列 DFU：
+
+   ```powershell
+   .\flash-dfu.ps1 dongle
+   ```
+
+   2026-09-09 補上這個選項。dongle 也是 XIAO nRF52840（Sense），同一顆
+   Adafruit bootloader、同一個 `--dev-type 0x0052`、同一個 UF2 family，
+   序號 `6D1223706D497DBF` 早就登記在腳本的 `$KNOWN` 表裡 ⇒ 防呆比對照樣
+   生效，**不會**因為多這個選項就重演 2026-08-08 那次事故。
+
+### 什麼時候「左半和 dongle 要一起刷」
+
+層名／副標是**兩邊各存一份**的：
+
+| 東西 | 存在哪 | 誰負責 |
+|---|---|---|
+| 大字層名（4 字元） | 鍵盤的 keymap `display-name` | 左半，經 BLE 廣播 |
+| 英文副標、ladder 格數 | dongle 的 `radii_layout.c` `LAYERS[]` | dongle 本地，用 layer **index** 查 |
+
+⇒ **只要動到層的「加 / 刪 / 重排」就必須兩顆一起刷**，只刷一顆會看到大字層名
+和副標對不上（例如大字 `NAV`、副標卻是 `NUMPAD / keypad + mods`）。
+改層名、改 bindings 則只要刷左半。2026-09-09 把 NAV/NUM 的 index 對調回
+1/2 就屬於「重排」，兩顆都刷了。
 
 自建的內容、可調選項、以及**還原成官方韌體的步驟**都在
 [`DONGLE-RESTORE.md`](DONGLE-RESTORE.md)。官方 release（YADS 層號列 +
