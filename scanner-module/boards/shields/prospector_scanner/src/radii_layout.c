@@ -83,10 +83,11 @@ struct toucan_layer {
 
 static const struct toucan_layer LAYERS[] = {
     { "BASE", "TYPING",      "13 layers"        },
-    /* 1/2 於 2026-09-06 的 fb3fc56 對調（keymap-editor 把 NUM 節點搬到 NAV
-     * 前面）。這張表是用 layer index 查的，順序錯了螢幕就會顯示錯的層名。 */
-    { "NUM",  "NUMPAD",      "keypad + mods"    },
+    /* 1/2 曾在 2026-09-06 的 fb3fc56 被 keymap-editor 對調（NUM 節點搬到 NAV
+     * 前面），2026-09-09 已把 keymap 的節點順序修回 NAV, NUM，這張表跟著還原。
+     * 這張表是用 layer index 查的，順序錯了螢幕就會顯示錯的層名。 */
     { "NAV",  "ARROWS",      "windows / claude" },
+    { "NUM",  "NUMPAD",      "keypad + mods"    },
     { "SYM",  "SYMBOLS",     "cheatsheet"       },
     { "CMD",  "SHORTCUTS",   "window / clipbrd" },
     { "FUN",  "FUNCTION",    "F1-F12 / volume"  },

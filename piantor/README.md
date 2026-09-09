@@ -7,13 +7,14 @@ keymap 一起版本控管，方便兩邊對照。
 
 | 檔案 | `settings` QSID 21 | 說明 |
 |---|---|---|
-| **`piantor-windows-20260907.vil`** | `0`（swap **關**） | ⭐ **本分支（Windows）要載入的就是這個**。對齊本分支 Toucan keymap 的 Windows 版；2026-09-07 由 Vial 匯出，只動了 L8（見下）。 |
-| `rollback/piantor-windows-20260904.vil` | `0`（swap **關**） | 上一版（L8 改動前）。**只有要回退時才碰**。 |
+| **`piantor-windows-20260909.vil`** | `0`（swap **關**） | ⭐ **本分支（Windows）要載入的就是這個**。對齊本分支 Toucan keymap 的 Windows 版；2026-09-09 由腳本從 09-07 版改 3 格（見下）。 |
+| `rollback/piantor-windows-20260907.vil` | `0`（swap **關**） | 上一版（L3/L4 拇指改動前）。**只有要回退時才碰**。 |
+| `rollback/piantor-windows-20260904.vil` | `0`（swap **關**） | 再上一版（L8 改動前）。**只有要回退時才碰**。 |
 | `rollback/piantor-20260903-original-swap-on.vil` | `256`（swap **開**） | 改動前的原始備份（2026-09-03 13:42）。**只有要回退時才碰**，刻意放在子資料夾避免誤選。 |
 
 > 📌 **2026-09-07 起，`.vil` 依分支區分平台**：`prospector-scanner-windows`
 > （本分支）只放 **Windows** 版；`prospector-scanner` 只放 **macOS** 版
-> （`piantor-macos-20260907.vil` 在那邊）。檔名同時帶平台字樣，跟分支
+> （在那邊是 `piantor-macos-20260909.vil`）。檔名同時帶平台字樣，跟分支
 > 雙重保險——之前發生過誤載事故，載入前檔名再看一眼。
 
 > ⚠️ 這兩個檔原本同層、檔名相近，2026-09-04 實際發生過誤載回退檔的事故：
@@ -21,9 +22,75 @@ keymap 一起版本控管，方便兩邊對照。
 > 按下去跑出「協助工具設定」(`Win+U`) 和「小工具面板」(`Win+W`)。
 > 回退檔因此移進 `rollback/`，讓載入時同一層只看得到一個 `.vil`。
 
-⚠️ `piantor-windows-20260907.vil` 是**實機當下狀態由 Vial 匯出**的，所以 L8 那批
+⚠️ `rollback/piantor-windows-20260907.vil` 是**實機當下狀態由 Vial 匯出**的，所以 L8 那批
 改動已經在鍵盤裡了。L4 上排四顆的刪除鍵（見下）則是 09-04 那版就改好、**一直沒刷入**，
-這份匯出檔也還是舊值——要一次補齊請重新 Load 一次。
+連 09-09 這版也還是舊值——要一次補齊請重新 Load 一次。
+
+## 載入步驟（Windows）
+
+1. Vial → `File` → `Load saved layout` → `piantor-windows-20260909.vil`
+2. 實測三顆：
+   - 按住 `D` 應該是 **Ctrl**（不是 Win）
+   - L4 的 `/` 鍵應該**關分頁**
+   - base 的 `.` 鍵應該還能**切輸入法**（送出 Win+Space）
+3. **09-09 這版多一個必驗項**：L4 右拇指最內側那顆送出的是
+   `LSFT(LCG(KC_SPACE))`（Ctrl+Win+Shift+Space）。這是**巢狀修飾鍵**寫法，
+   QMK 沒有 Ctrl+Shift+GUI 的三修飾鍵 alias（只有 `MEH` / `LCAG` / `HYPR`），
+   所以只能巢狀。**若 Vial 顯示成空白或 Any**，就是它的 parser 不吃這種寫法
+   ⇒ 在 Vial 裡手動用修飾鍵勾選面板重設那一顆，然後重新匯出取代這個檔。
+4. 確認無誤後**立刻另外匯出一份新備份**（EEPROM 隨時可能被清空）
+
+若行為整個相反 ⇒ QSID 21 沒被套用，手動去 `QMK Settings → Magic` 關掉
+`Swap Control and GUI`。
+
+## 2026-09-09 這一版改了什麼（只有 3 格）
+
+跟 `rollback/piantor-windows-20260907.vil` 相比，`layout` 只有 3 格變了；
+`uid` / `macro` / `tap_dance` / `combo` / `settings` **逐位元組相同**
+（QSID 21 仍是 `0`＝swap 關），驗證方式同下方「產生方式」。
+
+| 位置 | 09-07 | 09-09 | 意思 |
+|---|---|---|---|
+| L3 右拇指 r7c5 | `LCG(KC_A)` | `LCG(KC_R)` | Ctrl+Win+R（主機端全域熱鍵） |
+| L4 右拇指 r7c4 | `KC_NO` | `LCG(KC_SPACE)` | Ctrl+Win+Space |
+| L4 右拇指 r7c5 | `OSL(1)` | `LSFT(LCG(KC_SPACE))` | Ctrl+Win+Shift+Space（原本是升 NAV） |
+
+對應 Toucan 是 `config/toucan.keymap` 的 `layer_3`（SYM）與 `layer_4`（CMD）。
+
+⚠️ **Toucan 這次還有兩件事在 Piantor 上沒有對應物，不要去找**：
+1. **藍牙層搬家**（Toucan CMD 位置 40 → NUM 位置 34）。Piantor 有線，
+   沒有 BT 層，`KC_NO` 那格直接讓給 Ctrl+Win+Space。
+2. **鍵盤游標鍵速度**（Toucan 的 `&mmv` 三檔改成 250 / 500 / 1000）。
+   QMK 的 mousekey 速度是**韌體編譯期常數**（`MOUSEKEY_MAX_SPEED` 那組在
+   `config.h`），不存在 `.vil` 裡，所以 `.vil` 改不了也不用改。
+   Piantor L8 是靠 `KC_ACL0/1/2` 三顆調速的。
+
+⚠️ **L3 右拇指兩把鍵盤的左右是相反的**，這是既有狀態、不是這次弄壞的：
+Toucan 的 `LC(LG(A))` 在位置 41（右拇指**最外側**），Piantor 的 `LCG(KC_A)`
+在 `r7c5`（右拇指**最內側**）。原因是 2026-09-04 對齊時使用者決定
+「L3 右拇指維持 Piantor 原樣」（見下方對照表）。這次只換鍵碼、**沒有**
+順手把位置對齊——要對齊是另一個決定。
+
+### 欄位對應備忘（改 `.vil` 前先看這個）
+
+`layout[層][列][欄]`，列 0-3 = 左半、列 4-7 = 右半，列 3 / 列 7 是拇指排，
+拇指只用 **欄 3、4、5**（欄 0-2 是 `-1`）。**兩半都是欄 1 = 外側（小指）→
+欄 5 = 內側（食指）**，所以拇指排對到 Toucan 的 ZMK 位置是：
+
+| | Toucan 位置 | Piantor |
+|---|---|---|
+| 左拇指 外→內 | 36 / 37 / 38 | `r3c3` / `r3c4` / `r3c5` |
+| 右拇指 內→外 | 39 / 40 / 41 | `r7c5` / `r7c4` / `r7c3` |
+
+用 L0 交叉驗證：Toucan 39/40/41 = `BSPC` / `RET` / `F19`，Piantor
+`r7c5`=`LT2(KC_BSPACE)`、`r7c4`=`LT5(KC_ENTER)`、`r7c3`=`LT3(KC_F19)`。✅
+
+### ✅ 順帶確認：NAV / NUM 的層編號 Piantor 一直是對的
+
+Piantor base 是 `LT1(KC_ESCAPE)`（ESC → NAV）、`LT2(KC_BSPACE)`
+（BSPC → NUM），也就是 **L1 = NAV、L2 = NUM**。Toucan 那邊 2026-09-06 被
+keymap-editor bot 弄成 NUM=1 / NAV=2，2026-09-09 已修回來跟 Piantor 一致。
+`.vil` 這邊**不用改**。
 
 ## `Magic → Swap Control and GUI` 的旗標就存在 .vil 裡
 
@@ -34,18 +101,6 @@ keymap 一起版本控管，方便兩邊對照。
 1. 關掉開關後由 Vial 匯出，全檔**只有** QSID 21 由 `256` 變 `0`。
 2. 誤載回退檔（QSID 21 = `256`）之後，`LCTL` 立刻全部變成 `Win`
    —— 證明 **Vial 載入 `.vil` 時確實會套用這個旗標**，不只是存著而已。
-
-## 載入步驟（Windows）
-
-1. Vial → `File` → `Load saved layout` → `piantor-windows-20260907.vil`
-2. 實測三顆：
-   - 按住 `D` 應該是 **Ctrl**（不是 Win）
-   - L4 的 `/` 鍵應該**關分頁**
-   - base 的 `.` 鍵應該還能**切輸入法**（送出 Win+Space）
-3. 確認無誤後**立刻另外匯出一份新備份**（EEPROM 隨時可能被清空）
-
-若行為整個相反 ⇒ QSID 21 沒被套用，手動去 `QMK Settings → Magic` 關掉
-`Swap Control and GUI`。
 
 ## 2026-09-07 這一版改了什麼（只有 L8）
 
@@ -159,7 +214,7 @@ M13 刪到行尾（`Shift+End`→`Delete`）、M14 `claude`。
 | **L2 數字** | `KP_N0~N9` 數字鍵台 | `KC_0~9` 數字列——**不要同步**：NumLock 關掉時 `KC_KP_7` 在 Windows 是 Home |
 | L5 右手 | `Hyper+L/E/F/T` | `LCG(1~4)`、`HYPR(...)`：主機端全域熱鍵（Raycast vs AHK） |
 | L5 截圖 | `⇧⌘5` | `SGUI(KC_S)` = Win+Shift+S（對調後自動正確） |
-| L3 右拇指 | 內 `Hyper+E` / 外 `⌃⌘A` | 維持 Piantor 原樣（使用者決定不改） |
+| L3 右拇指**位置** | 內 `Hyper+E` / 外 `Ctrl+Win+R` | 內 `LCG(KC_R)` / 外 `HYPR(KC_E)`——**左右相反**，2026-09-04 決定維持 Piantor 原樣。鍵碼本身 09-09 已同步（`LCG(KC_A)`→`LCG(KC_R)`），只有位置沒對齊 |
 | 藍牙層（Toucan 的 L12） | 配對 / 輸出切換 | Piantor 有線，沒這層 |
 | Piantor L6,7,9~15 | — | 不在範圍（含 L8 滑鼠層），只吃全域對調 |
 

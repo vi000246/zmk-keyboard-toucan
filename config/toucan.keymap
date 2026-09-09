@@ -58,8 +58,8 @@
  *   #  名稱   說明
  *   ─────────────────────────────────────────────────────────────────
  *   0  BASE   打字
- *   1  NUM    數字鍵盤（2026-09-06 fb3fc56 起跟 NAV 對調，見下方 combo_num_word）
- *   2  NAV    方向鍵 / 視窗 / Claude Code 巨集
+ *   1  NAV    方向鍵 / 視窗 / Claude Code 巨集
+ *   2  NUM    數字鍵盤
  *   3  SYM    符號（小抄靠這名字查表，見下方 layer_3）
  *   4  CMD    Cmd 快捷 / 視窗 / 剪貼
  *   5  FUN    F1-F12 / 音量 / Hyper 巨集
@@ -70,6 +70,22 @@
  *  10  SCR-   滾動 50%（SCRL 拇指 38/39）
  *  11  SCR+   滾動 200%（SCRL 拇指 37/40）
  *  12  BT     配對 / 輸出切換 / bootloader
+ *
+ * ── 2026-09-09：NAV / NUM 的 index 修回 1 / 2 ─────────────────────────
+ *
+ * 層 index 是照 **devicetree 節點出現的順序**算的，跟節點名字 `layer_N`
+ * 無關。2026-09-06 的 fb3fc56（keymap-editor bot）把 NUM 的節點搬到 NAV
+ * 前面，於是檔案變成「節點叫 layer_1、display-name 是 NAV，但實際 index
+ * 是 2」——名字和 index 互相矛盾，讀檔的人（和 bot）每次都要重新推一遍。
+ *
+ * 這一版把 NAV 的節點搬回第一個，讓 **節點名 = display-name 的層 = 真正的
+ * index** 三者一致，也回到 Piantor 一直在用的編號（`LT1(KC_ESCAPE)` = NAV、
+ * `LT2(KC_BSPACE)` = NUM）與 regen.sh 的 LAYER_NAMES 順序。
+ * 行為完全不變：ESC 拇指仍升 NAV、BSPC 拇指仍升 NUM，只是 &lt 的數字跟著換。
+ *
+ * ⇒ 以後檢查很簡單：**節點順序就是 index，兩者對不上就是有人動過順序**。
+ *   跟著要核對的是 &num_word 的層參數（見下方 combo_num_word）和
+ *   radii_layout.c 的 LAYERS[]，那兩處 bot 不會幫你重編號。
  *
  * ── 2026-09-04 這一版砍掉四層（17 → 13）──────────────────────────────
  *
@@ -124,17 +140,36 @@
  *   &mmv MOVE_x(N) = N 像素 / 秒
  *   &msc MOVE_x(N) = N 格滾輪 / 秒
  *
- *   游標基準 1500（ZMK 預設 600；下面 &mmv 設 accel-exponent=0 ⇒ 全程等速）
- *     出現處：SCRL(7) 的 ±1500 四格
- *   滾輪基準 50（ZMK 預設 10）
- *     出現處：SCRL(7) 的 ±50 八格
+ *   游標基準 500（ZMK 預設 600；下面 &mmv 設 accel-exponent=0 ⇒ 全程等速）
+ *     出現處：SCRL(7) 的 ±500 四格
+ *   滾輪基準 25（ZMK 預設 10）
+ *     出現處：SCRL(7) 的 ±25 八格
  *   調速兩檔：
- *     SCR-(10)：游標 ±750   滾輪 ±25   （游標 50%、滾輪 50%）
- *     SCR+(11)：游標 ±2250  滾輪 ±100  （游標 150%、滾輪 200%）
+ *     SCR-(10)：游標 ±250   滾輪 ±10   （游標 50%、滾輪 40%）
+ *     SCR+(11)：游標 ±1000  滾輪 ±40   （游標 200%、滾輪 160%）
  *
- * ⚠️ 游標和滾輪的百分比刻意不同（150% vs 200%），跟 toucan-trackpad.dtsi
- *    的 PAD_CUR_*_PCT / PAD_SCRL_*_PCT 兩組分開的定義一致。滾輪吃加速度
- *    曲線（見下面的 &msc），最高速要拉得比游標開，短按才不會太鈍。
+ * ── 2026-09-09 游標三檔整體砍到 1/3 ──────────────────────────────────
+ *
+ * 舊值 750 / 1500 / 2250 實測太衝——&mmv 是全程等速（見下面 exponent=0），
+ * 1500 px/s 等於一按就飛過目標。新值把基準訂在 **500**，兩側維持
+ * 50% / 100% / 200% 的兩倍關係（跟滾輪同一種刻度，好記）：
+ *
+ *     SCR-(10)   750 → 250
+ *     SCRL(7)   1500 → 500     ← 基準
+ *     SCR+(11)  2250 → 1000
+ *
+ * 中途曾試 250/500(基準 750)/1500，750 仍偏快而作廢；1000 這一檔是刻意
+ * **沒有**回到舊基準 1500 的——真要那麼快就直接用觸控板，游標鍵的用途是
+ * 「最後幾像素的微調」。要更大的頂檔就把 SCR+ 的四格改成 1500。
+ *
+ * ⚠️ 游標三檔的調整**只動 &mmv（鍵盤游標鍵）**。觸控板刻意沒碰——它走
+ *    input processor，速度在 toucan-trackpad.dtsi 的 PAD_* 那組，而那組是
+ *    **平台個人化、不跨分支 sync** 的（見 CLAUDE.md）。
+ *
+ * 同一天順手修掉一個左右不對稱：SCR+(11) 的滾輪左手四格是 40、右手四格
+ * （位置 18-21）卻是 45，右手因此快 12.5%。已統一成 40。
+ * ⇒ 現在三個滾輪檔各自左右同值：SCR- 10 / SCRL 25 / SCR+ 40，
+ *   要驗證很容易——同一層的 &msc 只該出現一種絕對值。
  */
 /*
  * SCRL (7) 的 42 格 bindings。
@@ -549,9 +584,9 @@
         combo_to_nav {
             timeout-ms = <27>;
             key-positions = <31 32>;
-            bindings = <&to 2>;
+            bindings = <&to 1>;
 
-            // KC_M + KC_COMMA → TO(2)：目標仍是 NAV，只是 NAV 的 index 從 1 變 2
+            // KC_M + KC_COMMA → TO(1)：目標一直是 NAV，index 2026-09-09 修回 1
         };
 
         combo_tmux {
@@ -582,12 +617,13 @@
          * V + B ➔ num_word：自動升起 NUM 層連打數字，打到不在 continue-list
          * 的鍵就自己掉下來（continue-list 在上面的 &num_word 覆寫）。
          *
-         * ⚠️ 下面 bindings 的 `1` 是寫死的層 index，keymap-editor **不會**幫它
+         * ⚠️ 下面 bindings 的 `2` 是寫死的層 index，keymap-editor **不會**幫它
          *    重編號。2026-09-06 的 fb3fc56（editor bot，訊息寫 "swap ctrl cmd"）
          *    把 NUM 的節點搬到 NAV 前面——層 index 是照 devicetree 的節點順序算
          *    的，不是照 layer_N 的名字——所以 NUM 從 2 變成 1。editor 把它認得的
          *    &lt / &mo / &to 全部跟著改了，卻不知道 &num_word 的參數也是層
          *    index，於是這組 combo 變成升 NAV，症狀就是「num_word 不見了」。
+         *    2026-09-09 節點順序修回 NAV, NUM，這一行也跟著回到 2。
          *    以後只要層的順序動過，這一行都要手動核對。
          *    （不能改寫成 #define：editor 的 parser 不吃 bindings 裡的自訂巨集，
          *      見檔頭。）
@@ -596,7 +632,7 @@
         combo_num_word {
             timeout-ms = <27>; // 依照你其他 combo 的習慣設定為 27 毫秒
             key-positions = <29 28>; // 對應 BASE 層的 V (28) 和 B (29)
-            bindings = <&num_word 1>; // 1 = NUM（fb3fc56 之前是 2）
+            bindings = <&num_word 2>; // 2 = NUM（節點順序：BASE, NAV, NUM…）
         };
 
         layer {
@@ -631,14 +667,7 @@
         layer_0 {
             display-name = "BASE";
             bindings = <
-&none  &kp Q  &kp W  &kp E  &kp R  &kp T  &kp Y  &kp U  &kp I  &kp O  &kp P  &none  &none  &mt LALT A  &mt LGUI S  &mt LCTRL D  &mt LSHFT F  &lt 7 G  &lt 7 H  &mt LSHFT J  &mt LCTRL K  &mt LGUI L  &td5  &none  &none  &kp Z  &kp X  &kp C  &kp V  &kp B  &kp N  &kp M  &kp COMMA  &kp LG(SPACE)  &kp FSLH  &none  &lt 3 TAB  &lt 4 SPACE  &lt 2 ESC  &lt 1 BSPC  &lt 5 RET  &lt 3 F19
-            >;
-        };
-
-        layer_2 {
-            display-name = "NUM";
-            bindings = <
-&none  &kp KP_MULTIPLY  &kp N7  &kp N8  &kp N9  &kp KP_PLUS  &none  &none  &none  &none  &to 0  &none  &none  &kp KP_DIVIDE  &kp N4  &kp N5  &kp N6  &kp MINUS  &none  &kp LSHFT  &kp LCTRL  &kp LGUI  &kp LALT  &none  &none  &kp X  &kp N1  &kp N2  &kp N3  &kp EQUAL  &none  &none  &none  &none  &none  &none  &kp N0  &kp DOT  &kp PRCNT  &kp BACKSPACE  &kp ENTER  &kp F19
+&none  &kp Q  &kp W  &kp E  &kp R  &kp T  &kp Y  &kp U  &kp I  &kp O  &kp P  &none  &none  &mt LALT A  &mt LGUI S  &mt LCTRL D  &mt LSHFT F  &lt 7 G  &lt 7 H  &mt LSHFT J  &mt LCTRL K  &mt LGUI L  &td5  &none  &none  &kp Z  &kp X  &kp C  &kp V  &kp B  &kp N  &kp M  &kp COMMA  &kp LG(SPACE)  &kp FSLH  &none  &lt 3 TAB  &lt 4 SPACE  &lt 1 ESC  &lt 2 BSPC  &lt 5 RET  &lt 3 F19
             >;
         };
 
@@ -677,6 +706,31 @@
             >;
         };
 
+        layer_2 {
+            display-name = "NUM";
+
+            /*
+             * ⚠️ 位置 34（右手小指底排，BASE 的 `/`）是 BT 層的**唯一入口**。
+             *
+             * 2026-09-09 從 CMD 位置 40（右拇指中鍵）搬過來的——那顆太好按，
+             * 讓給 Ctrl+Win+Space。挑這裡的理由：
+             *   1. 這一層右手本來整片是 &none（位置 6-9、30-34 全空），
+             *      所以佔掉它不會擠掉任何現有鍵，也沒有既有肌肉記憶。
+             *   2. 進 NUM 靠的是**右**拇指 BSPC，位置 34 又是右手小指最外側
+             *      ⇒ 同手大跨度，打字時絕對不可能誤觸。
+             *   3. 按住之後**左手整隻是自由的**，而 BT 層要按的東西剛好都在
+             *      左邊：BT_SEL 0-4 在位置 1-5、OUT_USB/BLE/TOG 在 13-15、
+             *      BT_CLR 在 25。所以「難按」只針對進入，配對操作不受影響。
+             *
+             * 完整手勢：按住右拇指 BSPC + 右小指 `/`，左手選 profile。
+             * bootloader（位置 29/30）也在這條路徑上，刷機前要記得。
+             */
+
+            bindings = <
+&none  &kp KP_MULTIPLY  &kp N7  &kp N8  &kp N9  &kp KP_PLUS  &none  &none  &none  &none  &to 0  &none  &none  &kp KP_DIVIDE  &kp N4  &kp N5  &kp N6  &kp MINUS  &none  &kp LSHFT  &kp LCTRL  &kp LGUI  &kp LALT  &none  &none  &kp X  &kp N1  &kp N2  &kp N3  &kp EQUAL  &none  &none  &none  &none  &mo 12  &none  &kp N0  &kp DOT  &kp PRCNT  &kp BACKSPACE  &kp ENTER  &kp F19
+            >;
+        };
+
         layer_3 {
             /*
              * SYM 是第一個被縮短的層名（當年只有它超標），現在全部 13 層
@@ -691,14 +745,33 @@
 
             display-name = "SYM";
             bindings = <
-&none  &kp QMARK  &kp EXCL  &kp LBKT  &kp RBKT  &kp KP_PLUS  &kp AT  &kp HASH  &kp DLLR  &kp DQT  &kp GRAVE  &none  &none  &kp LT  &kp GT  &kp LPAR  &kp RPAR  &kp MINUS  &kp TILDE  &mt LSHFT SQT  &kp LCTRL  &kp LGUI  &mt LALT COLON  &none  &none  &kp PIPE  &kp AMPS  &kp LBRC  &kp RBRC  &kp KP_EQUAL  &kp CARET  &kp STAR  &kp COMMA  &kp BSLH  &kp FSLH  &none  &kp UNDER  &kp DOT  &kp PRCNT  &kp LS(LC(LA(LG(E))))  &kp LA(SPACE)  &kp LC(LG(A))
+&none  &kp QMARK  &kp EXCL  &kp LBKT  &kp RBKT  &kp KP_PLUS  &kp AT  &kp HASH  &kp DLLR  &kp DQT  &kp GRAVE  &none  &none  &kp LT  &kp GT  &kp LPAR  &kp RPAR  &kp MINUS  &kp TILDE  &mt LSHFT SQT  &kp LCTRL  &kp LGUI  &mt LALT COLON  &none  &none  &kp PIPE  &kp AMPS  &kp LBRC  &kp RBRC  &kp KP_EQUAL  &kp CARET  &kp STAR  &kp COMMA  &kp BSLH  &kp FSLH  &none  &kp UNDER  &kp DOT  &kp PRCNT  &kp LS(LC(LA(LG(E))))  &kp LA(SPACE)  &kp LC(LG(R))
             >;
         };
 
         layer_4 {
             display-name = "CMD";
+
+            /*
+             * ── 2026-09-09 右拇指兩顆換成主機端全域熱鍵 ──────────────────
+             *
+             *   位置 39（右拇指最內側）  &mo 2（升 NAV）   → Ctrl+Win+Shift+Space
+             *   位置 40（右拇指中鍵）    &mo 12（升 BT）   → Ctrl+Win+Space
+             *
+             * 理由是位置划算：這兩顆是右拇指最順的位置，而原本掛的兩個功能
+             * 都另有入口——NAV 用左拇指 ESC 就到（而且 CMD 本身是左拇指
+             * SPACE 按住的，同手再去升 NAV 本來就彆扭）；BT 一個月用不到
+             * 一次，搬到 NUM 位置 34（見 layer_2 的註解）。
+             *
+             * ⚠️ Ctrl+Win+Space / Ctrl+Win+Shift+Space **不是 OS 內建快捷鍵**，
+             *    送出去要有人接：Windows 這邊是 AHK、macOS 是 Hammerspoon /
+             *    Raycast。keymap 只負責送封包，主機端沒設就等於沒反應。
+             *    兩個平台分支送的是**同一組 HID 鍵碼**（Win 鍵 = ⌘ 是同一顆
+             *    modifier），所以這三顆不進「平台個人化」名單，要一起改。
+             */
+
             bindings = <
-&none  &kp LA(F4)  &kp LC(W)  &kp LC(E)  &kp LC(Y)  &kp LC(T)  &kp LC(U)  &kp LC(BSPC)  &kp LC(DEL)  &kp LC(K)  &to 0  &none  &none  &mt LALT LC(A)  &mt LGUI LC(S)  &mt LCTRL LC(D)  &mt LSHFT LC(F)  &kp LC(L)  &lt 7 HOME  &kp LC(LEFT)  &kp LC(RIGHT)  &kp END  &kp LC(LS(T))  &none  &none  &kp LC(Z)  &kp LC(X)  &kp LC(C)  &kp LC(V)  &kp LC(B)  &kp LS(HOME)  &kp LC(LS(LEFT))  &kp LC(LS(RIGHT))  &kp LS(END)  &kp LC(W)  &none  &kp LS(LC(LA(LG(GRAVE))))  &sl 5  &none  &mo 2  &mo 12  &kp F19
+&none  &kp LA(F4)  &kp LC(W)  &kp LC(E)  &kp LC(Y)  &kp LC(T)  &kp LC(U)  &kp LC(BSPC)  &kp LC(DEL)  &kp LC(K)  &to 0  &none  &none  &mt LALT LC(A)  &mt LGUI LC(S)  &mt LCTRL LC(D)  &mt LSHFT LC(F)  &kp LC(L)  &lt 7 HOME  &kp LC(LEFT)  &kp LC(RIGHT)  &kp END  &kp LC(LS(T))  &none  &none  &kp LC(Z)  &kp LC(X)  &kp LC(C)  &kp LC(V)  &kp LC(B)  &kp LS(HOME)  &kp LC(LS(LEFT))  &kp LC(LS(RIGHT))  &kp LS(END)  &kp LC(W)  &none  &kp LS(LC(LA(LG(GRAVE))))  &sl 5  &none  &kp LC(LG(LS(SPACE)))  &kp LC(LG(SPACE))  &kp F19
             >;
         };
 
@@ -726,7 +799,7 @@
              */
             display-name = "SCRL";
             bindings = <
-&trans  &kp LC(PLUS)  &msc MOVE_Y(25)  &mmv MOVE_Y(-1500)  &msc MOVE_Y(-25)  &kp LC(R)  &kp LC(PG_UP)  &kp LC(PG_DN)  &kp LA(LEFT)  &kp LA(RIGHT)  &to 0  &trans  &trans  &msc MOVE_X(25)  &mmv MOVE_X(-1500)  &mmv MOVE_Y(1500)  &mmv MOVE_X(1500)  &msc MOVE_X(-25)  &msc MOVE_X(25)  &msc MOVE_Y(25)  &msc MOVE_Y(-25)  &msc MOVE_X(-25)  &kp LC(LS(T))  &trans  &trans  &kp LC(MINUS)  &mkp LCLK  &mkp RCLK  &mkp MCLK  &kp ESC  &kp END  &kp PAGE_DOWN  &kp PAGE_UP  &kp HOME  &kp LC(W)  &trans  &kp LC(N0)  &mo 11  &mo 10  &mo 10  &mo 11  &kp F19
+&trans  &kp LC(PLUS)  &msc MOVE_Y(25)  &mmv MOVE_Y(-500)  &msc MOVE_Y(-25)  &kp LC(R)  &kp LC(PG_UP)  &kp LC(PG_DN)  &kp LA(LEFT)  &kp LA(RIGHT)  &to 0  &trans  &trans  &msc MOVE_X(25)  &mmv MOVE_X(-500)  &mmv MOVE_Y(500)  &mmv MOVE_X(500)  &msc MOVE_X(-25)  &msc MOVE_X(25)  &msc MOVE_Y(25)  &msc MOVE_Y(-25)  &msc MOVE_X(-25)  &kp LC(LS(T))  &trans  &trans  &kp LC(MINUS)  &mkp LCLK  &mkp RCLK  &mkp MCLK  &kp ESC  &kp END  &kp PAGE_DOWN  &kp PAGE_UP  &kp HOME  &kp LC(W)  &trans  &kp LC(N0)  &mo 11  &mo 10  &mo 10  &mo 11  &kp F19
             >;
         };
 
@@ -748,7 +821,7 @@
             /* 滾輪按鍵方向同 layer_7（natural），兩個平台分支相同。 */
             display-name = "SCR-";
             bindings = <
-&trans  &trans  &msc MOVE_Y(10)  &mmv MOVE_Y(-750)  &msc MOVE_Y(-10)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &msc MOVE_X(10)  &mmv MOVE_X(-750)  &mmv MOVE_Y(750)  &mmv MOVE_X(750)  &msc MOVE_X(-10)  &msc MOVE_X(10)  &msc MOVE_Y(10)  &msc MOVE_Y(-10)  &msc MOVE_X(-10)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &msc MOVE_Y(10)  &mmv MOVE_Y(-250)  &msc MOVE_Y(-10)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &msc MOVE_X(10)  &mmv MOVE_X(-250)  &mmv MOVE_Y(250)  &mmv MOVE_X(250)  &msc MOVE_X(-10)  &msc MOVE_X(10)  &msc MOVE_Y(10)  &msc MOVE_Y(-10)  &msc MOVE_X(-10)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
             >;
         };
 
@@ -756,7 +829,7 @@
             /* 滾輪按鍵方向同 layer_7（natural），兩個平台分支相同。 */
             display-name = "SCR+";
             bindings = <
-&trans  &trans  &msc MOVE_Y(40)  &mmv MOVE_Y(-2250)  &msc MOVE_Y(-40)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &msc MOVE_X(40)  &mmv MOVE_X(-2250)  &mmv MOVE_Y(2250)  &mmv MOVE_X(2250)  &msc MOVE_X(-40)  &msc MOVE_X(45)  &msc MOVE_Y(45)  &msc MOVE_Y(-45)  &msc MOVE_X(-45)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &msc MOVE_Y(40)  &mmv MOVE_Y(-1000)  &msc MOVE_Y(-40)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &msc MOVE_X(40)  &mmv MOVE_X(-1000)  &mmv MOVE_Y(1000)  &mmv MOVE_X(1000)  &msc MOVE_X(-40)  &msc MOVE_X(40)  &msc MOVE_Y(40)  &msc MOVE_Y(-40)  &msc MOVE_X(-40)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
             >;
         };
 
