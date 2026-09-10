@@ -7,14 +7,15 @@ keymap 一起版本控管，方便兩邊對照。
 
 | 檔案 | `settings` QSID 21 | 說明 |
 |---|---|---|
-| **`piantor-windows-20260909.vil`** | `0`（swap **關**） | ⭐ **本分支（Windows）要載入的就是這個**。對齊本分支 Toucan keymap 的 Windows 版；2026-09-09 由腳本從 09-07 版改 3 格（見下）。 |
+| **`piantor-windows-20260910.vil`** | `0`（swap **關**） | ⭐ **本分支（Windows）要載入的就是這個**。2026-09-10 從 09-09 版改 2 格 ＋ 2 條 tap dance（見下）。 |
+| `rollback/piantor-windows-20260909.vil` | `0`（swap **關**） | 上一版（L4 右拇指還是固定鍵碼、沒有 tap dance）。**只有要回退時才碰**。 |
 | `rollback/piantor-windows-20260907.vil` | `0`（swap **關**） | 上一版（L3/L4 拇指改動前）。**只有要回退時才碰**。 |
 | `rollback/piantor-windows-20260904.vil` | `0`（swap **關**） | 再上一版（L8 改動前）。**只有要回退時才碰**。 |
 | `rollback/piantor-20260903-original-swap-on.vil` | `256`（swap **開**） | 改動前的原始備份（2026-09-03 13:42）。**只有要回退時才碰**，刻意放在子資料夾避免誤選。 |
 
 > 📌 **2026-09-07 起，`.vil` 依分支區分平台**：`prospector-scanner-windows`
 > （本分支）只放 **Windows** 版；`prospector-scanner` 只放 **macOS** 版
-> （在那邊是 `piantor-macos-20260909.vil`）。檔名同時帶平台字樣，跟分支
+> （在那邊是 `piantor-macos-20260910.vil`）。檔名同時帶平台字樣，跟分支
 > 雙重保險——之前發生過誤載事故，載入前檔名再看一眼。
 
 > ⚠️ 這兩個檔原本同層、檔名相近，2026-09-04 實際發生過誤載回退檔的事故：
@@ -28,7 +29,7 @@ keymap 一起版本控管，方便兩邊對照。
 
 ## 載入步驟（Windows）
 
-1. Vial → `File` → `Load saved layout` → `piantor-windows-20260909.vil`
+1. Vial → `File` → `Load saved layout` → `piantor-windows-20260910.vil`
 2. 實測三顆：
    - 按住 `D` 應該是 **Ctrl**（不是 Win）
    - L4 的 `/` 鍵應該**關分頁**
@@ -42,6 +43,44 @@ keymap 一起版本控管，方便兩邊對照。
 
 若行為整個相反 ⇒ QSID 21 沒被套用，手動去 `QMK Settings → Magic` 關掉
 `Swap Control and GUI`。
+
+## 2026-09-10 這一版改了什麼（2 格 layout ＋ 2 條 tap dance）
+
+**L4 右拇指兩顆從固定鍵碼改成 tap dance —— 點一下 AX、連點兩下 Vision。**
+
+| 位置 | 09-09 | 09-10 | 單擊 | 雙擊 |
+|---|---|---|---|---|
+| L4 r7c4（右拇指中鍵） | `LCG(KC_SPACE)` | **`TD(7)`** | Ctrl+Win+Space（AX 單次） | Alt+Win+Space（Vision 單次） |
+| L4 r7c5（右拇指最內側） | `0xb2c` | **`TD(8)`** | Ctrl+Win+Shift+Space（AX 連續） | Alt+Win+Shift+Space（Vision 連續） |
+
+```
+TD(7) ["LCG(KC_SPACE)",       "KC_NO", "LAG(KC_SPACE)",       "KC_NO", 200]
+TD(8) ["LSFT(LCG(KC_SPACE))", "KC_NO", "LSFT(LAG(KC_SPACE))", "KC_NO", 200]
+```
+
+語意：**Ctrl 管 AX、Alt 管 Vision、Shift 管連不連續**。Vision（CV）只是 AX 標不到東西時的
+備援，所以放在比較費事的雙擊上。逐欄比對過 `uid`/`macro`/`combo`/`settings`/`key_override`/
+`encoder_layout` 逐位元組相同，`layout` 也逐格比對只有上表那兩格變。
+
+⚠️ **09-09 版的 r7c5 在 repo 裡是 `0xb2c` 而不是 `LSFT(LCG(KC_SPACE))`** —— 那是同一個鍵碼
+（`0x0B2C`：mods=0b01011=Ctrl+Shift+GUI、keycode=0x2C=Space），Vial 把它載進鍵盤再匯出時
+存成了原始碼。**這就是「巢狀修飾鍵 Vial 認不認」那個待驗證項的答案：它認得、只是回吐數字。**
+新加的 `LSFT(LAG(...))` 預期也會變成數字，不用緊張。
+
+⚠️ **槽號刻意用 7 / 8，把 `TD(6)` 留空** —— 本分支 `TD(6)` 本來就沒用到，但 macOS 分支的
+`TD(6)` 被 `LGUI(KC_LEFT)` / `MO(8)` 佔著。兩邊同槽號，README 與排錯步驟才不會分岔。
+
+⚠️ 代價：**單擊要等 200ms 的 tapping-term 過完才送出**（跟 `TD(5)` 一樣）。刻意的取捨——
+把「切 Vision」做在韌體，主機端就不必為了偵測雙擊而引入 timing window；Windows 端更是
+根本做不到：`Ctrl+Win+Space` 是 NeverClick 用 `RegisterHotKey` 佔的，AHK 連使用者按了
+第二下都看不到。
+
+⚠️ **`Alt+Win+Shift+Space`（Vision 連續）在 Windows 沒人接得住** —— NeverClick 沒有 repeat、
+mousemaster 沒有 CV。按了不會有反應，是主機端工具的能力限制，不是 keymap 漏了。
+
+⚠️ **本檔目前落後 macOS 分支**：2026-09-10 使用者確認「Vial 現在只在 mac 用，Windows 這份
+先不管、未來再同步」。要同步時的差異來源是 09-09 那筆 `123` commit（`.` 鍵 `KC_F18`、
+L3 的 `HYPR(KC_R)` / `LCG(KC_E)` 對調），那三格 macOS 分支還是舊值。
 
 ## 2026-09-09 這一版改了什麼（只有 3 格）
 
