@@ -7,13 +7,14 @@ keymap 一起版本控管，方便兩邊對照。
 
 | 檔案 | `settings` QSID 21 | 說明 |
 |---|---|---|
-| **`piantor-macos-20260909.vil`** | `0`（swap **關**） | ⭐ **本分支（macOS）要載入的就是這個**。由 Windows 版轉出，語意對齊本分支的 Toucan macOS keymap，見下方「macOS 版」一節。2026-09-09 從 09-07 版改 3 格（見下一節）。 |
-| `rollback/piantor-macos-20260907.vil` | `0`（swap **關**） | 上一版（L3/L4 拇指改動前）。**只有要回退時才碰**。 |
+| **`piantor-macos-20260910.vil`** | `0`（swap **關**） | ⭐ **本分支（macOS）要載入的就是這個**。由 Windows 版轉出，語意對齊本分支的 Toucan macOS keymap，見下方「macOS 版」一節。2026-09-10 從 09-09 版改 2 格 ＋ 2 條 tap dance（見下一節）。 |
+| `rollback/piantor-macos-20260909.vil` | `0`（swap **關**） | 上一版（L4 右拇指還是固定 `&kp`、沒有 tap dance）。**只有要回退時才碰**。 |
+| `rollback/piantor-macos-20260907.vil` | `0`（swap **關**） | 更早一版（L3/L4 拇指改動前）。**只有要回退時才碰**。 |
 | `rollback/piantor-20260903-original-swap-on.vil` | `256`（swap **開**） | 改動前的原始備份（2026-09-03 13:42）。**只有要回退時才碰**，刻意放在子資料夾避免誤選。 |
 
 > 📌 **2026-09-07 起，`.vil` 依分支區分平台**：`prospector-scanner`（本分支）
 > 只放 **macOS** 版；`prospector-scanner-windows` 只放 **Windows** 版
-> （在那邊是 `piantor-windows-20260909.vil`）。檔名同時帶平台字樣，
+> （在那邊是 `piantor-windows-20260910.vil`）。檔名同時帶平台字樣，
 > 跟分支雙重保險——之前發生過誤載事故，載入前檔名再看一眼。
 
 > ⚠️ 這兩個檔原本同層、檔名相近，2026-09-04 實際發生過誤載回退檔的事故：
@@ -21,14 +22,15 @@ keymap 一起版本控管，方便兩邊對照。
 > 按下去跑出「協助工具設定」(`Win+U`) 和「小工具面板」(`Win+W`)。
 > 回退檔因此移進 `rollback/`，讓載入時同一層只看得到一個 `.vil`。
 
-⚠️ `piantor-macos-20260909.vil` **尚未刷入實機驗證**——五個待驗證點：
+⚠️ `piantor-macos-20260910.vil` **尚未刷入實機驗證**——待驗證點：
 `LSA(` alias、新占用的 `TD(6)`（見「macOS 版」一節）、L8 新加的
 `LGUI(KC_KP_PLUS)` / `LGUI(KC_KP_MINUS)` 縮放（見下方 L8 一節），
-以及 09-09 新加的巢狀 `LSFT(LCG(KC_SPACE))`（見下一節）。
+巢狀 `LSFT(LCG(KC_SPACE))` / `LSFT(LAG(KC_SPACE))`，以及 09-10 新占用的
+`TD(7)` / `TD(8)`（見下一節）。
 
 ## 載入步驟（macOS）
 
-1. Vial → `File` → `Load saved layout` → `piantor-macos-20260909.vil`
+1. Vial → `File` → `Load saved layout` → `piantor-macos-20260910.vil`
 2. 實測三顆：
    - 按住 `S` 應該是 **⌘**、按住 `D` 應該是 **⌃**
    - L4 的 `/` 鍵應該**關分頁**（⌘W）
@@ -42,6 +44,46 @@ keymap 一起版本控管，方便兩邊對照。
 
 若行為整個相反 ⇒ QSID 21 沒被套用，手動去 `QMK Settings → Magic` 關掉
 `Swap Control and GUI`。
+
+## 2026-09-10 這一版改了什麼（2 格 layout ＋ 2 條 tap dance）
+
+跟 `rollback/piantor-macos-20260909.vil` 相比只動兩處；`uid` / `macro` / `combo` /
+`settings` / `key_override` **逐位元組相同**（已用 node 逐欄比對確認，QSID 21 仍是 `0`）。
+
+**L4 右拇指兩顆從固定鍵碼改成 tap dance —— 點一下 AX、連點兩下 Vision。**
+
+| 位置 | 09-09 | 09-10 | 單擊 | 雙擊 |
+|---|---|---|---|---|
+| L4 r7c4（右拇指中鍵） | `LCG(KC_SPACE)` | **`TD(7)`** | `LCG(KC_SPACE)` ⌃⌘Space（AX 單次） | `LAG(KC_SPACE)` ⌥⌘Space（Vision 單次） |
+| L4 r7c5（右拇指最內側） | `LSFT(LCG(KC_SPACE))` | **`TD(8)`** | `LSFT(LCG(KC_SPACE))` ⌃⌘⇧Space（AX 連續） | `LSFT(LAG(KC_SPACE))` ⌥⌘⇧Space（Vision 連續） |
+
+新占用兩個 tap dance 槽（`TD(7)` / `TD(8)`，原本 7 以後全空）：
+
+```
+TD(7) ["LCG(KC_SPACE)",       "KC_NO", "LAG(KC_SPACE)",       "KC_NO", 200]
+TD(8) ["LSFT(LCG(KC_SPACE))", "KC_NO", "LSFT(LAG(KC_SPACE))", "KC_NO", 200]
+```
+
+語意：**Ctrl 管 AX、Alt 管 Vision、Shift 管連不連續**。Vision（CV）只是 AX
+（accessibility tree）標不到東西時的備援，所以放在比較費事的雙擊上。
+
+⚠️ `LAG(` = Left Alt + GUI，QMK 內建 alias。`LSFT(LAG(...))` 是巢狀寫法（QMK 沒有
+Shift+Alt+GUI 的三修飾鍵 alias），跟 09-09 的 `LSFT(LCG(...))` 同一個待驗證風險：
+**若 Vial 顯示成空白或 Any，就是它的 parser 不吃**，得在 Vial 的修飾鍵勾選面板手動
+重設那一格再重新匯出。
+
+⚠️ **這 2 格與 2 條 tap dance 兩個平台的 `.vil` 值完全相同**（`⌘` 與 `Win`、`⌥` 與 `Alt`
+都是同一顆 HID modifier）⇒ 不進「刻意不同步」名單，**兩個分支要一起改**。對應 Toucan 是
+`config/toucan.keymap` 的 `td_hint` / `td_hint_rep` 兩個 behavior。
+
+⚠️ 代價：**單擊要等 200ms 的 tapping-term 過完才送出**（跟 `TD(5)` / Toucan 的 `td_ptt`
+一樣）。這是刻意的取捨——把「切 Vision」做在韌體，主機端就不必為了偵測雙擊而引入
+timing window（那會讓主線 AX 每次都變鈍），而且 Windows 端根本做不到：`Ctrl+Win+Space`
+是 NeverClick 用 `RegisterHotKey` 佔的，AHK 連使用者按了第二下都看不到。
+
+⚠️ **`Alt+Win+Shift+Space`（Vision 連續）在 Windows 沒人接得住** —— NeverClick 沒有
+repeat、mousemaster 沒有 CV。按了不會有反應，這是主機端工具的能力限制，不是 keymap
+漏了。macOS 端 Neru 四組都吃得下。
 
 ## 2026-09-09 這一版改了什麼（只有 3 格）
 
