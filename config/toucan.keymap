@@ -327,6 +327,57 @@
             tapping-term-ms = <200>;
             bindings = <&z30>, <&z50>;
         };
+
+        /*
+         * ── Hint 熱鍵：點一下 = AX、連點兩下 = Vision（2026-09-10）─────────
+         *
+         * 掛在 CMD(4) 右拇指兩顆（位置 39 / 40）。四組主機端熱鍵是：
+         *
+         *              單擊（AX / accessibility tree）  雙擊（Vision / CV 備援）
+         *   中鍵 40    Ctrl+Win+Space                   Alt+Win+Space
+         *   內側 39    Ctrl+Win+Shift+Space             Alt+Win+Shift+Space
+         *              └ 無 Shift = 點一次就收          └ Shift = 連續點擊
+         *
+         * 也就是「Ctrl 管 AX、Alt 管 Vision、Shift 管連不連續」。Vision 只是 AX
+         * 標不到東西時的備援，所以放在比較費事的雙擊上。
+         *
+         * ⚠️ 為什麼「切 Vision」做在韌體而不是主機端：主機端要做「快速連按兩次」
+         *    得引入 timing window，第一次按就得等 200ms 才知道是不是雙擊，主線
+         *    （AX）會整個變鈍。做在 tap dance 一樣是 200ms，但**只有這兩顆鍵**付
+         *    這個代價，而且 Windows 那邊根本做不到 —— Ctrl+Win+Space 是 NeverClick
+         *    用 RegisterHotKey 佔的，AHK 連「使用者按了第二下」都看不到。
+         *
+         * ⚠️ 送出去要有人接（keymap 只負責送封包）：
+         *      macOS   Neru（~/.config/neru/config.toml 的 [hotkeys] 四條）
+         *      Windows Ctrl+Win+Space / Alt+Win+Space = NeverClick 的兩條全域熱鍵；
+         *              Ctrl+Win+Shift+Space = mousemaster 的 ui-hint 連續點擊。
+         *              **Alt+Win+Shift+Space（Vision 連續）在 Windows 沒人接** ——
+         *              NeverClick 沒有 repeat、mousemaster 沒有 CV，按了不會有反應。
+         *              這是工具能力限制，不是 keymap 漏了。
+         *
+         * ⚠️ 這四組都**不是** OS 內建快捷鍵，但都撞到別人，主機端已各自處理：
+         *      macOS   Ctrl+Cmd+Space = 字元檢視器、Alt+Cmd+Space = Spotlight
+         *              「在 Finder 中顯示搜尋視窗」→ 使用者確認不需要，直接覆寫
+         *      Windows Alt+Win+Space 原本被 PowerToys 命令選擇區佔走
+         *              （RegisterHotKey）→ 已清掉它的熱鍵
+         *
+         * 兩個平台分支送的是**同一組 HID 鍵碼**（Win 鍵 = ⌘ 是同一顆 modifier），
+         * 所以這兩個 behavior 不進「平台個人化」名單，**要兩個分支一起改**。
+         */
+
+        td_hint: tap_dance_hint {
+            compatible = "zmk,behavior-tap-dance";
+            #binding-cells = <0>;
+            tapping-term-ms = <200>;
+            bindings = <&kp LC(LG(SPACE))>, <&kp LA(LG(SPACE))>;
+        };
+
+        td_hint_rep: tap_dance_hint_repeat {
+            compatible = "zmk,behavior-tap-dance";
+            #binding-cells = <0>;
+            tapping-term-ms = <200>;
+            bindings = <&kp LC(LG(LS(SPACE)))>, <&kp LA(LG(LS(SPACE)))>;
+        };
     };
 
     /*
@@ -724,6 +775,14 @@
              *   位置 39（右拇指最內側）  &mo 2（升 NAV）   → Ctrl+Cmd+Shift+Space
              *   位置 40（右拇指中鍵）    &mo 12（升 BT）   → Ctrl+Cmd+Space
              *
+             * ── 2026-09-10 這兩顆再升級成 tap dance ──────────────────────
+             *   39 = &td_hint_rep   單擊 Ctrl+Win+Shift+Space（AX 連續點擊）
+             *                       雙擊 Alt+Win+Shift+Space（Vision 連續點擊）
+             *   40 = &td_hint       單擊 Ctrl+Win+Space（AX 單次點擊）
+             *                       雙擊 Alt+Win+Space（Vision 單次點擊）
+             * 定義與完整理由見檔案上方 behaviors 的 td_hint / td_hint_rep 註解。
+             * 代價：單擊要等 200ms 的 tapping-term 過完才送出（同 td_ptt）。
+             *
              * 理由是位置划算：這兩顆是右拇指最順的位置，而原本掛的兩個功能
              * 都另有入口——NAV 用左拇指 ESC 就到（而且 CMD 本身是左拇指
              * SPACE 按住的，同手再去升 NAV 本來就彆扭）；BT 一個月用不到
@@ -739,7 +798,7 @@
              */
 
             bindings = <
-&none  &kp LG(Q)  &kp LG(W)  &kp LG(E)  &kp LS(LG(Z))  &kp LG(T)  &kp LG(BACKSPACE)  &kp LA(BACKSPACE)  &kp LA(DEL)  &kp LC(K)  &to 0  &none  &none  &mt LALT LG(A)  &mt LCTRL LG(S)  &mt LGUI LG(D)  &mt LSHFT LG(F)  &kp LG(L)  &lt 7 LG(LEFT)  &kp LA(LEFT)  &kp LA(RIGHT)  &kp LG(RIGHT)  &kp LG(LS(T))  &none  &none  &kp LG(Z)  &kp LG(X)  &kp LG(C)  &kp LG(V)  &kp LG(B)  &kp LS(LG(LEFT))  &kp LS(LA(LEFT))  &kp LS(LA(RIGHT))  &kp LS(LG(RIGHT))  &kp LG(W)  &none  &kp LS(LC(LA(LG(GRAVE))))  &sl 5  &none  &kp LC(LG(LS(SPACE)))  &kp LC(LG(SPACE))  &kp F19
+&none  &kp LG(Q)  &kp LG(W)  &kp LG(E)  &kp LS(LG(Z))  &kp LG(T)  &kp LG(BACKSPACE)  &kp LA(BACKSPACE)  &kp LA(DEL)  &kp LC(K)  &to 0  &none  &none  &mt LALT LG(A)  &mt LCTRL LG(S)  &mt LGUI LG(D)  &mt LSHFT LG(F)  &kp LG(L)  &lt 7 LG(LEFT)  &kp LA(LEFT)  &kp LA(RIGHT)  &kp LG(RIGHT)  &kp LG(LS(T))  &none  &none  &kp LG(Z)  &kp LG(X)  &kp LG(C)  &kp LG(V)  &kp LG(B)  &kp LS(LG(LEFT))  &kp LS(LA(LEFT))  &kp LS(LA(RIGHT))  &kp LS(LG(RIGHT))  &kp LG(W)  &none  &kp LS(LC(LA(LG(GRAVE))))  &sl 5  &none  &td_hint_rep  &td_hint  &kp F19
             >;
         };
 
