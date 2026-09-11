@@ -7,7 +7,8 @@ keymap 一起版本控管，方便兩邊對照。
 
 | 檔案 | `settings` QSID 21 | 說明 |
 |---|---|---|
-| **`piantor-macos-20260911.vil`** | `0`（swap **關**） | ⭐ **本分支（macOS）要載入的就是這個**。由 Windows 版轉出，語意對齊本分支的 Toucan macOS keymap，見下方「macOS 版」一節。2026-09-11 從 09-10 版只改 1 格（見下一節）。 |
+| **`piantor-macos-20260911b.vil`** | `0`（swap **關**） | ⭐ **本分支（macOS）要載入的就是這個**。由 Windows 版轉出，語意對齊本分支的 Toucan macOS keymap，見下方「macOS 版」一節。2026-09-11 第二版：herbr prefix 定案在 L1 的 W、清掉三個 Claude Code 巨集（見下一節）。 |
+| `rollback/piantor-macos-20260911.vil` | `0`（swap **關**） | 同日第一版（herbr prefix 還在 L1 的 B、M9/M11/M14 巨集還在）。**只有要回退時才碰**。 |
 | `rollback/piantor-macos-20260910.vil` | `0`（swap **關**） | 上一版（L1 的 B 還是 `M14` claude 巨集）。**只有要回退時才碰**。 |
 | `rollback/piantor-macos-20260909.vil` | `0`（swap **關**） | 更早一版（L4 右拇指還是固定 `&kp`、沒有 tap dance）。**只有要回退時才碰**。 |
 | `rollback/piantor-macos-20260907.vil` | `0`（swap **關**） | 更早一版（L3/L4 拇指改動前）。**只有要回退時才碰**。 |
@@ -23,7 +24,7 @@ keymap 一起版本控管，方便兩邊對照。
 > 按下去跑出「協助工具設定」(`Win+U`) 和「小工具面板」(`Win+W`)。
 > 回退檔因此移進 `rollback/`，讓載入時同一層只看得到一個 `.vil`。
 
-⚠️ `piantor-macos-20260911.vil` **尚未刷入實機驗證**——待驗證點沿用 09-10 版：
+⚠️ `piantor-macos-20260911b.vil` **尚未刷入實機驗證**——待驗證點沿用 09-10 版：
 `LSA(` alias、新占用的 `TD(6)`（見「macOS 版」一節）、L8 新加的
 `LGUI(KC_KP_PLUS)` / `LGUI(KC_KP_MINUS)` 縮放（見下方 L8 一節），
 巢狀 `LSFT(LCG(KC_SPACE))` / `LSFT(LAG(KC_SPACE))`，以及 09-10 新占用的
@@ -33,7 +34,7 @@ parser 不吃，得用修飾鍵勾選面板手動重設再重新匯出）。
 
 ## 載入步驟（macOS）
 
-1. Vial → `File` → `Load saved layout` → `piantor-macos-20260911.vil`
+1. Vial → `File` → `Load saved layout` → `piantor-macos-20260911b.vil`
 2. 實測三顆：
    - 按住 `S` 應該是 **⌘**、按住 `D` 應該是 **⌃**
    - L4 的 `/` 鍵應該**關分頁**（⌘W）
@@ -48,7 +49,28 @@ parser 不吃，得用修飾鍵勾選面板手動重設再重新匯出）。
 若行為整個相反 ⇒ QSID 21 沒被套用，手動去 `QMK Settings → Magic` 關掉
 `Swap Control and GUI`。
 
-## 2026-09-11 這一版改了什麼（只有 1 格）
+## 2026-09-11 第二版（20260911b）改了什麼（3 格 ＋ 清空 3 個巨集槽）
+
+跟 `rollback/piantor-macos-20260911.vil`（同日第一版）相比；`uid` / `tap_dance` /
+`combo` / `settings` / `key_override` / `encoder_layout` **逐位元組相同**
+（已用 node 逐欄比對確認，QSID 21 仍是 `0`）。
+
+| 位置 | 第一版 | 第二版 | 意思 |
+|---|---|---|---|
+| L1 左手 Q（r0c1） | `M11`（`/exit`+Enter） | `KC_NO` | cc_exit 拔掉 |
+| L1 左手 W（r0c2） | `M9`（`/clear`+Enter） | `LCA(KC_SPACE)` | herbr 的 prefix（⌃⌥Space）搬來這 |
+| L1 左手 B（r2c5） | `LCA(KC_SPACE)` | `KC_NO` | prefix 搬走，清空 |
+
+`macro` 區塊清空三個槽：**M9**（`/clear`）、**M11**（`/exit`）、**M14**（`claude`）
+→ `[]`。使用者不用這三個了，這次**不留備用**（跟 M12/M13 的慣例相反，是使用者
+明確要求拔掉）；要回收去翻 git 歷史。M1（`/context`）、M7（`continue`）、
+M8（`/usage`）、M10（`/effort`）等其餘巨集不動。
+
+對應 Toucan 是 `config/toucan.keymap` `layer_1`（NAV）位置 1 / 2 / 29，
+與 macros 區刪掉的 `claude` / `cc_clear` / `cc_exit` 三個定義，同日兩分支都已改。
+herbr prefix 這格兩個平台的 `.vil` 值相同（Ctrl / Alt 是同一組 HID modifier）。
+
+## 2026-09-11 第一版改了什麼（只有 1 格，已進 rollback/）
 
 跟 `rollback/piantor-macos-20260910.vil` 相比，`layout` 只有 1 格變了；
 `uid` / `macro` / `tap_dance` / `combo` / `settings` / `key_override` /
