@@ -7,8 +7,9 @@ keymap 一起版本控管，方便兩邊對照。
 
 | 檔案 | `settings` QSID 21 | 說明 |
 |---|---|---|
-| **`piantor-macos-20260910.vil`** | `0`（swap **關**） | ⭐ **本分支（macOS）要載入的就是這個**。由 Windows 版轉出，語意對齊本分支的 Toucan macOS keymap，見下方「macOS 版」一節。2026-09-10 從 09-09 版改 2 格 ＋ 2 條 tap dance（見下一節）。 |
-| `rollback/piantor-macos-20260909.vil` | `0`（swap **關**） | 上一版（L4 右拇指還是固定 `&kp`、沒有 tap dance）。**只有要回退時才碰**。 |
+| **`piantor-macos-20260911.vil`** | `0`（swap **關**） | ⭐ **本分支（macOS）要載入的就是這個**。由 Windows 版轉出，語意對齊本分支的 Toucan macOS keymap，見下方「macOS 版」一節。2026-09-11 從 09-10 版只改 1 格（見下一節）。 |
+| `rollback/piantor-macos-20260910.vil` | `0`（swap **關**） | 上一版（L1 的 B 還是 `M14` claude 巨集）。**只有要回退時才碰**。 |
+| `rollback/piantor-macos-20260909.vil` | `0`（swap **關**） | 更早一版（L4 右拇指還是固定 `&kp`、沒有 tap dance）。**只有要回退時才碰**。 |
 | `rollback/piantor-macos-20260907.vil` | `0`（swap **關**） | 更早一版（L3/L4 拇指改動前）。**只有要回退時才碰**。 |
 | `rollback/piantor-20260903-original-swap-on.vil` | `256`（swap **開**） | 改動前的原始備份（2026-09-03 13:42）。**只有要回退時才碰**，刻意放在子資料夾避免誤選。 |
 
@@ -22,15 +23,17 @@ keymap 一起版本控管，方便兩邊對照。
 > 按下去跑出「協助工具設定」(`Win+U`) 和「小工具面板」(`Win+W`)。
 > 回退檔因此移進 `rollback/`，讓載入時同一層只看得到一個 `.vil`。
 
-⚠️ `piantor-macos-20260910.vil` **尚未刷入實機驗證**——待驗證點：
+⚠️ `piantor-macos-20260911.vil` **尚未刷入實機驗證**——待驗證點沿用 09-10 版：
 `LSA(` alias、新占用的 `TD(6)`（見「macOS 版」一節）、L8 新加的
 `LGUI(KC_KP_PLUS)` / `LGUI(KC_KP_MINUS)` 縮放（見下方 L8 一節），
 巢狀 `LSFT(LCG(KC_SPACE))` / `LSFT(LAG(KC_SPACE))`，以及 09-10 新占用的
-`TD(7)` / `TD(8)`（見下一節）。
+`TD(7)` / `TD(8)`（見 09-10 一節）。09-11 新增一個：L1 的 `LCA(KC_SPACE)`
+（`LCA(` 是 QMK 內建 alias，風險同 `LAG(`——Vial 顯示空白或 Any 就是
+parser 不吃，得用修飾鍵勾選面板手動重設再重新匯出）。
 
 ## 載入步驟（macOS）
 
-1. Vial → `File` → `Load saved layout` → `piantor-macos-20260910.vil`
+1. Vial → `File` → `Load saved layout` → `piantor-macos-20260911.vil`
 2. 實測三顆：
    - 按住 `S` 應該是 **⌘**、按住 `D` 應該是 **⌃**
    - L4 的 `/` 鍵應該**關分頁**（⌘W）
@@ -44,6 +47,25 @@ keymap 一起版本控管，方便兩邊對照。
 
 若行為整個相反 ⇒ QSID 21 沒被套用，手動去 `QMK Settings → Magic` 關掉
 `Swap Control and GUI`。
+
+## 2026-09-11 這一版改了什麼（只有 1 格）
+
+跟 `rollback/piantor-macos-20260910.vil` 相比，`layout` 只有 1 格變了；
+`uid` / `macro` / `tap_dance` / `combo` / `settings` / `key_override` /
+`encoder_layout` **逐位元組相同**（已用 node 逐欄比對確認，QSID 21 仍是 `0`）。
+
+| 位置 | 09-10 | 09-11 | 意思 |
+|---|---|---|---|
+| L1 左手 B（r2c5） | `M14`（打字 `claude`+Enter） | `LCA(KC_SPACE)` | ⌃⌥Space —— herbr 的 prefix |
+
+使用者不再用 claude 巨集。**M14 保留不刪**（比照 M12/M13 的慣例），要回退
+直接綁回去。對應 Toucan 是 `config/toucan.keymap` 的 `layer_1`（NAV）位置 29
+（`&claude` → `&kp LC(LA(SPACE))`），同日兩個分支都已改。
+
+⚠️ **這 1 格兩個平台的 `.vil` 值完全相同**（Ctrl / Alt 是同一組 HID modifier）
+⇒ 不進「刻意不同步」名單。Windows 分支的 `.vil` 從 2026-09-10 起整體落後
+（使用者決定「Vial 現在只在 mac 用，Windows 這份先不管」），未來同步時
+這一格要一起帶上。
 
 ## 2026-09-10 這一版改了什麼（2 格 layout ＋ 2 條 tap dance）
 
