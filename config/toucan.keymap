@@ -460,17 +460,10 @@
             bindings = <&macro_tap>, <&kp HOME &kp LS(END)>;
         };
 
-        claude: macro_1 {
-            compatible = "zmk,behavior-macro";
-            #binding-cells = <0>;
-            wait-ms = <10>;
-            tap-ms = <10>;
-            bindings =
-                <&macro_tap>,
-                <&kp C &kp L &kp A &kp U &kp D &kp E>,
-                <&macro_tap>,
-                <&kp RET>;
-        };
+        /*
+         * 2026-09-11：macro_1（claude，打字 claude+Enter）連定義刪除，
+         * 使用者不用了。同批刪掉的還有 cc_clear / cc_exit（見下）。
+         */
 
         z30: macro_2 {
             compatible = "zmk,behavior-macro";
@@ -510,21 +503,12 @@
 
         /*
          * Claude Code 的斜線指令。跟 cc_usage / cc_model 一樣，打完直接送出。
-         * /clear 會清掉整段對話——不想要自動送出的話，把最後那組
-         * <&macro_tap>, <&kp ENTER> 兩行刪掉即可（只打字、不按 Enter）。
+         * 不想要自動送出的話，把最後那組 <&macro_tap>, <&kp ENTER> 兩行
+         * 刪掉即可（只打字、不按 Enter）。
+         *
+         * 2026-09-11 拔掉 cc_clear（/clear）與 cc_exit（/exit），連同 claude
+         * （見上面 macro_1 的位置）——使用者不用了，定義一併刪除。
          */
-
-        cc_clear: cc_clear {
-            compatible = "zmk,behavior-macro";
-            #binding-cells = <0>;
-            wait-ms = <10>;
-            tap-ms = <10>;
-            bindings =
-                <&macro_tap>,
-                <&kp FSLH &kp C &kp L &kp E &kp A &kp R>,
-                <&macro_tap>,
-                <&kp ENTER>;
-        };
 
         cc_rename: cc_rename {
             compatible = "zmk,behavior-macro";
@@ -604,19 +588,6 @@
             label = "MACRO10";
         };
 
-        cc_exit: macro11 {
-            compatible = "zmk,behavior-macro";
-            #binding-cells = <0>;
-            bindings =
-                <&macro_tap>,
-                <&kp FSLH &kp E &kp X &kp I &kp T>,
-                <&macro_tap>,
-                <&kp ENTER>;
-
-            label = "MACRO11";
-            wait-ms = <10>;
-            tap-ms = <10>;
-        };
     };
 
     combos {
@@ -731,10 +702,11 @@
              *    5b6ab49 當年確實把它們放在位置 3/4，但 3860f1b（add macro）
              *    起陸續被 Claude Code 巨集覆蓋，現在是：
              *
-             *      0 &none      1 &cc_exit    2 &cc_clear
+             *      0 &none      1 &none       2 &kp LC(LA(SPACE))
              *      3 &none      4 &cc_rename  5 &macro4
              *
-             *    也就是 **位置 3 是空的**，是這一層唯一的現成空位。
+             *    也就是 1 / 3 現在都是空位（1 原本是 &cc_exit，2026-09-11
+             *    連定義一起拔掉，見下）。
              *
              *    兩條逃生路徑沒有消失，只是搬家了，不用急著補回來：
              *      Studio 解鎖 → combo_studio_unlock（Z + /，見上面 combos）
@@ -746,10 +718,11 @@
              * Position 22 is hand-changed:
              *   22 &td_ptt — z30 / z50 合併：點一下 z30、連點兩下 z50。
              *
-             * 位置 29（BASE 的 B）2026-09-11：&claude（打字 claude+Enter）換成
-             * &kp LC(LA(SPACE)) ＝ Ctrl+Alt+Space —— herbr 的 prefix，主機端
-             * 要有 herbr 在跑才有反應。&claude 巨集比照 Piantor 的 M12/M13
-             * 慣例保留不刪（見 piantor/README.md），要回退直接綁回去。
+             * herbr 的 prefix（&kp LC(LA(SPACE)) ＝ Ctrl+Alt+Space，主機端要有
+             * herbr 在跑才有反應）：2026-09-11 先放在 29（B，蓋掉 &claude），
+             * 同日搬到 2（W），29 歸 &none。cc_exit（1）、cc_clear（原本的 2）
+             * 和 &claude 三個 Claude Code 巨集同時拔掉——使用者不用了，
+             * **定義一併刪除**（不留 M12/M13 式的備用），要回收去翻 git 歷史。
              *
              * 位置 34 以前是 &tog 14（hjkl 方向鍵 ⇄ 滾輪切換）。2026-09-04
              * 連同 HJKL / WHEL 兩層一起刪掉，改成 &trans 落回 BASE 的 `/`。
@@ -758,7 +731,7 @@
              */
 
             bindings = <
-&none  &cc_exit  &cc_clear  &none  &cc_rename  &macro4  &kp LC(PG_UP)  &kp LC(PG_DN)  &kp LA(LEFT)  &kp LA(RIGHT)  &to 0  &none  &none  &kp LALT  &kp LGUI  &kp LCTRL  &kp LSHFT  &trans  &kp LEFT  &kp DOWN  &kp UP  &kp RIGHT  &td_ptt  &none  &none  &cc_effort  &kp LA(P)  &cc_continue  &cc_usage  &kp LC(LA(SPACE))  &kp END  &kp PG_DN  &kp PG_UP  &kp HOME  &trans  &none  &none  &none  &kp ESC  &kp BSPC  &kp DEL  &kp F19
+&none  &none  &kp LC(LA(SPACE))  &none  &cc_rename  &macro4  &kp LC(PG_UP)  &kp LC(PG_DN)  &kp LA(LEFT)  &kp LA(RIGHT)  &to 0  &none  &none  &kp LALT  &kp LGUI  &kp LCTRL  &kp LSHFT  &trans  &kp LEFT  &kp DOWN  &kp UP  &kp RIGHT  &td_ptt  &none  &none  &cc_effort  &kp LA(P)  &cc_continue  &cc_usage  &none  &kp END  &kp PG_DN  &kp PG_UP  &kp HOME  &trans  &none  &none  &none  &kp ESC  &kp BSPC  &kp DEL  &kp F19
             >;
         };
 
