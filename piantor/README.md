@@ -81,6 +81,9 @@ mousemaster 沒有 CV。按了不會有反應，是主機端工具的能力限�
 ⚠️ **本檔目前落後 macOS 分支**：2026-09-10 使用者確認「Vial 現在只在 mac 用，Windows 這份
 先不管、未來再同步」。要同步時的差異來源是 09-09 那筆 `123` commit（`.` 鍵 `KC_F18`、
 L3 的 `HYPR(KC_R)` / `LCG(KC_E)` 對調），那三格 macOS 分支還是舊值。
+**2026-09-11 又多一格**：macOS 版（`piantor-macos-20260911.vil`）把 L1 左手 B 從
+`M14`（claude 巨集）改成 `LCA(KC_SPACE)`（herbr 的 prefix，Ctrl+Alt+Space），
+本檔這一格還是 `M14`，同步時要帶上（M14 巨集保留不刪）。
 
 ## 2026-09-09 這一版改了什麼（只有 3 格）
 
