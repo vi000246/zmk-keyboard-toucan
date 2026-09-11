@@ -746,6 +746,11 @@
              * Position 22 is hand-changed:
              *   22 &td_ptt — z30 / z50 合併：點一下 z30、連點兩下 z50。
              *
+             * 位置 29（BASE 的 B）2026-09-11：&claude（打字 claude+Enter）換成
+             * &kp LC(LA(SPACE)) ＝ Ctrl+Alt+Space —— herbr 的 prefix，主機端
+             * 要有 herbr 在跑才有反應。&claude 巨集比照 Piantor 的 M12/M13
+             * 慣例保留不刪（見 piantor/README.md），要回退直接綁回去。
+             *
              * 位置 34 以前是 &tog 14（hjkl 方向鍵 ⇄ 滾輪切換）。2026-09-04
              * 連同 HJKL / WHEL 兩層一起刪掉，改成 &trans 落回 BASE 的 `/`。
              * 這顆同時是 combo_studio_unlock 的一半（<25 34>），combo 是看
@@ -753,7 +758,7 @@
              */
 
             bindings = <
-&none  &cc_exit  &cc_clear  &none  &cc_rename  &macro4  &kp LC(PG_UP)  &kp LC(PG_DN)  &kp LA(LEFT)  &kp LA(RIGHT)  &to 0  &none  &none  &kp LALT  &kp LGUI  &kp LCTRL  &kp LSHFT  &trans  &kp LEFT  &kp DOWN  &kp UP  &kp RIGHT  &td_ptt  &none  &none  &cc_effort  &kp LA(P)  &cc_continue  &cc_usage  &claude  &kp END  &kp PG_DN  &kp PG_UP  &kp HOME  &trans  &none  &none  &none  &kp ESC  &kp BSPC  &kp DEL  &kp F19
+&none  &cc_exit  &cc_clear  &none  &cc_rename  &macro4  &kp LC(PG_UP)  &kp LC(PG_DN)  &kp LA(LEFT)  &kp LA(RIGHT)  &to 0  &none  &none  &kp LALT  &kp LGUI  &kp LCTRL  &kp LSHFT  &trans  &kp LEFT  &kp DOWN  &kp UP  &kp RIGHT  &td_ptt  &none  &none  &cc_effort  &kp LA(P)  &cc_continue  &cc_usage  &kp LC(LA(SPACE))  &kp END  &kp PG_DN  &kp PG_UP  &kp HOME  &trans  &none  &none  &none  &kp ESC  &kp BSPC  &kp DEL  &kp F19
             >;
         };
 
