@@ -90,20 +90,36 @@
          *     timeout-* 逐階往下掉。**手指放上去到游標會動的最壞延遲，
          *     就等於它當下那一階的 report rate。**
          *
-         * 2026-09-03：原本照抄 beekeeb 的 `report-rate-lp2 = <640>`，那是
-         * 省電取向——他自己的註解寫得很清楚：640 ms ≈ 55µA，而晶片預設的
-         * 160 ms ≈ 174µA。也就是我們把喚醒調成比原廠慢 4 倍，實際用起來
-         * 就是「碰了要等一下」。改成 240 ms，落在兩個已知錨點之間：
+         * 2026-09-03 把 beekeeb 原本的 `report-rate-lp2 = <640>`（省電取向，
+         * ≈55µA，但碰下去要等一下）改成 240。
+         * **2026-09-17 再調一次：240 -> 160（＝晶片預設，≈174µA），
+         * timeout-lp1 9 -> 3，也就是 180 秒 -> 60 秒才掉進 LP2。**
          *
-         *     還要更快 -> 160（＝晶片預設，約 174µA）
-         *     還要更省 -> 往 640 調回去（約 55µA）
+         * 各階的實際數值（沒在這裡寫的欄位就是晶片預設——驅動的 binding
+         * 寫明「Only written if explicitly set」；預設值出自驅動自己的
+         * register dump，見 zmk_driver_azoteq 的 doc/develop.md
+         * 「Default register values」）：
          *
-         * 另外把 timeout-lp1 拉長，延後掉進最慢的 LP2（beekeeb 註解過同一
-         * 行，單位是 20 秒；他寫 3=60 秒，晶片預設 1=20 秒）。
+         *   ACTIVE      13 ms   停 5 秒
+         *   IDLE-TOUCH  50 ms   停 60 秒
+         *   IDLE        50 ms   停 10 秒
+         *   LP1         80 ms   停 timeout-lp1 x 20 秒（本檔 3 = 60 秒）
+         *   LP2        160 ms   本檔設定，與晶片預設同值
+         *
+         * ⇒ 手指離開之後：5 秒掉到 IDLE、15 秒掉到 LP1（喚醒 ~80 ms）、
+         *   75 秒掉到 LP2（喚醒 ~160 ms；還要再過一個 IDLE 週期才吐座標，
+         *   實際最壞 ~210 ms）。
+         *
+         * 還嫌慢的話下一個旋鈕是 timeout-lp1 = <255>：datasheet 4.2 節寫明
+         * **255 = 永不 timeout**，等於永遠停在 LP1（喚醒 ~130 ms），代價是
+         * LP1 那 80 ms 掃描的電流（用 beekeeb 的兩個錨點外插 ≈330µA，
+         * 對比 LP2 160 ms 的 ≈174µA）。再往下才是改驅動做「打字時把感測器
+         * 踢回 ACTIVE」——晶片支援（SystemConfig0 bit7 MANUAL_CONTROL +
+         * SystemControl0 bit2-0 MODE_SELECT），但得 fork driver。
          */
         enable-power-management;
-        report-rate-lp2 = <240>;   /* 最壞喚醒延遲。160=晶片預設 / 640=最省電 */
-        timeout-lp1 = <9>;         /* 9 x 20s = 180s 才掉進 LP2 */
+        report-rate-lp2 = <160>;   /* 最壞喚醒延遲。160=晶片預設 / 640=最省電 */
+        timeout-lp1 = <3>;         /* 3 x 20s = 60s 才掉進 LP2（255 = 永不掉） */
         /* 設了 idle-sleep 會讓 ZMK IDLE（30 秒）就 suspend 觸控板，
          * 省電但「30 秒沒打字就要等醒來」，不建議。 */
         // idle-sleep;
@@ -141,7 +157,7 @@
          *                               低速時的濾波強度與速度門檻，
          *                               「慢慢移很鈍」就是調這組
          *
-         * 其他省電階段（⚠️ 晶片預設值未查證，真的不夠再動）：
+         * 其他省電階段（晶片預設值見上面「省電與碰下去要等多久才動」的表）：
          *   report-rate-idle / -idle-touch / -lp1
          *   timeout-active / -idle-touch / -idle
          *
