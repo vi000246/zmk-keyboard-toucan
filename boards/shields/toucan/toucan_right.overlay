@@ -90,36 +90,67 @@
          *     timeout-* 逐階往下掉。**手指放上去到游標會動的最壞延遲，
          *     就等於它當下那一階的 report rate。**
          *
-         * 2026-09-03 把 beekeeb 原本的 `report-rate-lp2 = <640>`（省電取向，
-         * ≈55µA，但碰下去要等一下）改成 240。
-         * **2026-09-17 再調一次：240 -> 160（＝晶片預設，≈174µA），
-         * timeout-lp1 9 -> 3，也就是 180 秒 -> 60 秒才掉進 LP2。**
+         * 調整史：2026-09-03 把 beekeeb 原本的 `report-rate-lp2 = <640>`
+         * 改成 240；2026-09-17 改成 160、timeout-lp1 9 -> 3。
          *
-         * 各階的實際數值（沒在這裡寫的欄位就是晶片預設——驅動的 binding
-         * 寫明「Only written if explicitly set」；預設值出自驅動自己的
-         * register dump，見 zmk_driver_azoteq 的 doc/develop.md
-         * 「Default register values」）：
+         * ⚠️ **2026-09-18 更正：beekeeb 註解裡的 µA 數字抄錯欄位，前面幾次
+         *    調整都建立在高估 7 倍的成本上。** 他寫「640 ms ≈ 55µA /
+         *    160 ms ≈ 174µA」，那是 IQS5xx-B000 datasheet §10.2.5 的**掃全板**
+         *    那一欄。但 LP1/LP2 掃全板還是掃 ALP（單一低功耗接近通道）是可設
+         *    的——ALPChannelSetup0 (0x0658) bit4，0 = LP 用全板 / 1 = 用 ALP。
+         *    而 Azoteq 自家模組 datasheet（TPS43/TPS65 Standard Trackpad
+         *    Module v1.06）Table 5.1 量到的是 **Low Power Current typ 23 µA**，
+         *    註腳寫明「LP2 Report Rate set to 160ms」。對照 §10.2.5 的 160 ms
+         *    那列：掃全板 174µA (IQS572) / 243µA (IQS550)，ALP 21~25µA
+         *    ⇒ **出廠設定就是 ALP**，LP 電流比原本以為的小一個數量級。
+         *    （那 23 µA 是在 TPS65 上量的，我們是 TPS43；同系列同一張電源表，
+         *    要 100% 確定得讀 0x0658 bit4，需要一次性 debug 韌體，沒做。）
+         *
+         * 修正後的電流（§10.2.5，IQS572 欄）：
+         *
+         *   掃描間隔   全板（ACTIVE / IDLE-TOUCH / IDLE）   ALP（LP1 / LP2）
+         *      13 ms        ~2.3 mA                            —
+         *      50 ms        ~550 µA                            —
+         *      80 ms         346 µA                          ~45 µA
+         *     160 ms         174 µA                          ~23 µA
+         *     640 ms          55 µA                           ~7 µA
+         *
+         * ⇒ **停在 LP1（80 ms）只比 LP2（160 ms）多 ~20µA**，8 小時約
+         *   0.2 mAh。所以 2026-09-18 直接 timeout-lp1 = 255 = 永不進 LP2。
+         *
+         * 為什麼 80 ms 就夠、不用再往下追：ALP 是**接近感應**，偵測的是手
+         * 靠近而不是碰到。手從鍵盤移到板子約 200~300 ms，80 ms 的週期等於
+         * 手還在半空中就醒了 ⇒ 主觀接近零延遲。之前 240 ms 會卡，正是因為
+         * 週期吃掉整段接近時間、沒有提前量。
+         *
+         * 各階數值（沒在這裡寫的欄位就是晶片預設——驅動 binding 寫明
+         * 「Only written if explicitly set」；預設值出自驅動自己的 register
+         * dump，見 zmk_driver_azoteq 的 doc/develop.md）：
          *
          *   ACTIVE      13 ms   停 5 秒
          *   IDLE-TOUCH  50 ms   停 60 秒
          *   IDLE        50 ms   停 10 秒
-         *   LP1         80 ms   停 timeout-lp1 x 20 秒（本檔 3 = 60 秒）
-         *   LP2        160 ms   本檔設定，與晶片預設同值
+         *   LP1         80 ms   停 timeout-lp1 x 20 秒（本檔 255 = 永不）
+         *   LP2        160 ms   現在到不了，只有把 timeout-lp1 調回有限值才會用到
          *
-         * ⇒ 手指離開之後：5 秒掉到 IDLE、15 秒掉到 LP1（喚醒 ~80 ms）、
-         *   75 秒掉到 LP2（喚醒 ~160 ms；還要再過一個 IDLE 週期才吐座標，
-         *   實際最壞 ~210 ms）。
+         * ⇒ 手指離開之後：5 秒掉到 IDLE（50 ms）、15 秒掉到 LP1（80 ms），
+         *   然後就停在 LP1，直到 ZMK SLEEP（20 分鐘）把整顆 suspend 掉。
          *
-         * 還嫌慢的話下一個旋鈕是 timeout-lp1 = <255>：datasheet 4.2 節寫明
-         * **255 = 永不 timeout**，等於永遠停在 LP1（喚醒 ~130 ms），代價是
-         * LP1 那 80 ms 掃描的電流（用 beekeeb 的兩個錨點外插 ≈330µA，
-         * 對比 LP2 160 ms 的 ≈174µA）。再往下才是改驅動做「打字時把感測器
-         * 踢回 ACTIVE」——晶片支援（SystemConfig0 bit7 MANUAL_CONTROL +
-         * SystemControl0 bit2-0 MODE_SELECT），但得 fork driver。
+         * ⚠️ 唯一沒有實證的地方：state diagram 裡 LP1 -> LP2 這個 timeout 的
+         *    動作是「reseed LP channel」。永不 timeout 等於那個週期性 reseed
+         *    不會發生（ALP 的 LTA 追蹤和 ref-update-time 仍在跑，理論上夠）。
+         *    **症狀會是「用久了要碰很用力才醒」**，真的出現就把 timeout-lp1
+         *    設回 <45>（= 15 分鐘），讓它偶爾 reseed 一次。
+         *
+         * 還想更快（目前判斷不需要）：report-rate-lp1 = <40> 約 ~90µA、
+         * <20> 約 ~175µA。再往下才是改驅動做「打字時把感測器踢回 ACTIVE」
+         * （SystemConfig0 bit7 MANUAL_CONTROL + SystemControl0 bit2-0
+         * MODE_SELECT）——以修正後的電流看**不值得**，那套頂多省 20~40µA
+         * 卻要長期維護一份 driver fork，而且只看得到右半的按鍵。
          */
         enable-power-management;
-        report-rate-lp2 = <160>;   /* 最壞喚醒延遲。160=晶片預設 / 640=最省電 */
-        timeout-lp1 = <3>;         /* 3 x 20s = 60s 才掉進 LP2（255 = 永不掉） */
+        report-rate-lp2 = <160>;   /* timeout-lp1=255 時到不了，留著當 fallback */
+        timeout-lp1 = <255>;       /* 255 = 永不掉進 LP2（datasheet 4.2） */
         /* 設了 idle-sleep 會讓 ZMK IDLE（30 秒）就 suspend 觸控板，
          * 省電但「30 秒沒打字就要等醒來」，不建議。 */
         // idle-sleep;
