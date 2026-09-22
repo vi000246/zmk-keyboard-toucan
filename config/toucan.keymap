@@ -565,12 +565,21 @@
                 <&kp RET>;
         };
 
+        /*
+         * macro4 = herdr 的 prefix + v ＝ copy_mode。掛在 NAV 層位置 5。
+         *
+         * ⚠️ 2026-09-22：原本送的是 `&kp LC(SPACE) &kp V`，那是**舊的 mac
+         *    prefix**（ctrl+space）—— 在這台 Windows 上從 2026-09-11 起就一直是
+         *    壞的（Windows 那時的 prefix 是 ctrl+alt+space，而且 Ctrl+Space 在
+         *    Windows 直接被系統 IME 中英熱鍵吃掉，根本到不了終端機）。
+         *    prefix 這次統一成 F23，順手把這顆一起遷移，兩平台都會動了。
+         */
         macro4: macro_4 {
             compatible = "zmk,behavior-macro";
             #binding-cells = <0>;
             wait-ms = <10>;
             tap-ms = <10>;
-            bindings = <&macro_tap>, <&kp LC(SPACE) &kp V>;
+            bindings = <&macro_tap>, <&kp F23 &kp V>;
         };
 
         /*
@@ -697,7 +706,8 @@
         /*
          * ── herdr prefix 改用 combo（2026-09-22）────────────────────────────
          *
-         * 原本掛在 NAV 層的 W（位置 2，那顆 &kp LC(LA(SPACE)) 保留沒動），要按
+         * 原本掛在 NAV 層的 W（位置 2；那顆同日下午一起改成 &kp F23，見下面
+         * 那段補充），要按
          * 到它得先按住左拇指 ESC 進 NAV。問題是 &lt 是 tap-preferred/200ms：
          * 拇指按不滿 200ms 就滾去按 W，拇指會被判成 **tap = ESC**，herdr 收到
          * 的是一個裸 ESC（client log 的 `flushing lone escape ... bytes=[27]`
@@ -707,11 +717,52 @@
          * 即時的鍵本來就不該放在 layer-hold 後面。
          */
 
+        /*
+         * ⚠️ 2026-09-22 下午追加：prefix 從 Ctrl+Alt+Space 改成 **F23**。
+         *
+         * 上面那段（今天早上寫的）以為裸 ESC 只來自 &lt 的 tap-preferred 誤判，
+         * 所以改用 combo 就沒事了。**不對，那只解決了一半。** combo 韌體 10:23
+         * build 完刷進去之後，13:40 的 client log 還是連噴七筆同樣的
+         * `flushing lone escape ... bytes=[27]`：
+         *
+         *   firmware 送出的是乾淨的 Ctrl+Alt+Space、完全沒有 ESC，
+         *   herdr 卻還是收到裸 ESC ⇒ 那個 ESC 是**主機端**加的，不是鍵盤產的。
+         *
+         * 成因：終端機編碼 Alt 組合鍵的方式就是 `ESC` + <鍵>。Ctrl+Alt+Space 到
+         * Windows Terminal 會變成 ESC + NUL 兩個 byte，而第二個 byte（NUL ＝
+         * Ctrl+Space）正好撞上系統註冊的 IME 中英熱鍵（Input Method\Hot Keys
+         * \00000070）、嘸蝦米又拿 Space 當送出字根鍵 —— 被吃掉。herdr 等不到第
+         * 二個 byte 就逾時，把裸 ESC 沖進 pane。
+         *
+         * ⇒ 只要 prefix 帶 Alt，這條 ESC 拆解路徑就一定存在，鍵盤端再乾淨也沒用。
+         *   F23 根本不是組合鍵，**沒有修飾鍵可以被拆散**：終端機送 F 鍵是一段
+         *   完整的 CSI 序列、由終端機自己一次寫出，輸入法也不碰 F 鍵（不是組字
+         *   鍵）。已實測穿得過 WT/ConPTY 到 herdr（見 herdr config.toml 的
+         *   workspace_picker 那段），同路徑的 Ctrl+F24 也天天在用。
+         *
+         * ⚠️ 為什麼**不能**選 Ctrl+字母 —— 這顆 prefix 是 combo 發射的，而
+         *   **combo 在任何 app 裡都會發射**。在 herdr 裡 herdr 會攔下來，但誤按
+         *   在 Chrome / VS Code 上那顆鍵就真的生效。選鍵條件因此不只是「pane 裡
+         *   沒人用」，還要「**誤按在別的地方無害**」。當天連踩兩次：
+         *     · Ctrl+O —— 撞 Claude Code 的 app:toggleTranscript，pane 內就衝突
+         *     · Ctrl+Q —— pane 內乾淨（四邊 0 命中），但**誤按會關掉程式**
+         *   Ctrl+字母的候選全被這條篩掉。F23 沒有任何程式綁 → 誤按完全沒事。
+         *
+         * ⚠️ Hyper（Ctrl+Alt+Shift+Win）也不行：Win 鍵永遠到不了終端機程式
+         *   （WT 官方：the terminal will never receive that binding）。
+         *
+         * ⚠️ F23 是登記在 MyConfig/docs/spec/fkeys.spec.md 的中性訊號鍵，
+         *   **F13–F22 與 F24 全部有主，F23 是唯一空著的一顆**。要再動 F 鍵之前
+         *   先查那張表。
+         *
+         * combo 本身保留 —— 它解決的是「不必先按住拇指進 NAV」，那個好處還在，
+         * 而且跟這次換鍵是正交的兩件事。
+         */
         combo_herdr_prefix {
             timeout-ms = <27>;
             key-positions = <2 3>;   // W + E
             layers = <0>;
-            bindings = <&kp LC(LA(SPACE))>;
+            bindings = <&kp F23>;
         };
 
         /*
@@ -840,7 +891,7 @@
              *    5b6ab49 當年確實把它們放在位置 3/4，但 3860f1b（add macro）
              *    起陸續被 Claude Code 巨集覆蓋，現在是：
              *
-             *      0 &none      1 &none       2 &kp LC(LA(SPACE))
+             *      0 &none      1 &none       2 &kp F23
              *      3 &none      4 &cc_rename  5 &macro4
              *
              *    也就是 1 / 3 現在都是空位（1 原本是 &cc_exit，2026-09-11
@@ -856,11 +907,21 @@
              * Position 22 is hand-changed:
              *   22 &td_ptt — z30 / z50 合併：點一下 z30、連點兩下 z50。
              *
-             * herbr 的 prefix（&kp LC(LA(SPACE)) ＝ Ctrl+Alt+Space，主機端要有
-             * herbr 在跑才有反應）：2026-09-11 先放在 29（B，蓋掉 &claude），
-             * 同日搬到 2（W），29 歸 &none。cc_exit（1）、cc_clear（原本的 2）
-             * 和 &claude 三個 Claude Code 巨集同時拔掉——使用者不用了，
-             * **定義一併刪除**（不留 M12/M13 式的備用），要回收去翻 git 歷史。
+             * herdr 的 prefix（位置 2 = W，主機端要有 herdr 在跑才有反應）：
+             * 2026-09-11 先放在 29（B，蓋掉 &claude），同日搬到 2（W），29 歸
+             * &none。cc_exit（1）、cc_clear（原本的 2）和 &claude 三個 Claude
+             * Code 巨集同時拔掉——使用者不用了，**定義一併刪除**（不留 M12/M13
+             * 式的備用），要回收去翻 git 歷史。
+             *
+             * ⚠️ 2026-09-22 送出的鍵從 &kp LC(LA(SPACE))（Ctrl+Alt+Space）改成
+             *    &kp F23。帶 Alt 的 prefix 在終端機會被拆成 `ESC`+<鍵>，第二個
+             *    byte 被輸入法吃掉就只剩裸 ESC；而 Ctrl+字母雖然沒這問題，卻會
+             *    在「combo 誤按在別的 app」時真的生效。F23 兩者都躲掉 ——
+             *    完整實測證據與推理見上面 combo_herdr_prefix 的註解。
+             *    主機端對應改動：MyConfig 的 dot_config/herdr/config.toml.tmpl
+             *    （prefix = "f23"，兩平台統一）與 dot_wezterm.lua，
+             *    ＋ docs/spec/fkeys.spec.md 的 F23 登記。
+             *    ⚠️ 位置 5 的 &macro4（prefix+v ＝ copy_mode）也一起改了。
              *
              * 位置 34 以前是 &tog 14（hjkl 方向鍵 ⇄ 滾輪切換）。2026-09-04
              * 連同 HJKL / WHEL 兩層一起刪掉，改成 &trans 落回 BASE 的 `/`。
@@ -869,7 +930,7 @@
              */
 
             bindings = <
-&none  &none  &kp LC(LA(SPACE))  &none  &cc_rename  &macro4  &kp LC(PG_UP)  &kp LC(PG_DN)  &kp LA(LEFT)  &kp LA(RIGHT)  &to 0  &none  &none  &kp LALT  &kp LGUI  &kp LCTRL  &kp LSHFT  &trans  &kp LEFT  &kp DOWN  &kp UP  &kp RIGHT  &td_ptt  &none  &none  &cc_effort  &kp LA(P)  &cc_continue  &cc_usage  &none  &kp END  &kp PG_DN  &kp PG_UP  &kp HOME  &trans  &none  &none  &none  &kp ESC  &kp BSPC  &kp DEL  &kp F19
+&none  &none  &kp F23  &none  &cc_rename  &macro4  &kp LC(PG_UP)  &kp LC(PG_DN)  &kp LA(LEFT)  &kp LA(RIGHT)  &to 0  &none  &none  &kp LALT  &kp LGUI  &kp LCTRL  &kp LSHFT  &trans  &kp LEFT  &kp DOWN  &kp UP  &kp RIGHT  &td_ptt  &none  &none  &cc_effort  &kp LA(P)  &cc_continue  &cc_usage  &none  &kp END  &kp PG_DN  &kp PG_UP  &kp HOME  &trans  &none  &none  &none  &kp ESC  &kp BSPC  &kp DEL  &kp F19
             >;
         };
 
