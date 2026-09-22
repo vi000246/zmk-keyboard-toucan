@@ -533,6 +533,48 @@
         };
 
         /*
+         * ── Hyper+I：強制把主機的嘸蝦米切成英文（2026-09-22）─────────────────
+         *
+         * 送一顆 Hyper+I（Ctrl+Alt+Shift+Win+I）。主機端由 AutoHotkey 的
+         * `^!+#i::ImeForceEnglish()` 接走，用 IMM32 的 IMC_SETOPENSTATUS 寫 0。
+         * ⚠️ 這顆鍵**不會漏進前景 app**（AHK 沒加 `~`，會吃掉）。
+         *
+         * 為什麼需要：中文模式下，鍵盤 macro 打出來的 ASCII 會被輸入法整串吃掉
+         * （/rename 變成組字），herdr 的 prefix 之後要按的字母也一樣到不了 herdr。
+         *
+         * 為什麼是 I：Ctrl+Alt+Shift+Win 就是微軟「Office 鍵」的模擬 chord，系統
+         * 用 RegisterHotKey 搶註了 D L N O P T W X Y 九個字母（用一般註冊會完全
+         * 沒反應且無錯誤訊息）。I 不在那九顆裡。全機登記表：
+         * MyConfig/docs/spec/hyperkeys.spec.md。
+         *
+         * ⚠️ 用法一律是「**放在 macro 的第一個動作**」，靠順序保證，不插延遲。
+         *    曾評估在後面插 `&macro_wait_time 80`，使用者認為太久而否決 ——
+         *    AHK 的 SendMessage 實測遠快於 macro 的 10ms wait-ms，但不是硬保證；
+         *    真的遇到偶發失敗，旋鈕就是在該 macro 裡插 `<&macro_wait_time N>`。
+         *
+         * ⚠️ macOS 刻意不做（2026-09-22 使用者決定）。mac 的中/英是「選哪個輸入
+         *    來源」而不是 IME 的 open status，Hammerspoon 那邊要另寫一套；
+         *    Piantor 的 macOS .vil（分支 prospector-scanner）也沒有跟著改。
+         *
+         * ⚠️ 這顆刻意**內嵌重複**在每個需要的 macro 裡，沒有抽成一個 `&ime_en`
+         *    macro 再互相呼叫。ZMK 的巢狀 macro（macro 裡呼叫 macro）文件上說
+         *    可行、但本 repo 沒實證過，而驗證成本是「build → 刷韌體 → 手測」。
+         *    重複一個 token 換掉這份不確定性，划算。要改成巢狀之前先實測。
+         */
+
+        /*
+         * herdr 的 prefix：先切英文（Hyper+I），再送 F23。
+         * combo（W+E）與 NAV 層的 W（位置 2）都綁這顆，兩條路徑行為一致。
+         */
+        hp_prefix: herdr_prefix {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            wait-ms = <10>;
+            tap-ms = <10>;
+            bindings = <&macro_tap>, <&kp LC(LA(LS(LG(I)))) &kp F23>;
+        };
+
+        /*
          * 2026-09-11：macro_1（claude，打字 claude+Enter）連定義刪除，
          * 使用者不用了。同批刪掉的還有 cc_clear / cc_exit（見下）。
          */
@@ -579,7 +621,7 @@
             #binding-cells = <0>;
             wait-ms = <10>;
             tap-ms = <10>;
-            bindings = <&macro_tap>, <&kp F23 &kp V>;
+            bindings = <&macro_tap>, <&kp LC(LA(LS(LG(I)))) &kp F23 &kp V>;
         };
 
         /*
@@ -598,6 +640,8 @@
             tap-ms = <10>;
             bindings =
                 <&macro_tap>,
+                <&kp LC(LA(LS(LG(I))))>,
+                <&macro_tap>,
                 <&kp FSLH &kp R &kp E &kp N &kp A &kp M &kp E>,
                 <&macro_tap>,
                 <&kp ENTER>;
@@ -609,6 +653,8 @@
             wait-ms = <10>;
             tap-ms = <10>;
             bindings =
+                <&macro_tap>,
+                <&kp LC(LA(LS(LG(I))))>,
                 <&macro_tap>,
                 <&kp COLON>,
                 <&macro_tap>,
@@ -624,6 +670,8 @@
             tap-ms = <10>;
             bindings =
                 <&macro_tap>,
+                <&kp LC(LA(LS(LG(I))))>,
+                <&macro_tap>,
                 <&kp C &kp O &kp N &kp T &kp I &kp N &kp U &kp E>,
                 <&macro_tap>,
                 <&kp RET>;
@@ -633,6 +681,8 @@
             compatible = "zmk,behavior-macro";
             #binding-cells = <0>;
             bindings =
+                <&macro_tap>,
+                <&kp LC(LA(LS(LG(I))))>,
                 <&macro_tap>,
                 <&kp FSLH &kp U &kp S &kp A &kp G &kp E>,
                 <&macro_tap>,
@@ -648,6 +698,8 @@
             #binding-cells = <0>;
             bindings =
                 <&macro_tap>,
+                <&kp LC(LA(LS(LG(I))))>,
+                <&macro_tap>,
                 <&kp FSLH &kp M &kp O &kp D &kp E &kp L>,
                 <&macro_tap>,
                 <&kp ENTER>;
@@ -661,6 +713,8 @@
             compatible = "zmk,behavior-macro";
             #binding-cells = <0>;
             bindings =
+                <&macro_tap>,
+                <&kp LC(LA(LS(LG(I))))>,
                 <&macro_tap>,
                 <&kp FSLH &kp E &kp F &kp F &kp O &kp R &kp T>,
                 <&macro_tap>,
@@ -762,7 +816,7 @@
             timeout-ms = <27>;
             key-positions = <2 3>;   // W + E
             layers = <0>;
-            bindings = <&kp F23>;
+            bindings = <&hp_prefix>;
         };
 
         /*
@@ -930,7 +984,7 @@
              */
 
             bindings = <
-&none  &none  &kp F23  &none  &cc_rename  &macro4  &kp LC(PG_UP)  &kp LC(PG_DN)  &kp LA(LEFT)  &kp LA(RIGHT)  &to 0  &none  &none  &kp LALT  &kp LGUI  &kp LCTRL  &kp LSHFT  &trans  &kp LEFT  &kp DOWN  &kp UP  &kp RIGHT  &td_ptt  &none  &none  &cc_effort  &kp LA(P)  &cc_continue  &cc_usage  &none  &kp END  &kp PG_DN  &kp PG_UP  &kp HOME  &trans  &none  &none  &none  &kp ESC  &kp BSPC  &kp DEL  &kp F19
+&none  &none  &hp_prefix  &none  &cc_rename  &macro4  &kp LC(PG_UP)  &kp LC(PG_DN)  &kp LA(LEFT)  &kp LA(RIGHT)  &to 0  &none  &none  &kp LALT  &kp LGUI  &kp LCTRL  &kp LSHFT  &trans  &kp LEFT  &kp DOWN  &kp UP  &kp RIGHT  &td_ptt  &none  &none  &cc_effort  &kp LA(P)  &cc_continue  &cc_usage  &none  &kp END  &kp PG_DN  &kp PG_UP  &kp HOME  &trans  &none  &none  &none  &kp ESC  &kp BSPC  &kp DEL  &kp F19
             >;
         };
 
