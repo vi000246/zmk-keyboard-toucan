@@ -7,7 +7,8 @@ keymap 一起版本控管，方便兩邊對照。
 
 | 檔案 | `settings` QSID 21 | 說明 |
 |---|---|---|
-| **`piantor-macos-20260911b.vil`** | `0`（swap **關**） | ⭐ **本分支（macOS）要載入的就是這個**。由 Windows 版轉出，語意對齊本分支的 Toucan macOS keymap，見下方「macOS 版」一節。2026-09-11 第二版：herbr prefix 定案在 L1 的 W、清掉三個 Claude Code 巨集（見下一節）。 |
+| **`piantor-macos-20260922.vil`** | `0`（swap **關**） | ⭐ **本分支（macOS）要載入的就是這個**。2026-09-22：herdr prefix 改成 F23、所有打 ASCII 的巨集先送 Hyper+I 強制切英文、L4 左拇指最外側改成 F15 音訊輪替（見下一節）。 |
+| `rollback/piantor-macos-20260911b.vil` | `0`（swap **關**） | 上一版（herdr prefix 還是舊的 `LCTL(KC_SPACE)`、巨集沒有 Hyper+I）。**只有要回退時才碰**。 |
 | `rollback/piantor-macos-20260911.vil` | `0`（swap **關**） | 同日第一版（herbr prefix 還在 L1 的 B、M9/M11/M14 巨集還在）。**只有要回退時才碰**。 |
 | `rollback/piantor-macos-20260910.vil` | `0`（swap **關**） | 上一版（L1 的 B 還是 `M14` claude 巨集）。**只有要回退時才碰**。 |
 | `rollback/piantor-macos-20260909.vil` | `0`（swap **關**） | 更早一版（L4 右拇指還是固定 `&kp`、沒有 tap dance）。**只有要回退時才碰**。 |
@@ -48,6 +49,57 @@ parser 不吃，得用修飾鍵勾選面板手動重設再重新匯出）。
 
 若行為整個相反 ⇒ QSID 21 沒被套用，手動去 `QMK Settings → Magic` 關掉
 `Swap Control and GUI`。
+
+## 2026-09-22 改了什麼（herdr prefix 換鍵 ＋ 巨集先切英文 ＋ 一顆死鍵復活）
+
+跟 `rollback/piantor-macos-20260911b.vil` 相比。`uid` / `tap_dance` / `settings`
+逐位元組不變；改的是 `layout` 一格、`macro` 七個槽、`combo` 一條。
+
+### ① herdr 的 prefix：`LCTL(KC_SPACE)` → **F23**
+
+舊值是 tmux 時代留下來的 `Ctrl+Space`，**兩平台都已經失效很久**。原因鏈：
+
+- `ctrl+alt+space`（2026-09-11～09-22 的 prefix）在終端機被編成 `ESC`＋`<鍵>`
+  兩個 byte，第二個 byte 被輸入法吃掉，herdr 只收到裸 ESC
+  （client log 的 `flushing lone escape ... bytes=[27]`）。
+- 換成 **F23**：完整 CSI 序列、輸入法不碰、而且**沒有任何程式綁它**（誤按無害）。
+  登記在 `MyConfig/docs/spec/fkeys.spec.md`（F13–F24 至此全滿）。
+
+| | 舊 | 新 |
+|---|---|---|
+| `combo 2`（C+V） | `LCTL(KC_SPACE)` | **`M9`**（新巨集：Hyper+I → F23） |
+| `macro 4`（prefix+v ＝ copy_mode） | `LCTL(KC_SPACE), KC_V` | `HYPR(KC_I), KC_F23, KC_V` |
+| `macro 9` | （空槽） | `HYPR(KC_I), KC_F23` ＝ herdr prefix |
+
+### ② 打 ASCII 的巨集：第一個動作改成送 **Hyper+I**
+
+中文模式下 `/rename` 這種會被嘸蝦米整串拿去組字。主機端由
+`dot_hammerspoon/ime_force_english.lua`（mac）/ `autohotkey.ahk` 的 `^!+#i`
+（Windows）接走，**強制**切英文（不是 toggle）。**靠順序保證，不插延遲。**
+
+受影響：`M1` /context、`M5` /rename、`M6` :wq、`M7` continue、`M8` /usage、
+`M10` /effort。**`M2` / `M3`（Z30 / Z50）刻意沒改** —— 跟 Toucan 那邊保持一致。
+
+⚠️ 為什麼挑 `I`：Windows 把 `D L N O P T W X Y` 九個字母預約給「Office 鍵」，
+用一般註冊會完全沒反應且無錯誤訊息。`I` 不在那九顆裡。全機登記表：
+`MyConfig/docs/spec/hyperkeys.spec.md`。
+
+### ③ L4 `r3c3`（左拇指最外側）：`HYPR(KC_GRAVE)` → **`KC_F15`**（音訊輪替）
+
+`HYPR(KC_GRAVE)` **全 repo 查不到任何綁定** —— Hammerspoon 只綁字母
+`t f o s l m r y g a`、AHK 沒有、mousemaster 的 backtick 是裸鍵。兩平台都是死鍵。
+F15 是 `dot_hammerspoon/init.lua` 的 `hs.hotkey.bind({}, "f15", audioCycle.cycle)`，
+本 README 第 225 行早就記過「已經佔用 F13 / F15（切換音訊輸出裝置）」。
+
+⚠️ **F15 只有 macOS 有效**，Windows 沒有對應綁定 —— 所以這格**只改 macOS 版**，
+Windows 版的 `.vil` 維持原狀。
+
+### 產生方式（同檔尾的原則）
+
+**沒有做 JSON 轉存。** `uid` 是 `16002279599986889074`，超過
+`Number.MAX_SAFE_INTEGER`，`JSON.parse` → `stringify` 往返會把它改壞。
+作法是逐字串精準替換 ＋ 括號深度掃描定位 `macro` 槽位，改完驗證 `uid` 逐字不變
+且 JSON 可解析。檔案 16393 → 16539 bytes。
 
 ## 2026-09-11 第二版（20260911b）改了什麼（3 格 ＋ 清空 3 個巨集槽）
 
