@@ -7,7 +7,8 @@ keymap 一起版本控管，方便兩邊對照。
 
 | 檔案 | `settings` QSID 21 | 說明 |
 |---|---|---|
-| **`piantor-windows-20260910.vil`** | `0`（swap **關**） | ⭐ **本分支（Windows）要載入的就是這個**。2026-09-10 從 09-09 版改 2 格 ＋ 2 條 tap dance（見下）。 |
+| **`piantor-windows-20260924.vil`** | `0`（swap **關**） | ⭐ **本分支（Windows）要載入的就是這個**。2026-09-24 從 09-10 版改 L8 九格 ＋ 1 條 tap dance（見下）。 |
+| `rollback/piantor-windows-20260910.vil` | `0`（swap **關**） | 上一版（L8 改動前、`TD(9)` 還是空的）。**只有要回退時才碰**。 |
 | `rollback/piantor-windows-20260909.vil` | `0`（swap **關**） | 上一版（L4 右拇指還是固定鍵碼、沒有 tap dance）。**只有要回退時才碰**。 |
 | `rollback/piantor-windows-20260907.vil` | `0`（swap **關**） | 上一版（L3/L4 拇指改動前）。**只有要回退時才碰**。 |
 | `rollback/piantor-windows-20260904.vil` | `0`（swap **關**） | 再上一版（L8 改動前）。**只有要回退時才碰**。 |
@@ -15,7 +16,7 @@ keymap 一起版本控管，方便兩邊對照。
 
 > 📌 **2026-09-07 起，`.vil` 依分支區分平台**：`prospector-scanner-windows`
 > （本分支）只放 **Windows** 版；`prospector-scanner` 只放 **macOS** 版
-> （在那邊是 `piantor-macos-20260910.vil`）。檔名同時帶平台字樣，跟分支
+> （在那邊是 `piantor-macos-20260924.vil`）。檔名同時帶平台字樣，跟分支
 > 雙重保險——之前發生過誤載事故，載入前檔名再看一眼。
 
 > ⚠️ 這兩個檔原本同層、檔名相近，2026-09-04 實際發生過誤載回退檔的事故：
@@ -29,7 +30,7 @@ keymap 一起版本控管，方便兩邊對照。
 
 ## 載入步驟（Windows）
 
-1. Vial → `File` → `Load saved layout` → `piantor-windows-20260910.vil`
+1. Vial → `File` → `Load saved layout` → `piantor-windows-20260924.vil`
 2. 實測三顆：
    - 按住 `D` 應該是 **Ctrl**（不是 Win）
    - L4 的 `/` 鍵應該**關分頁**
@@ -39,10 +40,50 @@ keymap 一起版本控管，方便兩邊對照。
    QMK 沒有 Ctrl+Shift+GUI 的三修飾鍵 alias（只有 `MEH` / `LCAG` / `HYPR`），
    所以只能巢狀。**若 Vial 顯示成空白或 Any**，就是它的 parser 不吃這種寫法
    ⇒ 在 Vial 裡手動用修飾鍵勾選面板重設那一顆，然後重新匯出取代這個檔。
-4. 確認無誤後**立刻另外匯出一份新備份**（EEPROM 隨時可能被清空）
+4. **09-24 這版多兩個必驗項**（都在 L8，按住 `G` 或 `H` 進去）：
+   - 左手 `A` = 放大、`Z` = 縮小、`T` / `G` = 上一頁 / 下一頁、
+     `B` 點一下 **End**、連點兩下 **Home**。
+   - **垂直滾輪四格方向翻過來了**（左 `W` = 上、`R` = 下；右 `J` = 上、`K` = 下），
+     跟 09-10 以前**相反**。這是刻意對齊 Toucan 的 SCRL，不是載錯檔。
+5. 確認無誤後**立刻另外匯出一份新備份**（EEPROM 隨時可能被清空）
 
 若行為整個相反 ⇒ QSID 21 沒被套用，手動去 `QMK Settings → Magic` 關掉
 `Swap Control and GUI`。
+
+## 2026-09-24 這一版改了什麼（L8 九格 ＋ 1 條 tap dance）
+
+跟 `rollback/piantor-windows-20260910.vil` 相比，**只有 `layout` 的第 8 層（9 格）
+與 `tap_dance[9]` 變了**；`uid` / `macro` / `combo` / `settings` 全部逐位元組相同
+（QSID 21 仍是 `0`＝swap 關）。
+
+左手整排改成「Esc ＋ 縮放 ＋ 上下頁」，水平滾輪讓出去（水平只剩右手 `H` / `L`）：
+
+| 位置 | 09-10 | 09-24 | 意思 |
+|---|---|---|---|
+| 左 r0c2（`W`） | `KC_WH_D` | `KC_WH_U` | 垂直滾輪改跟 Toucan 同向 |
+| 左 r0c4（`R`） | `KC_WH_U` | `KC_WH_D` | 同上 |
+| 左 r0c5（`T`） | `LCTL(KC_KP_PLUS)` | `KC_PGUP` | 上一頁；放大搬去 `A` |
+| 左 r1c1（`A`） | `KC_WH_L` | `LCTL(KC_KP_PLUS)` | 放大 |
+| 左 r1c5（`G`） | `KC_WH_R` | `KC_PGDOWN` | 下一頁 |
+| 左 r2c1（`Z`） | `LALT(KC_TAB)` | `LCTL(KC_KP_MINUS)` | 縮小（Alt+Tab 拿掉） |
+| 左 r2c5（`B`） | `LCTL(KC_KP_MINUS)` | `TD(9)` | 點一下 End、連點兩下 Home |
+| 右 r5c3（`K`） | `KC_WH_U` | `KC_WH_D` | 垂直滾輪改跟 Toucan 同向 |
+| 右 r5c4（`J`） | `KC_WH_D` | `KC_WH_U` | 同上 |
+
+```
+TD(9) ["KC_END", "KC_NO", "KC_HOME", "KC_NO", 200]
+```
+
+⚠️ **垂直滾輪四格的方向翻過來了**。09-10 以前 Piantor 的 L8 滾輪鍵跟 Toucan 的
+SCRL 是**相反**的，這一版才對齊。按下去的感受會跟以前不同，這是刻意的。
+
+⚠️ 滑鼠鍵（`X` = `KC_BTN1` / `C` = `KC_BTN4` / `V` = `KC_BTN2`）**刻意沒動**。
+Toucan 同位置是左鍵 / 右鍵 / 中鍵，這是兩把鍵盤已知且**不打算對齊**的差異。
+
+對應 Toucan 這邊是 `config/toucan.keymap` 的 `layer_7`（SCRL）——
+**Toucan L7 = Piantor L8，兩邊要一起改**，本次兩個 ZMK 分支同步改了。
+Piantor 的 `TD(9)` 在 Toucan 是 `td_end_home` behavior。唯一沒跟過去的是右拇指
+最外側的 `LCTL(KC_R)`（重新整理）—— Toucan 那三顆拇指是 SCR± 調速與 F19，不讓位。
 
 ## 2026-09-10 這一版改了什麼（2 格 layout ＋ 2 條 tap dance）
 
