@@ -90,8 +90,8 @@
  *   5  FUN    F1-F12 / 音量 / Hyper 巨集
  *   6  PAD    觸控板自動升起的點擊層
  *   7  SCRL   按住 G/H：觸控板變滾輪
- *   8  CUR-   游標 1.25x（PAD 拇指 38/39）
- *   9  CUR+   游標 3.75x（PAD 拇指 37/40）
+ *   8  CUR-   游標慢檔（PAD 的 N 與左拇指 38）
+ *   9  CUR+   游標快檔（PAD 的 M 與左拇指 37）
  *  10  SCR-   滾動 50%（SCRL 拇指 38/39）
  *  11  SCR+   滾動 200%（SCRL 拇指 37/40）
  *  12  BT     配對 / 輸出切換 / bootloader
@@ -168,7 +168,8 @@
  *   游標基準 500（ZMK 預設 600；下面 &mmv 設 accel-exponent=0 ⇒ 全程等速）
  *     出現處：SCRL(7) 的 ±500 四格
  *   滾輪基準 25（ZMK 預設 10）
- *     出現處：SCRL(7) 的 ±25 八格
+ *     出現處：SCRL(7) 的 ±25 六格（2026-09-24 起左手只剩垂直 2/4 兩格，
+ *             水平的 A / G 讓給了放大與 PgDn；右手 18-21 四格不變）
  *   調速兩檔：
  *     SCR-(10)：游標 ±250   滾輪 ±10   （游標 50%、滾輪 40%）
  *     SCR+(11)：游標 ±1000  滾輪 ±40   （游標 200%、滾輪 160%）
@@ -483,6 +484,27 @@
             #binding-cells = <0>;
             tapping-term-ms = <200>;
             bindings = <&kp LC(LG(LS(SPACE)))>, <&kp LA(LG(LS(SPACE)))>;
+        };
+
+        /*
+         * SCRL(7) 位置 29（B）＝ Piantor 的 TD(9)。點一下 End、連點兩下 Home。
+         *
+         * 2026-09-24 才搬進來。這顆原本是 &kp ESC，改版時 Esc 讓給位置 1（Q，
+         * 對齊 Piantor），空出來的格子接手左手的「行首 / 行尾」。右手底排本來
+         * 就有 N = End、句點 = Home，這顆是給「按住 H、只剩左手」時用的。
+         *
+         * End 放單擊、Home 放雙擊，因為 End 用得頻繁得多。代價同 td_ptt /
+         * td_hint：單點要等 200ms 的 tapping-term 過完才送得出去。
+         *
+         * HID 鍵碼兩個平台相同（macOS 的 End / Home 就是 fn+→ / fn+←），
+         * 所以**不進平台個人化名單，兩個分支一起改**。
+         */
+
+        td_end_home: tap_dance_end_home {
+            compatible = "zmk,behavior-tap-dance";
+            #binding-cells = <0>;
+            tapping-term-ms = <200>;
+            bindings = <&kp END>, <&kp HOME>;
         };
     };
 
@@ -1073,9 +1095,51 @@
         };
 
         layer_6 {
+            /*
+             * ── 2026-09-24：右半整隻手變成一套完整滑鼠 ────────────────────
+             *
+             * 觸控板在**右拇指底下**，所以「右拇指調速鍵」從來就按不到——手指
+             * 在板上的時候那三顆拇指是被佔住的。但**其餘四指是空的**，於是整組
+             * 滑鼠功能改掛到右手，變成「拇指推游標、四指按鍵」的單手操作：
+             *
+             *   位置 19 (J) &trans    → &mkp LCLK   左鍵（食指 home）
+             *   位置 20 (K) &trans    → &mkp RCLK   右鍵（中指 home）
+             *   位置 21 (L) &trans    → &mkp MCLK   中鍵（無名指 home）
+             *   位置 30 (N) &mkp LCLK → &mo 8       CUR-（慢）
+             *   位置 31 (M) &mkp RCLK → &mo 9       CUR+（快）
+             *   位置 39/40（右拇指內／中）&mo 8 / &mo 9 → &trans
+             *   位置 6  (Y) &mkp MCLK → &trans      （舊的零散點擊，收掉）
+             *
+             * 捲動**不用另外配**，本來就有兩條純右手的路：
+             *   雙指滑觸控板（TPS43 硬體手勢，見 toucan_right.overlay 的 scroll）
+             *   按住 H ＋ 拖板（18 是 &trans ⇒ 落到 BASE 的 &lt 7 H，進 SCRL）
+             * ⇒ **位置 18 (H) 必須維持 &trans**，填東西進去會把一手捲動弄不見。
+             *
+             * 左手 26/27/28 的 LCLK/RCLK/MCLK 與左拇指 37/38 的調速**都保留**，
+             * 兩手各一套、互不干擾。
+             *
+             * 順帶修掉一個誤觸：N / M 原本是 LCLK / RCLK，觸控板 600 ms timeout
+             * 內打到 n / m 會**真的點下去**。換成 &mo 之後，誤觸代價只剩「升起
+             * 一個 42 格全 &trans 的層」，等於沒事。
+             *
+             * ⚠️ 代價講清楚：J / K / L 現在是點擊鍵，**摸完觸控板 600 ms 內打到
+             *    j / k / l 會真的點下去**。這正是檔頭在講的那個誤觸問題，這一版
+             *    刻意把面積擴大到右手，換一手完整滑鼠。反方向有
+             *    require-prior-idle-ms = 200 擋著（剛打完字不升 PAD 層），
+             *    但「先摸板、再打字」只靠 timeout。常誤觸的話下一步是把點擊往下
+             *    移到 32/33/34（`,` `.` `/`），**不要**去縮 listener 的 timeout
+             *    ——那會弄壞「先定位、停手、再點擊」。
+             *
+             * ⚠️ 這些鍵能按是因為 toucan-trackpad.dtsi 的 excluded-positions 是
+             *    空的（＝沒有任何鍵會關掉 PAD 層）。那裡改成非空的話，這五顆會
+             *    變成「一按就把 PAD 層踢掉」，整組直接失效。
+             *
+             * ⚠️ 右半最外欄（位置 11 / 23 / 35）**沒焊開關**，不要往那裡放東西。
+             *    左半的 0 / 12 / 24 同理。
+             */
             display-name = "PAD";
             bindings = <
-&trans  &trans  &trans  &trans  &trans  &trans  &mkp MCLK  &trans  &trans  &trans  &to 0  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &mkp LCLK  &mkp RCLK  &trans  &trans  &trans  &trans  &trans  &mo 9  &mo 8  &mo 8  &mo 9  &trans
+&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &to 0  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &trans  &trans  &trans  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &mo 8  &mo 9  &trans  &trans  &trans  &trans  &trans  &mo 9  &mo 8  &trans  &trans  &trans
             >;
         };
 
@@ -1088,16 +1152,37 @@
              * ── 2026-09-22：水平（H / L）對調 ─────────────────────────────
              *   位置 18 (H) = &msc MOVE_X(-25)   ← 原本 (25)
              *   位置 21 (L) = &msc MOVE_X(25)    ← 原本 (-25)
-             * 垂直那四顆與 G(17) / A(13) 都沒動。
+             * 兩個平台分支都有這一版（macOS 那邊的註解寫的是「兩個分支同步」）。
+             * 這裡原本寫「macOS 分支尚未同步」是過期資訊，2026-09-24 更正。
              *
-             * ⚠️ 垂直方向那條「兩個 ZMK 平台分支相同、改動要兩邊一起做」的約定
-             *    **仍然有效**（見根目錄 CLAUDE.md）。水平這次只改了 Windows
-             *    分支，macOS 分支 (`prospector-scanner`) 尚未同步 —— 要對齊的話
-             *    那邊也要照樣把 18/21 對調。
+             * ⚠️ 真正漏改的是 SCR-(10) / SCR+(11) —— 那兩層一路停在舊方向，
+             *    按著拇指調速時水平就反過來。2026-09-24 已一併對調，三檔同向。
+             *
+             * ── 2026-09-24：左手照 Piantor L8 重排 ───────────────────────
+             *
+             *   位置 1  (Q)  &kp LC(PLUS)      → &kp ESC
+             *   位置 5  (T)  &kp LC(R)         → &kp PAGE_UP
+             *   位置 13 (A)  &msc MOVE_X(25)   → &kp LC(PLUS)     放大
+             *   位置 17 (G)  &msc MOVE_X(-25)  → &kp PAGE_DOWN
+             *   位置 29 (B)  &kp ESC           → &td_end_home     單 End / 雙 Home
+             *
+             * 位置 25 (Z) 的縮小與拇指 36 的 &kp LC(N0)（歸零）沒動，跟新的 A
+             * 湊成完整一組縮放。&td_end_home 的理由見上方 behaviors。
+             *
+             * ⚠️ 左手從此沒有水平滾輪 —— A / G 讓出去了，水平只剩右手 H / L。
+             *    SCR-(10) / SCR+(11) 的 13 / 17 也一起改成 &trans，不然按著
+             *    調速拇指的時候那兩顆又會變回水平滾動。
+             *
+             * ⚠️ &kp LC(R)（重新整理）直接拿掉，沒有另外找位置。Piantor 把它
+             *    放在右拇指最外側，但 Toucan 那三顆是 SCR± 調速與 F19，不讓位。
+             *
+             * 還沒對齊 Piantor 的只剩滑鼠鍵：Piantor 是 X=BTN1 / C=BTN4（上一頁）
+             * / V=BTN2，Toucan 是 26=LCLK / 27=RCLK / 28=MCLK。Toucan 這邊刻意
+             * 保留右鍵與中鍵，沒有跟著改。
              */
             display-name = "SCRL";
             bindings = <
-&trans  &kp LC(PLUS)  &msc MOVE_Y(25)  &mmv MOVE_Y(-500)  &msc MOVE_Y(-25)  &kp LC(R)  &kp LC(PG_UP)  &kp LC(PG_DN)  &kp LA(LEFT)  &kp LA(RIGHT)  &to 0  &trans  &trans  &msc MOVE_X(25)  &mmv MOVE_X(-500)  &mmv MOVE_Y(500)  &mmv MOVE_X(500)  &msc MOVE_X(-25)  &msc MOVE_X(-25)  &msc MOVE_Y(25)  &msc MOVE_Y(-25)  &msc MOVE_X(25)  &kp LC(LS(T))  &trans  &trans  &kp LC(MINUS)  &mkp LCLK  &mkp RCLK  &mkp MCLK  &kp ESC  &kp END  &kp PAGE_DOWN  &kp PAGE_UP  &kp HOME  &kp LC(W)  &trans  &kp LC(N0)  &mo 11  &mo 10  &mo 10  &mo 11  &kp F19
+&trans  &kp ESC  &msc MOVE_Y(25)  &mmv MOVE_Y(-500)  &msc MOVE_Y(-25)  &kp PAGE_UP  &kp LC(PG_UP)  &kp LC(PG_DN)  &kp LA(LEFT)  &kp LA(RIGHT)  &to 0  &trans  &trans  &kp LC(PLUS)  &mmv MOVE_X(-500)  &mmv MOVE_Y(500)  &mmv MOVE_X(500)  &kp PAGE_DOWN  &msc MOVE_X(-25)  &msc MOVE_Y(25)  &msc MOVE_Y(-25)  &msc MOVE_X(25)  &kp LC(LS(T))  &trans  &trans  &kp LC(MINUS)  &mkp LCLK  &mkp RCLK  &mkp MCLK  &td_end_home  &kp END  &kp PAGE_DOWN  &kp PAGE_UP  &kp HOME  &kp LC(W)  &trans  &kp LC(N0)  &mo 11  &mo 10  &mo 10  &mo 11  &kp F19
             >;
         };
 
@@ -1119,7 +1204,7 @@
             /* 滾輪按鍵方向同 layer_7（natural），兩個平台分支相同。 */
             display-name = "SCR-";
             bindings = <
-&trans  &trans  &msc MOVE_Y(10)  &mmv MOVE_Y(-250)  &msc MOVE_Y(-10)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &msc MOVE_X(10)  &mmv MOVE_X(-250)  &mmv MOVE_Y(250)  &mmv MOVE_X(250)  &msc MOVE_X(-10)  &msc MOVE_X(10)  &msc MOVE_Y(10)  &msc MOVE_Y(-10)  &msc MOVE_X(-10)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &msc MOVE_Y(10)  &mmv MOVE_Y(-250)  &msc MOVE_Y(-10)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mmv MOVE_X(-250)  &mmv MOVE_Y(250)  &mmv MOVE_X(250)  &trans  &msc MOVE_X(-10)  &msc MOVE_Y(10)  &msc MOVE_Y(-10)  &msc MOVE_X(10)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
             >;
         };
 
@@ -1127,7 +1212,7 @@
             /* 滾輪按鍵方向同 layer_7（natural），兩個平台分支相同。 */
             display-name = "SCR+";
             bindings = <
-&trans  &trans  &msc MOVE_Y(40)  &mmv MOVE_Y(-1000)  &msc MOVE_Y(-40)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &msc MOVE_X(40)  &mmv MOVE_X(-1000)  &mmv MOVE_Y(1000)  &mmv MOVE_X(1000)  &msc MOVE_X(-40)  &msc MOVE_X(40)  &msc MOVE_Y(40)  &msc MOVE_Y(-40)  &msc MOVE_X(-40)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &msc MOVE_Y(40)  &mmv MOVE_Y(-1000)  &msc MOVE_Y(-40)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mmv MOVE_X(-1000)  &mmv MOVE_Y(1000)  &mmv MOVE_X(1000)  &trans  &msc MOVE_X(-40)  &msc MOVE_Y(40)  &msc MOVE_Y(-40)  &msc MOVE_X(40)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
             >;
         };
 
