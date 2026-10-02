@@ -50,7 +50,7 @@
  *   跳字            ⌥← / ⌥→        → Ctrl+← / Ctrl+→（選取加 Shift 同理）
  *   四顆刪除鍵(YUIO) ⌘⌫ ⌥⌫ ⌥⌦ ⌃K   → Ctrl+U / Ctrl+⌫ / Ctrl+Del / Ctrl+K
  *   截圖            ⇧⌘5            → Win+Shift+S
- *   切輸入法        F18            → Win+Space
+ *   切輸入法        F18            → F18（兩平台同鍵碼；Windows 由 AHK 的 $F18:: 接走）
  *   縮放            ⌘+ / ⌘0        → Ctrl+= / Ctrl+0
  *   重新整理        ⌘R             → Ctrl+R
  *   同程式切視窗    ⌘`             → Alt+Esc（Windows 沒有原生同程式循環，
@@ -62,6 +62,12 @@
  * 不變的：Hyper 巨集（⌃⌥⇧⌘+字母，HID 兩邊相同，主機端 AHK 接手）、
  * Alt+P / Alt+Space / Ctrl+Space(tmux) / Ctrl+K / F19、所有打字巨集、
  * home row 裸修飾鍵（fb3fc56 起兩把鍵盤就是「位置一致」：S=GUI、D=Ctrl）。
+ *
+ * ⚠️ 切輸入法 2026-10-02 起不再送 `LG(SPACE)`：鍵盤送真的 Win 時，只要放開
+ *    Win 的瞬間落進 AHK 注入 Ctrl+Space 的那 1–2ms，Win 就會漏給 shell、
+ *    **開始功能表跳出來**（KeyHistory 實拍：實體 LWin up 夾在注入的 Ctrl
+ *    down/up 中間）。改送 F18 之後 Win 根本不出現，競態沒有地方發生。
+ *    筆電內建鍵盤的 Win+Space 仍由 AHK 的 `$#Space::` 接。
  *
  * ⚠️ 下方歷史註解裡提到的 mac 鍵碼（LG(W) 之類）維持原文不改，讀的時候
  *    對照本表換算即可。
@@ -954,7 +960,7 @@
         layer_0 {
             display-name = "BASE";
             bindings = <
-&none  &kp Q  &kp W  &kp E  &kp R  &kp T  &kp Y  &kp U  &kp I  &kp O  &kp P  &none  &none  &mt LALT A  &mt LGUI S  &mt LCTRL D  &mt LSHFT F  &lt 7 G  &lt 7 H  &mt LSHFT J  &mt LCTRL K  &mt LGUI L  &td5  &none  &none  &kp Z  &kp X  &kp C  &kp V  &kp B  &kp N  &kp M  &kp COMMA  &kp LG(SPACE)  &kp FSLH  &none  &lt 3 TAB  &lt_spc 4 SPACE  &lt_esc 1 ESC  &lt 2 BSPC  &lt 5 RET  &lt 3 F19
+&none  &kp Q  &kp W  &kp E  &kp R  &kp T  &kp Y  &kp U  &kp I  &kp O  &kp P  &none  &none  &mt LALT A  &mt LGUI S  &mt LCTRL D  &mt LSHFT F  &lt 7 G  &lt 7 H  &mt LSHFT J  &mt LCTRL K  &mt LGUI L  &td5  &none  &none  &kp Z  &kp X  &kp C  &kp V  &kp B  &kp N  &kp M  &kp COMMA  &kp F18  &kp FSLH  &none  &lt 3 TAB  &lt_spc 4 SPACE  &lt_esc 1 ESC  &lt 2 BSPC  &lt 5 RET  &lt 3 F19
             >;
         };
 
