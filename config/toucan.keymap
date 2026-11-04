@@ -1012,7 +1012,7 @@
              */
 
             bindings = <
-&none  &none  &hp_prefix  &none  &cc_rename  &macro4  &kp LC(PG_UP)  &kp LC(PG_DN)  &kp LA(LEFT)  &kp LA(RIGHT)  &to 0  &none  &none  &kp LALT  &kp LGUI  &kp LCTRL  &kp LSHFT  &trans  &kp LEFT  &kp DOWN  &kp UP  &kp RIGHT  &td_ptt  &none  &none  &cc_effort  &kp LA(P)  &cc_continue  &cc_usage  &none  &kp END  &kp PG_DN  &kp PG_UP  &kp HOME  &trans  &none  &none  &none  &kp ESC  &kp BSPC  &kp DEL  &kp F19
+&none  &none  &hp_prefix  &none  &cc_rename  &macro4  &kp LC(PG_UP)  &kp LC(PG_DN)  &kp LA(LEFT)  &kp LA(RIGHT)  &to 0  &none  &none  &kp LALT  &kp LGUI  &kp LCTRL  &kp LSHFT  &trans  &kp LEFT  &kp DOWN  &kp UP  &kp RIGHT  &kp LC(LS(T))  &none  &none  &cc_effort  &kp LA(P)  &cc_continue  &cc_usage  &none  &kp END  &kp PG_DN  &kp PG_UP  &kp HOME  &kp LC(W)  &none  &none  &none  &kp ESC  &kp BSPC  &kp DEL  &kp F19
             >;
         };
 
