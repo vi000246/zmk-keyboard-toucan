@@ -1121,6 +1121,11 @@
 
         layer_6 {
             /*
+             * ── 2026-11-04：右手全部改回 &trans，左拇指內側(38)的 &mo 9 也拔掉 ──
+             * 用 PAD 後馬上打字會一直離不開 PAD 層（J/K/L/N/M 等是點擊/&mo，
+             * 會續命或吃掉字）。下面 09-24 那段說明的右手滑鼠配置已不再適用；
+             * 保留 10 的 &to 0 當逃生鍵。layer_9（CUR+）沒有入口了。
+             *
              * ── 2026-09-24：右半整隻手變成一套完整滑鼠 ────────────────────
              *
              * 觸控板在**右拇指底下**，所以「右拇指調速鍵」從來就按不到——手指
@@ -1165,7 +1170,7 @@
 
             display-name = "PAD";
             bindings = <
-&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &to 0  &trans  &trans  &kp LALT  &kp LGUI  &kp LCTRL  &kp LSHFT  &trans  &mo 7  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &trans  &trans  &trans  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &mo 8  &mo 9  &trans  &trans  &trans  &trans  &ctrl_click  &mo 8  &mo 9  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &to 0  &trans  &trans  &kp LALT  &kp LGUI  &kp LCTRL  &kp LSHFT  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &ctrl_click  &mo 8  &trans  &trans  &trans  &trans
             >;
         };
 
