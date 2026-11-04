@@ -557,12 +557,19 @@
          * 放在 PAD / SCRL 的左拇指最外側（位置 36）。一按就是一次完整點擊，
          * 不能按住拖曳；要拖曳就按住 LCLK（X）。
          */
+
         ctrl_click: ctrl_click {
             compatible = "zmk,behavior-macro";
             #binding-cells = <0>;
             wait-ms = <10>;
             tap-ms = <20>;
-            bindings = <&macro_press &kp LCTRL>, <&macro_tap &mkp LCLK>, <&macro_release &kp LCTRL>;
+            bindings =
+                <&macro_press>,
+                <&kp LCTRL>,
+                <&macro_tap>,
+                <&mkp LCLK>,
+                <&macro_release>,
+                <&kp LCTRL>;
         };
 
         macro0: macro_0 {
@@ -602,11 +609,11 @@
          *    可行、但本 repo 沒實證過，而驗證成本是「build → 刷韌體 → 手測」。
          *    重複一個 token 換掉這份不確定性，划算。要改成巢狀之前先實測。
          */
-
         /*
          * herdr 的 prefix：先切英文（Hyper+I），再送 F23。
          * combo（W+E）與 NAV 層的 W（位置 2）都綁這顆，兩條路徑行為一致。
          */
+
         hp_prefix: herdr_prefix {
             compatible = "zmk,behavior-macro";
             #binding-cells = <0>;
@@ -657,6 +664,7 @@
          *    Windows 直接被系統 IME 中英熱鍵吃掉，根本到不了終端機）。
          *    prefix 這次統一成 F23，順手把這顆一起遷移，兩平台都會動了。
          */
+
         macro4: macro_4 {
             compatible = "zmk,behavior-macro";
             #binding-cells = <0>;
@@ -763,7 +771,6 @@
 
             label = "MACRO10";
         };
-
     };
 
     combos {
@@ -797,7 +804,6 @@
          *      HKCU\Control Panel\Input Method\Hot Keys\00000070），所以這組
          *      combo 在這台的實際效果是「切換中英輸入」，不是任何有用的東西。
          */
-
         /*
          * ── herdr prefix 改用 combo（2026-09-22）────────────────────────────
          *
@@ -811,7 +817,6 @@
          * combo 的 27ms 窗口沒有這個問題，也不必先進層。prefix 這種高頻又要求
          * 即時的鍵本來就不該放在 layer-hold 後面。
          */
-
         /*
          * ⚠️ 2026-09-22 下午追加：prefix 從 Ctrl+Alt+Space 改成 **F23**。
          *
@@ -853,6 +858,7 @@
          * combo 本身保留 —— 它解決的是「不必先按住拇指進 NAV」，那個好處還在，
          * 而且跟這次換鍵是正交的兩件事。
          */
+
         combo_herdr_prefix {
             timeout-ms = <27>;
             key-positions = <2 3>;   // W + E
@@ -1102,7 +1108,7 @@
              */
 
             bindings = <
-&none  &kp LA(F4)  &kp LC(W)  &kp LC(E)  &kp LC(Y)  &kp LC(T)  &kp LC(U)  &kp LC(BSPC)  &kp LC(DEL)  &kp LC(K)  &to 0  &none  &none  &mt LALT LC(A)  &mt LGUI LC(S)  &mt LCTRL LC(D)  &mt LSHFT LC(F)  &kp LC(L)  &lt 7 HOME  &kp LC(LEFT)  &kp LC(RIGHT)  &kp END  &kp LC(LS(T))  &none  &none  &kp LC(Z)  &kp LC(X)  &kp LC(C)  &kp LC(V)  &kp LC(B)  &kp LS(HOME)  &kp LC(LS(LEFT))  &kp LC(LS(RIGHT))  &kp LS(END)  &kp LC(W)  &none  &kp LS(LC(LA(LG(GRAVE))))  &sl 5  &none  &td_hint_rep  &td_hint  &kp F19
+&none  &kp LA(F4)  &kp LC(W)  &kp LC(E)  &kp LC(Y)  &kp LC(T)  &kp LC(U)  &kp LC(BSPC)  &kp LC(DEL)  &kp LC(K)  &to 0  &none  &none  &mt (LALT) LC(A)  &mt (LGUI) LC(S)  &mt (LCTRL) LC(D)  &mt (LSHFT) LC(F)  &kp LC(L)  &lt 7 HOME  &kp LC(LEFT)  &kp LC(RIGHT)  &kp END  &kp LC(LS(T))  &none  &none  &kp LC(Z)  &kp LC(X)  &kp LC(C)  &kp LC(V)  &kp LC(B)  &kp LS(HOME)  &kp LC(LS(LEFT))  &kp LC(LS(RIGHT))  &kp LS(END)  &kp LC(W)  &none  &kp LS(LC(LA(LG(GRAVE))))  &sl 5  &none  &td_hint_rep  &td_hint  &kp F19
             >;
         };
 
@@ -1156,9 +1162,10 @@
              * ⚠️ 右半最外欄（位置 11 / 23 / 35）**沒焊開關**，不要往那裡放東西。
              *    左半的 0 / 12 / 24 同理。
              */
+
             display-name = "PAD";
             bindings = <
-&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &to 0  &trans  &trans  &kp LALT  &kp LGUI  &kp LCTRL  &kp LSHFT  &trans  &trans  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &trans  &trans  &trans  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &mo 8  &mo 9  &trans  &trans  &trans  &trans  &ctrl_click  &mo 8  &mo 9  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &to 0  &trans  &trans  &kp LALT  &kp LGUI  &kp LCTRL  &kp LSHFT  &trans  &to 7  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &trans  &trans  &trans  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &mo 8  &mo 9  &trans  &trans  &trans  &trans  &ctrl_click  &mo 8  &mo 9  &trans  &trans  &trans
             >;
         };
 
@@ -1199,9 +1206,10 @@
              * / V=BTN2，Toucan 是 26=LCLK / 27=RCLK / 28=MCLK。Toucan 這邊刻意
              * 保留右鍵與中鍵，沒有跟著改。
              */
+
             display-name = "SCRL";
             bindings = <
-&trans  &kp LC(W)  &kp HOME  &kp PAGE_DOWN  &kp PAGE_UP  &kp LC(R)  &kp LC(PG_UP)  &kp LC(PG_DN)  &kp LA(LEFT)  &kp LA(RIGHT)  &to 0  &trans  &trans  &kp LC(PLUS)  &kp END  &kp LA(LEFT)  &kp LA(RIGHT)  &trans  &msc MOVE_X(-25)  &msc MOVE_Y(25)  &msc MOVE_Y(-25)  &msc MOVE_X(25)  &kp LC(LS(T))  &trans  &trans  &kp LC(MINUS)  &mkp LCLK  &mkp RCLK  &mkp MCLK  &td_end_home  &kp END  &kp PAGE_DOWN  &kp PAGE_UP  &kp HOME  &kp LC(W)  &trans  &ctrl_click  &mo 10  &mo 11  &mo 10  &mo 11  &kp F19
+&trans  &kp LC(W)  &kp HOME  &kp PAGE_DOWN  &kp PAGE_UP  &kp LC(R)  &kp LC(PG_UP)  &kp LC(PG_DN)  &kp LA(LEFT)  &kp LA(RIGHT)  &to 0  &trans  &trans  &kp LC(PLUS)  &kp END  &kp LA(LEFT)  &kp LA(RIGHT)  &trans  &msc (MOVE_X(-25))  &msc MOVE_Y(25)  &msc (MOVE_Y(-25))  &msc MOVE_X(25)  &kp LC(LS(T))  &trans  &trans  &kp LC(MINUS)  &mkp LCLK  &mkp RCLK  &mkp MCLK  &td_end_home  &kp END  &kp PAGE_DOWN  &kp PAGE_UP  &kp HOME  &kp LC(W)  &trans  &ctrl_click  &mo 10  &mo 11  &mo 10  &mo 11  &kp F19
             >;
         };
 
@@ -1221,17 +1229,19 @@
 
         layer_10 {
             /* 滾輪按鍵方向同 layer_7（natural），兩個平台分支相同。 */
+
             display-name = "SCR-";
             bindings = <
-&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &msc MOVE_X(-10)  &msc MOVE_Y(10)  &msc MOVE_Y(-10)  &msc MOVE_X(10)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &msc (MOVE_X(-10))  &msc MOVE_Y(10)  &msc (MOVE_Y(-10))  &msc MOVE_X(10)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
             >;
         };
 
         layer_11 {
             /* 滾輪按鍵方向同 layer_7（natural），兩個平台分支相同。 */
+
             display-name = "SCR+";
             bindings = <
-&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &msc MOVE_X(-40)  &msc MOVE_Y(40)  &msc MOVE_Y(-40)  &msc MOVE_X(40)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &msc (MOVE_X(-40))  &msc MOVE_Y(40)  &msc (MOVE_Y(-40))  &msc MOVE_X(40)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
             >;
         };
 
