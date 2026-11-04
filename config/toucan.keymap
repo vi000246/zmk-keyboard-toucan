@@ -1145,7 +1145,7 @@
              */
             display-name = "PAD";
             bindings = <
-&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &to 0  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &trans  &trans  &trans  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &mo 8  &mo 9  &trans  &trans  &trans  &trans  &trans  &mo 8  &mo 9  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &to 0  &trans  &trans  &trans  &trans  &kp LA(LEFT)  &kp LA(RIGHT)  &trans  &trans  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &trans  &trans  &trans  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &mo 8  &mo 9  &trans  &trans  &trans  &trans  &trans  &mo 8  &mo 9  &trans  &trans  &trans
             >;
         };
 
@@ -1188,7 +1188,7 @@
              */
             display-name = "SCRL";
             bindings = <
-&trans  &kp ESC  &msc MOVE_Y(25)  &mmv MOVE_Y(-500)  &msc MOVE_Y(-25)  &kp PAGE_UP  &kp LC(PG_UP)  &kp LC(PG_DN)  &kp LA(LEFT)  &kp LA(RIGHT)  &to 0  &trans  &trans  &kp LC(PLUS)  &mmv MOVE_X(-500)  &mmv MOVE_Y(500)  &mmv MOVE_X(500)  &kp PAGE_DOWN  &msc MOVE_X(-25)  &msc MOVE_Y(25)  &msc MOVE_Y(-25)  &msc MOVE_X(25)  &kp LC(LS(T))  &trans  &trans  &kp LC(MINUS)  &mkp LCLK  &mkp RCLK  &mkp MCLK  &td_end_home  &kp END  &kp PAGE_DOWN  &kp PAGE_UP  &kp HOME  &kp LC(W)  &trans  &kp LC(N0)  &mo 10  &mo 11  &mo 10  &mo 11  &kp F19
+&trans  &kp ESC  &trans  &kp PAGE_UP  &kp PAGE_DOWN  &trans  &kp LC(PG_UP)  &kp LC(PG_DN)  &kp LA(LEFT)  &kp LA(RIGHT)  &to 0  &trans  &trans  &kp LC(PLUS)  &trans  &kp LA(LEFT)  &kp LA(RIGHT)  &trans  &msc MOVE_X(-25)  &msc MOVE_Y(25)  &msc MOVE_Y(-25)  &msc MOVE_X(25)  &kp LC(LS(T))  &trans  &trans  &kp LC(MINUS)  &mkp LCLK  &mkp RCLK  &mkp MCLK  &td_end_home  &kp END  &kp PAGE_DOWN  &kp PAGE_UP  &kp HOME  &kp LC(W)  &trans  &kp LC(N0)  &mo 10  &mo 11  &mo 10  &mo 11  &kp F19
             >;
         };
 
@@ -1210,7 +1210,7 @@
             /* 滾輪按鍵方向同 layer_7（natural），兩個平台分支相同。 */
             display-name = "SCR-";
             bindings = <
-&trans  &trans  &msc MOVE_Y(10)  &mmv MOVE_Y(-250)  &msc MOVE_Y(-10)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mmv MOVE_X(-250)  &mmv MOVE_Y(250)  &mmv MOVE_X(250)  &trans  &msc MOVE_X(-10)  &msc MOVE_Y(10)  &msc MOVE_Y(-10)  &msc MOVE_X(10)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &msc MOVE_X(-10)  &msc MOVE_Y(10)  &msc MOVE_Y(-10)  &msc MOVE_X(10)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
             >;
         };
 
@@ -1218,7 +1218,7 @@
             /* 滾輪按鍵方向同 layer_7（natural），兩個平台分支相同。 */
             display-name = "SCR+";
             bindings = <
-&trans  &trans  &msc MOVE_Y(40)  &mmv MOVE_Y(-1000)  &msc MOVE_Y(-40)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mmv MOVE_X(-1000)  &mmv MOVE_Y(1000)  &mmv MOVE_X(1000)  &trans  &msc MOVE_X(-40)  &msc MOVE_Y(40)  &msc MOVE_Y(-40)  &msc MOVE_X(40)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &msc MOVE_X(-40)  &msc MOVE_Y(40)  &msc MOVE_Y(-40)  &msc MOVE_X(40)  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
             >;
         };
 
