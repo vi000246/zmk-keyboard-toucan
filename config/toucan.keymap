@@ -1145,7 +1145,7 @@
              */
             display-name = "PAD";
             bindings = <
-&trans  &trans  &kp HOME  &kp PAGE_UP  &kp PAGE_DOWN  &trans  &trans  &trans  &trans  &trans  &to 0  &trans  &trans  &trans  &kp END  &kp LA(LEFT)  &kp LA(RIGHT)  &trans  &trans  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &trans  &trans  &trans  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &mo 8  &mo 9  &trans  &trans  &trans  &trans  &trans  &mo 8  &mo 9  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &to 0  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &trans  &trans  &trans  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &mo 8  &mo 9  &trans  &trans  &trans  &trans  &trans  &mo 8  &mo 9  &trans  &trans  &trans
             >;
         };
 
