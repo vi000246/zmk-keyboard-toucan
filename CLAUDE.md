@@ -17,12 +17,15 @@
 2. `piantor/*.vil` —— 每個分支只放**自己平台**那一份，另一個平台的不 checkout 進來
 3. `piantor/README.md` —— 載入步驟與對照表跟著平台走
 
-其餘（scanner module、boards、config/*.conf、regen.sh…）兩邊要一致。
+其餘（scanner module、boards、config/*.conf、regen.sh…）原本也是兩邊一致，
+但 2026-11-04 起不再主動同步（見下方規則）。
 
 ### 規則
 
-- **功能性改動（新增/移動/刪除某顆鍵）要兩個分支都做**，只是鍵碼各自用該平台的原生寫法。
-  只改一邊 = 下次切平台就發現鍵不見了。
+- **2026-11-04 起兩個平台分支不再互相同步。** 功能性改動（新增/移動/刪除某顆鍵）
+  只做在當下所在的分支，**不用**也**不要**主動去另一邊補同一個改動；兩邊的
+  `config/toucan.keymap` 會各自演進、diff 有差是常態，不是漏改。
+  要把某個改動帶到另一邊，必須是使用者明講。
 - **不要把 `.vil` 從一個平台分支 cherry-pick 到另一個**。macOS 版是由 Windows 版**轉出**的
   （只重建 `layout` / `tap_dance` 的文字、原地拼接，`uid`/`macro`/`combo`/`settings` 逐位元組不變），
   轉換規則寫在各分支的 `piantor/README.md`。
@@ -45,7 +48,8 @@ natural（內容跟著手指走）語意**，`config/toucan.keymap` 裡 SCRL(7)�
 SCR+(11) 的滾輪按鍵（位置 2/4、19/20 的 `&msc MOVE_Y`）**兩個分支相同**，
 Windows 分支原本的上下對調已取消。觸控板方向本來就一致（各滾動鏈的
 `INPUT_TRANSFORM_Y_INVERT`，在 `toucan-trackpad.dtsi`）。
-⇒ 現在滾動方向的改動**要兩個分支一起做**，看到 diff 有差就是有一邊漏改了。
+⇒ 2026-09-08 當時兩邊的滾動方向是一致的；但 2026-11-04 起分支不再同步，
+後續滾動方向的改動也只做在當下的分支。
 
 ⚠️ 這個統一有個**前提在 OS 那一側**：natural 語意要在 macOS 和 Windows 都成立，
 Windows 得把指向裝置的滾輪方向也翻成 natural（精確式觸控板有內建設定；一般滑鼠
