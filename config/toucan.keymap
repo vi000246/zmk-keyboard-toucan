@@ -101,6 +101,7 @@
  *  10  SCR-   滾動 50%（SCRL 拇指 38/39）
  *  11  SCR+   滾動 200%（SCRL 拇指 37/40）
  *  12  BT     配對 / 輸出切換 / bootloader
+ *  13  DRAG   PAD 按住 X 拖曳時升起：C / V 滾輪（2026-11-05）
  *
  * ── 2026-09-09：NAV / NUM 的 index 修回 1 / 2 ─────────────────────────
  *
@@ -570,6 +571,23 @@
                 <&mkp LCLK>,
                 <&macro_release>,
                 <&kp LCTRL>;
+        };
+
+        /*
+         * 按住的左鍵＋升起 DRAG(13)（2026-11-05，PAD 的 X / 位置 26）。
+         * 按住拖曳選取時，C / V 變成 SCRL 的 J / K（滾輪下 / 上），
+         * 不用放開左鍵就能捲動。放開就同時放掉左鍵與 DRAG。
+         */
+
+        drag_lclk: drag_lclk {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            wait-ms = <0>;
+            tap-ms = <0>;
+            bindings =
+                <&macro_press &mkp LCLK &mo 13>,
+                <&macro_pause_for_release>,
+                <&macro_release &mkp LCLK &mo 13>;
         };
 
         macro0: macro_0 {
@@ -1121,6 +1139,10 @@
 
         layer_6 {
             /*
+             * ── 2026-11-05：X(26) 的左鍵改成 &drag_lclk ──
+             * 仍是按住的左鍵，但按住期間升起 DRAG(13)：C(27) = 滾輪下、
+             * V(28) = 滾輪上（同 SCRL 的 J / K），拖曳選取時可以邊按邊捲。
+             *
              * ── 2026-11-04：右手全部改回 &trans，左拇指內側(38)的 &mo 9 也拔掉 ──
              * 用 PAD 後馬上打字會一直離不開 PAD 層（J/K/L/N/M 等是點擊/&mo，
              * 會續命或吃掉字）。下面 09-24 那段說明的右手滑鼠配置已不再適用；
@@ -1170,7 +1192,7 @@
 
             display-name = "PAD";
             bindings = <
-&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &to 0  &trans  &trans  &kp LALT  &ctrl_click  &kp LCTRL  &kp LSHFT  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mkp LCLK  &mkp RCLK  &mkp MCLK  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mo 8  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &to 0  &trans  &trans  &kp LALT  &ctrl_click  &kp LCTRL  &kp LSHFT  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &drag_lclk  &mkp RCLK  &mkp MCLK  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mo 8  &trans  &trans  &trans  &trans  &trans
             >;
         };
 
@@ -1254,6 +1276,20 @@
             display-name = "BT";
             bindings = <
 &none  &bt BT_SEL 0  &bt BT_SEL 1  &bt BT_SEL 2  &bt BT_SEL 3  &bt BT_SEL 4  &trans  &trans  &trans  &trans  &to 0  &none  &none  &out OUT_USB  &out OUT_BLE  &out OUT_TOG  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &none  &none  &bt BT_CLR  &trans  &trans  &trans  &bootloader  &bootloader  &trans  &trans  &trans  &trans  &none  &trans  &trans  &trans  &trans  &trans  &trans
+            >;
+        };
+
+        layer_13 {
+            /*
+             * 只由 PAD 的 X(26) &drag_lclk 按住時升起。C(27) / V(28) 照抄
+             * SCRL 的 J(19) / K(20)，方向一樣是 natural。
+             * 觸控板處理鏈（toucan-trackpad.dtsi）刻意不含 13 ⇒ 游標照常移動，
+             * 拖曳不受影響。
+             */
+
+            display-name = "DRAG";
+            bindings = <
+&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &msc MOVE_Y(25)  &msc (MOVE_Y(-25))  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
             >;
         };
     };

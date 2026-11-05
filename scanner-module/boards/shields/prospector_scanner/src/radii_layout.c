@@ -11,7 +11,7 @@
  *   1. 輪盤上限 10 格（Kconfig PROSPECTOR_MAX_LAYERS range 4-10，而且
  *      draw_wheel() 自己還有一道 layer_count <= 16 的 guard）。這台鍵盤
  *      當時有 17 層 ⇒ 一半的層輪盤不亮、轉到哪都沒意義。改成左緣一格一層
- *      的 ladder（2026-09-04 起是 13 格，見 LAYER_COUNT）。
+ *      的 ladder（2026-11-05 起是 14 格，見 LAYER_COUNT）。
  *   2. 三塊高彩度面板（#ACB9D3 淺藍灰 + #1448AA 寶藍 + #E2FF61 螢光黃綠）
  *      擠在 280px 裡互相搶眼，沒有主從。改成全暗底 + hairline，accent
  *      只用在「現在是什麼狀態」上。
@@ -21,7 +21,7 @@
  *
  * 版面（280 x 240，ST7789V，硬體 y-offset 已由 driver 處理）：
  *
- *   x=14   13 格 ladder（亮的那格 = 目前層 index）
+ *   x=14   14 格 ladder（亮的那格 = 目前層 index）
  *   x=34   index 兩位數 / 大字層名 / hairline / 副標一 / 副標二
  *   x=206  垂直 hairline
  *   x=220  修飾鍵 2x2 / 左右電量（數字 + bar）/ BLE profile 四點
@@ -82,7 +82,7 @@ struct toucan_layer {
 };
 
 static const struct toucan_layer LAYERS[] = {
-    { "BASE", "TYPING",      "13 layers"        },
+    { "BASE", "TYPING",      "14 layers"        },
     /* 1/2 曾在 2026-09-06 的 fb3fc56 被 keymap-editor 對調（NUM 節點搬到 NAV
      * 前面），2026-09-09 已把 keymap 的節點順序修回 NAV, NUM，這張表跟著還原。
      * 這張表是用 layer index 查的，順序錯了螢幕就會顯示錯的層名。 */
@@ -98,6 +98,7 @@ static const struct toucan_layer LAYERS[] = {
     { "SCR-", "SCROLL SLOW", "50%"              },
     { "SCR+", "SCROLL FAST", "200%"             },
     { "BT",   "PAIRING",     "profile / output" },
+    { "DRAG", "DRAG SCROLL", "X held / C V"     },
 };
 
 /*
@@ -106,7 +107,7 @@ static const struct toucan_layer LAYERS[] = {
  * 拿來當維度在某些版本會出事。下面的 BUILD_ASSERT 保證兩者不會脫鉤：
  * 在 keymap 加一層卻忘了更新 LAYERS[]，會直接編譯失敗而不是默默對錯副標。
  */
-#define LAYER_COUNT 13
+#define LAYER_COUNT 14
 BUILD_ASSERT(ARRAY_SIZE(LAYERS) == LAYER_COUNT,
              "LAYERS[] must have one entry per keymap layer (see config/toucan.keymap)");
 
@@ -354,7 +355,7 @@ static void create_text_column(lv_obj_t *parent) {
     hrule = rl_rect(parent, TEXT_X, 126, 150, 1, PAL->rule, 0);
 
     sub1_label = rl_label(parent, TEXT_X, 136, &DINishCondensed_SemiBold_22, PAL->accent, "TYPING");
-    sub2_label = rl_label(parent, TEXT_X, 164, &DINishCondensed_SemiBold_20, PAL->sub2, "13 layers");
+    sub2_label = rl_label(parent, TEXT_X, 164, &DINishCondensed_SemiBold_20, PAL->sub2, "14 layers");
 }
 
 static void create_right_column(lv_obj_t *parent) {
